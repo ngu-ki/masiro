@@ -10,6 +10,7 @@ final class Novel extends Equatable {
   final String? lastUpdated;
   final String? lastUpdatedTime;
   final int lvLimit;
+  final int words;
 
   const Novel({
     required this.id,
@@ -21,6 +22,7 @@ final class Novel extends Equatable {
     required this.lastUpdated,
     required this.lastUpdatedTime,
     required this.lvLimit,
+    required this.words,
   });
 
   @override
@@ -34,5 +36,6 @@ final class Novel extends Equatable {
         lastUpdated,
         lastUpdatedTime,
         lvLimit,
+        words,
       ];
 }

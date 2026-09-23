@@ -39,6 +39,7 @@ class NovelResponse {
   String? newUpTime;
   String? newUpContent;
   int lvLimit;
+  int words;
 
   NovelResponse({
     required this.id,
@@ -50,11 +51,15 @@ class NovelResponse {
     required this.newUpTime,
     required this.newUpContent,
     required this.lvLimit,
+    required this.words,
   });
 
   factory NovelResponse.fromJson(Map<String, dynamic> json) {
     final rawLvLimit = json['lv_limit'];
     final lvLimit = rawLvLimit is String ? int.parse(rawLvLimit) : rawLvLimit;
+    final rawWords = json['words'];
+    final words =
+        rawWords is int ? rawWords : int.tryParse('$rawWords') ?? 0;
     return NovelResponse(
       id: json['id'],
       title: json['title'],
@@ -65,6 +70,7 @@ class NovelResponse {
       newUpTime: json['new_up_time'],
       newUpContent: json['new_up_content'],
       lvLimit: lvLimit,
+      words: words,
     );
   }
 }

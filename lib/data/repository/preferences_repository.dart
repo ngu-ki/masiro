@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Keys
 const _versionKey = 'version';
 const _languageKey = 'language';
+const _favoritesOrderKey = 'favoritesOrder';
 
 // Represents the current version of the shared preferences data
 const _currentVersion = 10;
@@ -29,4 +30,11 @@ class PreferencesRepository {
   String get language => _prefs.getString(_languageKey) ?? 'zh';
 
   set language(String value) => _prefs.setString(_languageKey, value);
+
+  /// Manually adjusted order of the favorite novels, as a list of novel ids.
+  List<String> get favoritesOrder =>
+      _prefs.getStringList(_favoritesOrderKey) ?? const [];
+
+  set favoritesOrder(List<String> value) =>
+      _prefs.setStringList(_favoritesOrderKey, value);
 }

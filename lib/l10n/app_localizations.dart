@@ -580,6 +580,48 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'跳转到'**
   String get jumpTo;
+
+  /// No description provided for @sortMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序方式'**
+  String get sortMode;
+
+  /// No description provided for @sortDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认'**
+  String get sortDefault;
+
+  /// No description provided for @sortByName.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称'**
+  String get sortByName;
+
+  /// No description provided for @sortByWordCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'字数'**
+  String get sortByWordCount;
+
+  /// No description provided for @sortAscending.
+  ///
+  /// In zh, this message translates to:
+  /// **'正序'**
+  String get sortAscending;
+
+  /// No description provided for @sortDescending.
+  ///
+  /// In zh, this message translates to:
+  /// **'倒序'**
+  String get sortDescending;
+
+  /// No description provided for @manualSort.
+  ///
+  /// In zh, this message translates to:
+  /// **'调整排序'**
+  String get manualSort;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

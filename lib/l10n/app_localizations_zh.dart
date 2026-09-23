@@ -258,6 +258,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get jumpTo => '跳转到';
+
+  @override
+  String get sortMode => '排序方式';
+
+  @override
+  String get sortDefault => '默认';
+
+  @override
+  String get sortByName => '名称';
+
+  @override
+  String get sortByWordCount => '字数';
+
+  @override
+  String get sortAscending => '正序';
+
+  @override
+  String get sortDescending => '倒序';
+
+  @override
+  String get manualSort => '调整排序';
 }
 
 /// The translations for Chinese, as used in Hong Kong, using the Han script (`zh_Hant_HK`).
@@ -514,6 +535,27 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get jumpTo => '跳转到';
+
+  @override
+  String get sortMode => '排序方式';
+
+  @override
+  String get sortDefault => '默认';
+
+  @override
+  String get sortByName => '名称';
+
+  @override
+  String get sortByWordCount => '字数';
+
+  @override
+  String get sortAscending => '正序';
+
+  @override
+  String get sortDescending => '倒序';
+
+  @override
+  String get manualSort => '调整排序';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -770,4 +812,25 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get jumpTo => '跳转到';
+
+  @override
+  String get sortMode => '排序方式';
+
+  @override
+  String get sortDefault => '默认';
+
+  @override
+  String get sortByName => '名称';
+
+  @override
+  String get sortByWordCount => '字数';
+
+  @override
+  String get sortAscending => '正序';
+
+  @override
+  String get sortDescending => '倒序';
+
+  @override
+  String get manualSort => '调整排序';
 }

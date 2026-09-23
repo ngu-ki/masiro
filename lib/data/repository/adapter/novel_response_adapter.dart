@@ -12,5 +12,6 @@ Novel novelResponseToNovel(NovelResponse n) {
     lastUpdated: n.newUpContent,
     lastUpdatedTime: n.newUpTime,
     lvLimit: n.lvLimit,
+    words: n.words,
   );
 }

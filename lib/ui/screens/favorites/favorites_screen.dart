@@ -62,51 +62,178 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget buildBody(BuildContext context, FavoritesScreenLoadedState state) {
     final localizations = context.localizations();
     final novels = state.novels;
-    return EasyRefresh(
-      controller: _easyRefreshController,
-      header: classicHeader(context),
-      onRefresh: () {
-        context.read<FavoritesScreenBloc>().add(FavoritesScreenRefreshed());
-      },
-      child: novels.isNotEmpty
-          ? GridView.builder(
-              padding: const EdgeInsets.all(10),
-              itemCount: novels.length,
-              gridDelegate: isDesktop
-                  ? const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 600,
-                      mainAxisExtent: 150,
-                    )
-                  : const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: double.infinity,
-                      mainAxisExtent: 120,
+
+    return Column(
+      children: [
+        buildHeader(context, state),
+        Expanded(
+          child: EasyRefresh(
+            controller: _easyRefreshController,
+            header: classicHeader(context),
+            onRefresh: () {
+              context
+                  .read<FavoritesScreenBloc>()
+                  .add(FavoritesScreenRefreshed());
+            },
+            child: novels.isNotEmpty
+                ? buildNovelList(context, state)
+                : LayoutBuilder(
+                    builder: (context, constraints) => ListView(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20.0),
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Message(
+                            message: localizations.noContentMessage,
+                          ),
+                        ),
+                      ],
                     ),
-              itemBuilder: (context, index) {
-                final n = novels[index];
-                return NovelCard(
-                  title: n.title,
-                  coverImg: n.coverImg,
-                  author: n.author,
-                  lastUpdated: n.lastUpdated,
-                  brief: n.brief,
-                  lvLimit: n.lvLimit,
-                  onTap: () => _navigateToNovelDetailScreen(context, n),
-                );
-              },
-            )
-          : LayoutBuilder(
-              builder: (context, constraints) => ListView(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20.0),
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: Message(message: localizations.noContentMessage),
                   ),
-                ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildHeader(BuildContext context, FavoritesScreenLoadedState state) {
+    final localizations = context.localizations();
+    final colorScheme = context.colorScheme();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 4, 4),
+      child: Row(
+        children: [
+          Text(
+            localizations.favorites,
+            style: context.textTheme().titleLarge,
+          ),
+          const Spacer(),
+          PopupMenuButton<FavoritesSortMode>(
+            tooltip: localizations.sortMode,
+            icon: const Icon(Icons.sort_rounded),
+            onSelected: (mode) {
+              context
+                  .read<FavoritesScreenBloc>()
+                  .add(FavoritesScreenSortSelected(mode));
+            },
+            itemBuilder: (_) => [
+              buildSortMenuItem(
+                context,
+                state,
+                mode: FavoritesSortMode.defaultOrder,
+                label: localizations.sortDefault,
               ),
+              buildSortMenuItem(
+                context,
+                state,
+                mode: FavoritesSortMode.lastUpdated,
+                label: localizations.lastUpdated,
+              ),
+              buildSortMenuItem(
+                context,
+                state,
+                mode: FavoritesSortMode.name,
+                label: localizations.sortByName,
+              ),
+              buildSortMenuItem(
+                context,
+                state,
+                mode: FavoritesSortMode.wordCount,
+                label: localizations.sortByWordCount,
+              ),
+            ],
+          ),
+          IconButton(
+            isSelected: state.manualAdjusting,
+            tooltip: localizations.manualSort,
+            icon: const Icon(Icons.swap_vert_rounded),
+            selectedIcon: Icon(
+              Icons.swap_vert_rounded,
+              color: colorScheme.primary,
             ),
+            onPressed: () {
+              context
+                  .read<FavoritesScreenBloc>()
+                  .add(FavoritesScreenManualModeToggled());
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<FavoritesSortMode> buildSortMenuItem(
+    BuildContext context,
+    FavoritesScreenLoadedState state, {
+    required FavoritesSortMode mode,
+    required String label,
+  }) {
+    final isSelected = state.sortMode == mode;
+    Widget? trailing;
+    if (isSelected) {
+      if (mode == FavoritesSortMode.defaultOrder) {
+        trailing = const Icon(Icons.check_rounded, size: 20);
+      } else {
+        trailing = Icon(
+          state.sortDirection == FavoritesSortDirection.ascending
+              ? Icons.arrow_upward_rounded
+              : Icons.arrow_downward_rounded,
+          size: 20,
+        );
+      }
+    }
+    return PopupMenuItem<FavoritesSortMode>(
+      value: mode,
+      child: Row(
+        children: [
+          Expanded(child: Text(label)),
+          if (trailing != null) trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget buildNovelList(BuildContext context, FavoritesScreenLoadedState state) {
+    final bloc = context.read<FavoritesScreenBloc>();
+    final novels = state.novels;
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(10),
+      itemCount: novels.length,
+      itemBuilder: (context, index) {
+        final n = novels[index];
+        Widget card = NovelCard(
+          title: n.title,
+          coverImg: n.coverImg,
+          author: n.author,
+          lastUpdated: n.lastUpdated,
+          brief: n.brief,
+          lvLimit: n.lvLimit,
+          onTap: () => _navigateToNovelDetailScreen(context, n),
+          onMoveUp: state.manualAdjusting && index > 0
+              ? () => bloc.add(
+                    FavoritesScreenNovelMoved(novelId: n.id, moveUp: true),
+                  )
+              : null,
+          onMoveDown: state.manualAdjusting && index < novels.length - 1
+              ? () => bloc.add(
+                    FavoritesScreenNovelMoved(novelId: n.id, moveUp: false),
+                  )
+              : null,
+        );
+        if (isDesktop) {
+          card = Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: card,
+            ),
+          );
+        }
+        return card;
+      },
     );
   }
 

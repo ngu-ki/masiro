@@ -79,5 +79,12 @@
   "chapterComments": "章节评论",
   "reply": "回复",
   "viewMoreReplies": "查看更多回复 ({count})",
-  "jumpTo": "跳转到"
+  "jumpTo": "跳转到",
+  "sortMode": "排序方式",
+  "sortDefault": "默认",
+  "sortByName": "名称",
+  "sortByWordCount": "字数",
+  "sortAscending": "正序",
+  "sortDescending": "倒序",
+  "manualSort": "调整排序"
 }

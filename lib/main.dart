@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:masiro/data/database/migration/migration.dart';
+import 'package:masiro/data/repository/preferences_repository.dart';
 import 'package:masiro/di/get_it.dart';
 import 'package:masiro/misc/platform.dart';
 import 'package:masiro/ui/app.dart';
@@ -21,6 +22,8 @@ Future<void> main() async {
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   await setupGetIt();
+
+  await PreferencesRepository.init();
 
   await performMigrationIfNeeded();
 
