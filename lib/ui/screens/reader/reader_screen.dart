@@ -221,13 +221,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final horizontalPadding = isDesktop ? 120.0 : _contentHorizontalPadding;
 
     if (paymentInfo != null) {
-      return _tapToToggleHud(
-        PaymentDetail(paymentInfo: paymentInfo),
-      );
+      return _tapToToggleHud(context, PaymentDetail(paymentInfo: paymentInfo));
     }
 
     if (pageTurnMode.isVertical()) {
       return _tapToToggleHud(
+        context,
         ChapterContentScroll(
           fontSize: fontSize,
           textColor: contentColor,
@@ -278,7 +277,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     bloc.add(ReaderScreenPositionChanged(position: position));
   }
 
-  Widget _tapToToggleHud(Widget child) {
+  Widget _tapToToggleHud(BuildContext context, Widget child) {
     return isDesktop
         ? Listener(
             behavior: HitTestBehavior.opaque,
