@@ -68,21 +68,10 @@ jobs:
           mv app-arm64-v8a-release.apk masiro-${{ env.COMMIT_SHORT_HASH }}-arm64-v8a-release.apk
           mv app-armeabi-v7a-release.apk masiro-${{ env.COMMIT_SHORT_HASH }}-armeabi-v7a-release.apk
           cd ..
-      - name: Sign app APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: ${{ env.RELEASE_DIR }}
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
       - name: Release
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: "${{ env.RELEASE_DIR }}/masiro-${{ env.COMMIT_SHORT_HASH }}-*-release-signed.apk"
+          artifacts: "${{ env.RELEASE_DIR }}/masiro-${{ env.COMMIT_SHORT_HASH }}-*-release.apk"
           tag: ${{ env.COMMIT_SHORT_HASH }}
           prerelease: true
