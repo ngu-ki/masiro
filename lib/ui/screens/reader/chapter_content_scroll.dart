@@ -12,6 +12,9 @@ class ChapterContentScroll extends StatefulWidget {
   final ReadPosition position;
   final void Function(ReadPosition position)? onPositionChange;
   final int fontSize;
+  final Color? textColor;
+  final ValueNotifier<double>? progressNotifier;
+  final int totalCharacterCount;
 
   const ChapterContentScroll({
     super.key,
@@ -20,6 +23,9 @@ class ChapterContentScroll extends StatefulWidget {
     this.position = startPosition,
     this.onPositionChange,
     required this.fontSize,
+    this.textColor,
+    this.progressNotifier,
+    this.totalCharacterCount = 0,
   });
 
   @override
@@ -53,16 +59,23 @@ class _ChapterContentScrollState extends State<ChapterContentScroll> {
     super.didChangeDependencies();
 
     final defaultTextStyle = DefaultTextStyle.of(context).style;
-    style = defaultTextStyle.copyWith(fontSize: widget.fontSize.toDouble());
+    style = defaultTextStyle.copyWith(
+      fontSize: widget.fontSize.toDouble(),
+      color: widget.textColor,
+    );
   }
 
   @override
   void didUpdateWidget(covariant ChapterContentScroll oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.fontSize != widget.fontSize) {
+    if (oldWidget.fontSize != widget.fontSize ||
+        oldWidget.textColor != widget.textColor) {
       final defaultTextStyle = DefaultTextStyle.of(context).style;
-      style = defaultTextStyle.copyWith(fontSize: widget.fontSize.toDouble());
+      style = defaultTextStyle.copyWith(
+        fontSize: widget.fontSize.toDouble(),
+        color: widget.textColor,
+      );
     }
   }
 
@@ -154,6 +167,7 @@ class _ChapterContentScrollState extends State<ChapterContentScroll> {
     // it indicates that the first item of `ChapterContent.elements` has not been scrolled past.
     // Therefore, we can directly notify the parent widget of the current position.
     if (firstVisibleItem.itemLeadingEdge > 0) {
+      _reportProgress(startPosition);
       widget.onPositionChange!(startPosition);
       return;
     }
@@ -175,19 +189,30 @@ class _ChapterContentScrollState extends State<ChapterContentScroll> {
         width,
         topOffset.abs(),
       );
-      widget.onPositionChange!(
-        ReadPosition(
-          elementIndex: elementIndex,
-          elementTopOffset: topOffset,
-          elementCharacterIndex: elementCharacterIndex,
-          articleCharacterIndex: getArticleCharacterIndex(
-            elements,
-            elementIndex,
-            elementCharacterIndex,
-          ),
+      final position = ReadPosition(
+        elementIndex: elementIndex,
+        elementTopOffset: topOffset,
+        elementCharacterIndex: elementCharacterIndex,
+        articleCharacterIndex: getArticleCharacterIndex(
+          elements,
+          elementIndex,
+          elementCharacterIndex,
         ),
       );
+      _reportProgress(position);
+      widget.onPositionChange!(position);
       return;
     }
+  }
+
+  void _reportProgress(ReadPosition position) {
+    final progressNotifier = widget.progressNotifier;
+    if (progressNotifier == null) {
+      return;
+    }
+    final total = widget.totalCharacterCount;
+    progressNotifier.value = total > 0 && position.articleCharacterIndex != null
+        ? (position.articleCharacterIndex! / total).clamp(0.0, 1.0)
+        : 0.0;
   }
 }

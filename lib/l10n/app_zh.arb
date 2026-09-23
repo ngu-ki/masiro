@@ -86,5 +86,12 @@
   "sortByWordCount": "字数",
   "sortAscending": "正序",
   "sortDescending": "倒序",
-  "manualSort": "调整排序"
+  "manualSort": "调整排序",
+  "backgroundColor": "背景颜色",
+  "pageTurnMode": "翻页模式",
+  "pageTurnSimulation": "仿真",
+  "pageTurnSlide": "平移",
+  "pageTurnVertical": "上下",
+  "pageTurnNone": "无动画",
+  "chapterEndHint": "本章完，点击进入下一章"
 }

@@ -622,6 +622,48 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'调整排序'**
   String get manualSort;
+
+  /// No description provided for @backgroundColor.
+  ///
+  /// In zh, this message translates to:
+  /// **'背景颜色'**
+  String get backgroundColor;
+
+  /// No description provided for @pageTurnMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻页模式'**
+  String get pageTurnMode;
+
+  /// No description provided for @pageTurnSimulation.
+  ///
+  /// In zh, this message translates to:
+  /// **'仿真'**
+  String get pageTurnSimulation;
+
+  /// No description provided for @pageTurnSlide.
+  ///
+  /// In zh, this message translates to:
+  /// **'平移'**
+  String get pageTurnSlide;
+
+  /// No description provided for @pageTurnVertical.
+  ///
+  /// In zh, this message translates to:
+  /// **'上下'**
+  String get pageTurnVertical;
+
+  /// No description provided for @pageTurnNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'无动画'**
+  String get pageTurnNone;
+
+  /// No description provided for @chapterEndHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'本章完，点击进入下一章'**
+  String get chapterEndHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

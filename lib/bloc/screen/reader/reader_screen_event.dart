@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
 
 sealed class ReaderScreenEvent extends Equatable {
@@ -42,4 +43,22 @@ final class ReaderScreenFontSizeChanged extends ReaderScreenEvent {
 
   @override
   List<Object> get props => [fontSize];
+}
+
+final class ReaderScreenBackgroundColorChanged extends ReaderScreenEvent {
+  final int colorValue;
+
+  ReaderScreenBackgroundColorChanged({required this.colorValue});
+
+  @override
+  List<Object> get props => [colorValue];
+}
+
+final class ReaderScreenPageTurnModeChanged extends ReaderScreenEvent {
+  final PageTurnMode pageTurnMode;
+
+  ReaderScreenPageTurnModeChanged({required this.pageTurnMode});
+
+  @override
+  List<Object> get props => [pageTurnMode];
 }

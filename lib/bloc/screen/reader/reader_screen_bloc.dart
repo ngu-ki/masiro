@@ -8,9 +8,11 @@ import 'package:masiro/data/repository/masiro_repository.dart';
 import 'package:masiro/data/repository/model/chapter_detail.dart';
 import 'package:masiro/data/repository/model/chapter_record.dart';
 import 'package:masiro/data/repository/model/loading_status.dart';
+import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
 import 'package:masiro/data/repository/model/reading_mode.dart';
 import 'package:masiro/data/repository/novel_record_repository.dart';
+import 'package:masiro/data/repository/preferences_repository.dart';
 import 'package:masiro/data/repository/user_repository.dart';
 import 'package:masiro/di/get_it.dart';
 
@@ -19,6 +21,7 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
   final novelRecordRepository = getIt<NovelRecordRepository>();
   final appConfigurationRepository = getIt<AppConfigurationRepository>();
   final userRepository = getIt<UserRepository>();
+  final preferencesRepository = PreferencesRepository();
 
   final int novelId;
 
@@ -33,6 +36,16 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     );
     on<ReaderScreenChapterNavigated>(_onReaderScreenChapterNavigated);
     on<ReaderScreenFontSizeChanged>(_onReaderScreenFontSizeChanged);
+    on<ReaderScreenBackgroundColorChanged>(
+      _onReaderScreenBackgroundColorChanged,
+    );
+    on<ReaderScreenPageTurnModeChanged>(_onReaderScreenPageTurnModeChanged);
+  }
+
+  ReadingMode _readingModeOf(PageTurnMode pageTurnMode) {
+    return pageTurnMode.isVertical()
+        ? ReadingMode.scroll
+        : ReadingMode.page;
   }
 
   Future<void> _onRequestReaderScreenChapterDetail(
@@ -46,10 +59,12 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
         chapterId,
       );
       final currentUser = await userRepository.getCurrentUser();
+      final pageTurnMode =
+          pageTurnModeFromName(preferencesRepository.pageTurnMode);
       final chapterRecord = await novelRecordRepository.findChapterRecord(
         currentUser!.userId,
         chapterId,
-        ReadingMode.scroll,
+        _readingModeOf(pageTurnMode),
       );
       final appConfig = await appConfigurationRepository.getAppConfiguration();
       emit(
@@ -57,6 +72,9 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
           chapterDetail: chapterDetail,
           position: chapterRecord?.position ?? startPosition,
           fontSize: appConfig.fontSize,
+          backgroundColor: preferencesRepository.readerBackgroundColor,
+          pageTurnMode: pageTurnMode,
+          readingMode: _readingModeOf(pageTurnMode),
         ),
       );
     } catch (e) {
@@ -128,6 +146,35 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     await appConfigurationRepository.putAppConfiguration(nextAppConfig);
     final loadedState = state as ReaderScreenLoadedState;
     emit(loadedState.copyWith(fontSize: event.fontSize));
+  }
+
+  Future<void> _onReaderScreenBackgroundColorChanged(
+    ReaderScreenBackgroundColorChanged event,
+    Emitter<ReaderScreenState> emit,
+  ) async {
+    if (state is! ReaderScreenLoadedState) {
+      return;
+    }
+    preferencesRepository.readerBackgroundColor = event.colorValue;
+    final loadedState = state as ReaderScreenLoadedState;
+    emit(loadedState.copyWith(backgroundColor: event.colorValue));
+  }
+
+  Future<void> _onReaderScreenPageTurnModeChanged(
+    ReaderScreenPageTurnModeChanged event,
+    Emitter<ReaderScreenState> emit,
+  ) async {
+    if (state is! ReaderScreenLoadedState) {
+      return;
+    }
+    preferencesRepository.pageTurnMode = event.pageTurnMode.name;
+    final loadedState = state as ReaderScreenLoadedState;
+    emit(
+      loadedState.copyWith(
+        pageTurnMode: event.pageTurnMode,
+        readingMode: _readingModeOf(event.pageTurnMode),
+      ),
+    );
   }
 
   Future<String> purchasePaidChapter(PaymentInfo paymentInfo) async {

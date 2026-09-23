@@ -9,6 +9,27 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get backgroundColor => '背景颜色';
+
+  @override
+  String get pageTurnMode => '翻页模式';
+
+  @override
+  String get pageTurnSimulation => '仿真';
+
+  @override
+  String get pageTurnSlide => '平移';
+
+  @override
+  String get pageTurnVertical => '上下';
+
+  @override
+  String get pageTurnNone => '无动画';
+
+  @override
+  String get chapterEndHint => '本章完，点击进入下一章';
+
+  @override
   String get home => '首页';
 
   @override
@@ -286,6 +307,27 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   AppLocalizationsZhHantHk(): super('zh_Hant_HK');
 
   @override
+  String get backgroundColor => '背景顏色';
+
+  @override
+  String get pageTurnMode => '翻頁模式';
+
+  @override
+  String get pageTurnSimulation => '仿真';
+
+  @override
+  String get pageTurnSlide => '平移';
+
+  @override
+  String get pageTurnVertical => '上下';
+
+  @override
+  String get pageTurnNone => '無動畫';
+
+  @override
+  String get chapterEndHint => '本章完，點擊進入下一章';
+
+  @override
   String get home => '首页';
 
   @override
@@ -561,6 +603,27 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
 class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   AppLocalizationsZhHantTw(): super('zh_Hant_TW');
+
+  @override
+  String get backgroundColor => '背景顏色';
+
+  @override
+  String get pageTurnMode => '翻頁模式';
+
+  @override
+  String get pageTurnSimulation => '仿真';
+
+  @override
+  String get pageTurnSlide => '平移';
+
+  @override
+  String get pageTurnVertical => '上下';
+
+  @override
+  String get pageTurnNone => '無動畫';
+
+  @override
+  String get chapterEndHint => '本章完，點擊進入下一章';
 
   @override
   String get home => '首页';

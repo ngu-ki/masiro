@@ -1,12 +1,18 @@
+import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Keys
 const _versionKey = 'version';
 const _languageKey = 'language';
 const _favoritesOrderKey = 'favoritesOrder';
+const _readerBackgroundColorKey = 'readerBackgroundColor';
+const _pageTurnModeKey = 'pageTurnMode';
 
 // Represents the current version of the shared preferences data
 const _currentVersion = 10;
+
+// Default reader background color (white)
+const defaultReaderBackgroundColor = 0xFFFFFFFF;
 
 /// Manages all the shared preferences data used by the application
 class PreferencesRepository {
@@ -37,4 +43,17 @@ class PreferencesRepository {
 
   set favoritesOrder(List<String> value) =>
       _prefs.setStringList(_favoritesOrderKey, value);
+
+  /// Background color (as a value) of the reader screen.
+  int get readerBackgroundColor =>
+      _prefs.getInt(_readerBackgroundColorKey) ?? defaultReaderBackgroundColor;
+
+  set readerBackgroundColor(int value) =>
+      _prefs.setInt(_readerBackgroundColorKey, value);
+
+  /// Page turn mode of the reader, stored as the enum name.
+  String get pageTurnMode =>
+      _prefs.getString(_pageTurnModeKey) ?? PageTurnMode.vertical.name;
+
+  set pageTurnMode(String value) => _prefs.setString(_pageTurnModeKey, value);
 }

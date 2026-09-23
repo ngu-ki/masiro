@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:masiro/data/repository/model/chapter_detail.dart';
 import 'package:masiro/data/repository/model/loading_status.dart';
+import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
 import 'package:masiro/data/repository/model/reading_mode.dart';
 
@@ -27,6 +28,8 @@ class ReaderScreenLoadedState extends ReaderScreenState {
   final ReadPosition position;
   final LoadingStatus loadingStatus;
   final int fontSize;
+  final int backgroundColor;
+  final PageTurnMode pageTurnMode;
 
   ReaderScreenLoadedState({
     required this.chapterDetail,
@@ -35,6 +38,8 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     required this.position,
     this.loadingStatus = LoadingStatus.success,
     required this.fontSize,
+    this.backgroundColor = 0xFFFFFFFF,
+    this.pageTurnMode = PageTurnMode.vertical,
   });
 
   ReaderScreenLoadedState copyWith({
@@ -44,6 +49,8 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     ReadPosition? position,
     LoadingStatus? loadingStatus,
     int? fontSize,
+    int? backgroundColor,
+    PageTurnMode? pageTurnMode,
   }) {
     return ReaderScreenLoadedState(
       chapterDetail: chapterDetail ?? this.chapterDetail,
@@ -52,6 +59,8 @@ class ReaderScreenLoadedState extends ReaderScreenState {
       position: position ?? this.position,
       loadingStatus: loadingStatus ?? this.loadingStatus,
       fontSize: fontSize ?? this.fontSize,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      pageTurnMode: pageTurnMode ?? this.pageTurnMode,
     );
   }
 
@@ -63,5 +72,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
         position,
         loadingStatus,
         fontSize,
+        backgroundColor,
+        pageTurnMode,
       ];
 }

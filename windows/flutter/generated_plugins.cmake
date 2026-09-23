@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  battery_plus
   isar_flutter_libs
   screen_retriever
   tray_manager
