@@ -23,9 +23,8 @@ class _SearchTopBarState extends State<SearchTopBar> {
   void initState() {
     super.initState();
     _searchBarFocusNode = FocusNode(debugLabel: 'Search Bar');
-    _searchController = SearchController(
-      text: widget.initialKeyword ?? '',
-    );
+    _searchController = SearchController()
+      ..text = widget.initialKeyword ?? '';
   }
 
   @override

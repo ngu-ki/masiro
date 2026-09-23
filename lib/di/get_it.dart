@@ -38,6 +38,7 @@ Future<void> setupGetIt() async {
     ..options.validateStatus =
         (status) => status != null && status >= 200 && status < 400;
   getIt.registerSingleton(dio);
+  getIt.registerSingleton<CacheOptions>(options);
 
   // Register isar
   final isar = await Isar.open(

@@ -32,7 +32,9 @@ class MasiroApi {
       MasiroUrl.novelViewUrl,
       queryParameters: {'novel_id': novelId},
       options: forceRefresh
-          ? const CacheOptions(policy: CachePolicy.refresh).toOptions()
+          ? getIt<CacheOptions>()
+              .copyWith(policy: CachePolicy.refresh)
+              .toOptions()
           : null,
     );
     return NovelDetailResponse.fromHtml(response.data);
@@ -136,7 +138,9 @@ class MasiroApi {
     final response = await _dio.get(
       MasiroUrl.adminUrl,
       options: forceRefresh
-          ? const CacheOptions(policy: CachePolicy.refresh).toOptions()
+          ? getIt<CacheOptions>()
+              .copyWith(policy: CachePolicy.refresh)
+              .toOptions()
           : null,
     );
     return ProfileResponse.fromHtml(response.data);
