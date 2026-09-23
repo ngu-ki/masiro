@@ -53,7 +53,7 @@ class PreferencesRepository {
 
   /// Page turn mode of the reader, stored as the enum name.
   String get pageTurnMode =>
-      _prefs.getString(_pageTurnModeKey) ?? PageTurnMode.vertical.name;
+      _prefs.getString(_pageTurnModeKey) ?? PageTurnMode.slide.name;
 
   set pageTurnMode(String value) => _prefs.setString(_pageTurnModeKey, value);
 }

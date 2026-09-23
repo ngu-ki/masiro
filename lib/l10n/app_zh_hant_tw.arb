@@ -89,9 +89,8 @@
   "manualSort": "调整排序",
   "backgroundColor": "背景顏色",
   "pageTurnMode": "翻頁模式",
-  "pageTurnSimulation": "仿真",
   "pageTurnSlide": "平移",
-  "pageTurnVertical": "上下",
   "pageTurnNone": "無動畫",
-  "chapterEndHint": "本章完，點擊進入下一章"
+  "chapterEndHint": "本章完，點擊進入下一章",
+  "contents": "目錄"
 }

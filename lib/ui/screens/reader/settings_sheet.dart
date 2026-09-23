@@ -83,16 +83,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
             spacing: 8,
             children: [
               _buildModeChip(
-                localizations.pageTurnSimulation,
-                PageTurnMode.simulation,
-              ),
-              _buildModeChip(
                 localizations.pageTurnSlide,
                 PageTurnMode.slide,
-              ),
-              _buildModeChip(
-                localizations.pageTurnVertical,
-                PageTurnMode.vertical,
               ),
               _buildModeChip(
                 localizations.pageTurnNone,

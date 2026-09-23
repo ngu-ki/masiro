@@ -6,7 +6,6 @@ import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/render.dart';
 import 'package:masiro/ui/screens/reader/pagination.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
-import 'package:page_flip/page_flip.dart';
 
 /// Controller that allows the menu slider to jump to a position fraction of
 /// the current chapter.
@@ -21,7 +20,7 @@ class ReaderPagerController {
 }
 
 /// Displays the chapter content with page turn modes:
-/// simulation (page curl), slide and none (instant).
+/// slide and none (instant).
 ///
 /// The screen is divided into three tap zones: the left third turns to the
 /// previous page, the right third turns to the next page and the middle
@@ -78,7 +77,6 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   int _currentPage = 0;
 
   PageController? _pageController;
-  GlobalKey<PageFlipWidgetState>? _flipKey;
 
   Offset? _pointerDownPosition;
   DateTime? _pointerDownTime;
@@ -163,19 +161,22 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
               _reportPosition(_currentPage);
             }
           });
-          if (widget.mode.isSimulation()) {
-            _pageController?.dispose();
-            _pageController = null;
-            _flipKey = GlobalKey<PageFlipWidgetState>();
-          } else {
-            _pageController?.dispose();
-            _pageController = PageController(initialPage: _currentPage);
-          }
+          _pageController?.dispose();
+          _pageController = PageController(initialPage: _currentPage);
         }
 
         final pageWidgets = [
           for (var i = 0; i < _pages.length; i++)
-            _buildPage(context, _pages[i], style, paragraphGap),
+            _buildPage(
+              context,
+              _pages[i],
+              style,
+              paragraphGap,
+              topInset: topInset,
+              bottomInset: bottomInset,
+              contentWidth: contentWidth,
+              contentHeight: contentHeight,
+            ),
         ];
         final chapterEndPage = _buildChapterEndPage(context);
 
@@ -183,27 +184,9 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
           behavior: HitTestBehavior.translucent,
           onPointerDown: _onPointerDown,
           onPointerUp: (event) => _onPointerUp(context, event),
-          child: widget.mode.isSimulation()
-              ? _buildFlipPager(pageWidgets, chapterEndPage)
-              : _buildPageViewPager(pageWidgets, chapterEndPage),
+          child: _buildPageViewPager(pageWidgets, chapterEndPage),
         );
       },
-    );
-  }
-
-  Widget _buildFlipPager(
-    List<Widget> pageWidgets,
-    Widget chapterEndPage,
-  ) {
-    // `PageFlipWidget` appends `lastPage` to the `children` list internally,
-    // therefore a fresh copy of the list is always passed in.
-    return PageFlipWidget(
-      key: ValueKey(_layoutSignature),
-      backgroundColor: widget.backgroundColor,
-      initialIndex: _currentPage,
-      lastPage: chapterEndPage,
-      onPageFlipped: _onPageFlipped,
-      children: List<Widget>.of(pageWidgets),
     );
   }
 
@@ -228,14 +211,17 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     BuildContext context,
     ReaderPageContent page,
     TextStyle style,
-    double paragraphGap,
-  ) {
+    double paragraphGap, {
+    required double topInset,
+    required double bottomInset,
+    required double contentWidth,
+    required double contentHeight,
+  }) {
     if (page.isImagePage()) {
-      final size = MediaQuery.of(context).size;
       return CachedImage(
         url: page.image!.src,
-        width: size.width,
-        height: size.height,
+        width: contentWidth,
+        height: contentHeight,
         fit: BoxFit.contain,
       );
     }
@@ -257,7 +243,8 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     }
 
     return Padding(
-      padding: widget.padding,
+      padding: widget.padding +
+          EdgeInsets.only(top: topInset, bottom: bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -351,25 +338,9 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   }
 
   void _turnToPage(int index) {
-    final previous = _currentPage;
     _currentPage = index;
     _reportProgress();
     _reportPosition(index);
-
-    if (widget.mode.isSimulation()) {
-      final state = _flipKey?.currentState;
-      if (state == null) {
-        return;
-      }
-      if (index == previous + 1) {
-        state.nextPage();
-      } else if (index == previous - 1) {
-        state.previousPage();
-      } else {
-        state.goToPage(index);
-      }
-      return;
-    }
 
     final controller = _pageController;
     if (controller == null || !controller.hasClients) {
@@ -391,20 +362,10 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       return;
     }
     final target = (fraction * (_pages.length - 1)).round();
-    if (widget.mode.isSimulation()) {
-      _flipKey?.currentState?.goToPage(target);
-    } else {
-      _pageController?.jumpToPage(target);
-    }
+    _pageController?.jumpToPage(target);
     _currentPage = target;
     _reportProgress();
     _reportPosition(target);
-  }
-
-  void _onPageFlipped(int pageNumber) {
-    _currentPage = pageNumber;
-    _reportProgress();
-    _reportPosition(pageNumber);
   }
 
   void _onPageViewChanged(int index) {

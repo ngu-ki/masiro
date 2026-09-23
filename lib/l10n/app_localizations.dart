@@ -635,23 +635,11 @@ abstract class AppLocalizations {
   /// **'翻页模式'**
   String get pageTurnMode;
 
-  /// No description provided for @pageTurnSimulation.
-  ///
-  /// In zh, this message translates to:
-  /// **'仿真'**
-  String get pageTurnSimulation;
-
   /// No description provided for @pageTurnSlide.
   ///
   /// In zh, this message translates to:
   /// **'平移'**
   String get pageTurnSlide;
-
-  /// No description provided for @pageTurnVertical.
-  ///
-  /// In zh, this message translates to:
-  /// **'上下'**
-  String get pageTurnVertical;
 
   /// No description provided for @pageTurnNone.
   ///
@@ -664,6 +652,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'本章完，点击进入下一章'**
   String get chapterEndHint;
+
+  /// No description provided for @contents.
+  ///
+  /// In zh, this message translates to:
+  /// **'目录'**
+  String get contents;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -43,9 +43,7 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
   }
 
   ReadingMode _readingModeOf(PageTurnMode pageTurnMode) {
-    return pageTurnMode.isVertical()
-        ? ReadingMode.scroll
-        : ReadingMode.page;
+    return ReadingMode.page;
   }
 
   Future<void> _onRequestReaderScreenChapterDetail(

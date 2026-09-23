@@ -39,7 +39,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     this.loadingStatus = LoadingStatus.success,
     required this.fontSize,
     this.backgroundColor = 0xFFFFFFFF,
-    this.pageTurnMode = PageTurnMode.vertical,
+    this.pageTurnMode = PageTurnMode.slide,
   });
 
   ReaderScreenLoadedState copyWith({

@@ -1,32 +1,10 @@
 /// Page turn modes of the reader.
 enum PageTurnMode {
-  /// Simulated page curl animation, like a physical book.
-  simulation,
-
   /// Horizontal sliding animation.
   slide,
 
-  /// Vertical scrolling, the classic continuous reading mode.
-  vertical,
-
   /// Instant page switching without any animation.
-  none;
-
-  bool isVertical() {
-    return this == PageTurnMode.vertical;
-  }
-
-  bool isSimulation() {
-    return this == PageTurnMode.simulation;
-  }
-
-  bool isPageBased() {
-    return this != PageTurnMode.vertical;
-  }
-
-  bool hasTapToTurn() {
-    return isPageBased();
-  }
+  none,
 }
 
 PageTurnMode pageTurnModeFromName(String name) {
@@ -35,5 +13,5 @@ PageTurnMode pageTurnModeFromName(String name) {
       return mode;
     }
   }
-  return PageTurnMode.vertical;
+  return PageTurnMode.slide;
 }

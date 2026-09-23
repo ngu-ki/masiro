@@ -15,19 +15,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pageTurnMode => '翻页模式';
 
   @override
-  String get pageTurnSimulation => '仿真';
-
-  @override
   String get pageTurnSlide => '平移';
-
-  @override
-  String get pageTurnVertical => '上下';
 
   @override
   String get pageTurnNone => '无动画';
 
   @override
   String get chapterEndHint => '本章完，点击进入下一章';
+
+  @override
+  String get contents => '目录';
 
   @override
   String get home => '首页';
@@ -313,19 +310,16 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get pageTurnMode => '翻頁模式';
 
   @override
-  String get pageTurnSimulation => '仿真';
-
-  @override
   String get pageTurnSlide => '平移';
-
-  @override
-  String get pageTurnVertical => '上下';
 
   @override
   String get pageTurnNone => '無動畫';
 
   @override
   String get chapterEndHint => '本章完，點擊進入下一章';
+
+  @override
+  String get contents => '目錄';
 
   @override
   String get home => '首页';
@@ -611,19 +605,16 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get pageTurnMode => '翻頁模式';
 
   @override
-  String get pageTurnSimulation => '仿真';
-
-  @override
   String get pageTurnSlide => '平移';
-
-  @override
-  String get pageTurnVertical => '上下';
 
   @override
   String get pageTurnNone => '無動畫';
 
   @override
   String get chapterEndHint => '本章完，點擊進入下一章';
+
+  @override
+  String get contents => '目錄';
 
   @override
   String get home => '首页';

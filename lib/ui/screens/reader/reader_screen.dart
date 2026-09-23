@@ -12,7 +12,7 @@ import 'package:masiro/misc/platform.dart';
 import 'package:masiro/misc/router.dart';
 import 'package:masiro/ui/screens/reader/bottom_bar.dart';
 import 'package:masiro/ui/screens/reader/chapter_content_pager.dart';
-import 'package:masiro/ui/screens/reader/chapter_content_scroll.dart';
+import 'package:masiro/ui/screens/reader/contents_sheet.dart';
 import 'package:masiro/ui/screens/reader/payment_detail.dart';
 import 'package:masiro/ui/screens/reader/reader_palette.dart';
 import 'package:masiro/ui/screens/reader/reading_hud.dart';
@@ -102,7 +102,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final chapterDetail = state.chapterDetail;
     final isHudVisible = state.isHudVisible;
     final fontSize = state.fontSize;
-    final pageTurnMode = state.pageTurnMode;
 
     final backgroundColor = Color(state.backgroundColor);
     final contentColor = readerContentColor(backgroundColor);
@@ -150,12 +149,29 @@ class _ReaderScreenState extends State<ReaderScreen> {
             prevChapterId: prevChapter?.id,
             nextChapterId: nextChapter?.id,
             progress: _progressNotifier,
-            onSeek: pageTurnMode.isPageBased()
-                ? _pagerController.seekToFraction
-                : null,
+            onSeek: _pagerController.seekToFraction,
             onNavigateTo: (chapterId) {
               _lastReadChapterIdForPopResult = chapterId;
               bloc.add(ReaderScreenChapterNavigated(chapterId: chapterId));
+            },
+            onContentsClicked: () {
+              showModalBottomSheet<void>(
+                showDragHandle: true,
+                context: context,
+                builder: (BuildContext sheetContext) {
+                  return ContentsSheet(
+                    volumes: chapterDetail.volumes,
+                    currentChapterId: chapterDetail.chapterId,
+                    onNavigateTo: (chapterId) {
+                      Navigator.of(sheetContext).pop();
+                      _lastReadChapterIdForPopResult = chapterId;
+                      bloc.add(
+                        ReaderScreenChapterNavigated(chapterId: chapterId),
+                      );
+                    },
+                  );
+                },
+              );
             },
             onSettingsClicked: () {
               showModalBottomSheet<void>(
@@ -175,7 +191,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         ),
                       );
                     },
-                    pageTurnMode: pageTurnMode,
+                    pageTurnMode: state.pageTurnMode,
                     onPageTurnModeChanged: (mode) {
                       bloc.add(ReaderScreenPageTurnModeChanged(pageTurnMode: mode));
                     },
@@ -222,26 +238,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     if (paymentInfo != null) {
       return _tapToToggleHud(context, PaymentDetail(paymentInfo: paymentInfo));
-    }
-
-    if (pageTurnMode.isVertical()) {
-      return _tapToToggleHud(
-        context,
-        ChapterContentScroll(
-          fontSize: fontSize,
-          textColor: contentColor,
-          content: chapterDetail.content,
-          padding: EdgeInsets.symmetric(
-            horizontal: horizontalPadding,
-            vertical: 64,
-          ),
-          position: state.position,
-          progressNotifier: _progressNotifier,
-          totalCharacterCount: chapterDetail.textContent.length,
-          onPositionChange: (position) =>
-              _onPositionChange(bloc, position),
-        ),
-      );
     }
 
     return ChapterContentPager(

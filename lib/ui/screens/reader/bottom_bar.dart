@@ -15,6 +15,7 @@ class BottomBar extends StatelessWidget {
   final void Function(double fraction)? onSeek;
 
   final void Function(int chapterId) onNavigateTo;
+  final void Function() onContentsClicked;
   final void Function() onSettingsClicked;
   final void Function() onCommentClicked;
 
@@ -26,6 +27,7 @@ class BottomBar extends StatelessWidget {
     this.progress,
     this.onSeek,
     required this.onNavigateTo,
+    required this.onContentsClicked,
     required this.onSettingsClicked,
     required this.onCommentClicked,
   });
@@ -97,6 +99,11 @@ class BottomBar extends StatelessWidget {
                 IconButton(
                   onPressed: onCommentClicked,
                   icon: const Icon(Icons.comment),
+                  color: foregroundColor,
+                ),
+                IconButton(
+                  onPressed: onContentsClicked,
+                  icon: const Icon(Icons.menu_book_rounded),
                   color: foregroundColor,
                 ),
                 IconButton(
