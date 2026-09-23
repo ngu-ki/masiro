@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masiro/bloc/screen/search/search_screen_bloc.dart';
+import 'package:masiro/bloc/screen/search/search_screen_event.dart';
 import 'package:masiro/bloc/screen/search/search_screen_state.dart';
 import 'package:masiro/ui/screens/search/novel_list.dart';
 import 'package:masiro/ui/screens/search/search_top_bar.dart';
 import 'package:masiro/ui/widgets/error_message.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  /// The keyword to search automatically when the screen is opened.
+  final String? initialKeyword;
+
+  const SearchScreen({super.key, this.initialKeyword});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -16,13 +20,20 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
+    final initialKeyword = widget.initialKeyword;
     return Material(
       child: SafeArea(
         child: BlocProvider(
-          create: (_) => SearchScreenBloc(),
+          create: (_) {
+            final bloc = SearchScreenBloc();
+            if (initialKeyword != null && initialKeyword.isNotEmpty) {
+              bloc.add(SearchScreenSearched(keyword: initialKeyword));
+            }
+            return bloc;
+          },
           child: Column(
             children: [
-              const SearchTopBar(),
+              SearchTopBar(initialKeyword: initialKeyword),
               Expanded(child: buildBody(context)),
             ],
           ),

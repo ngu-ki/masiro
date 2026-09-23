@@ -6,7 +6,10 @@ import 'package:masiro/bloc/screen/search/search_screen_event.dart';
 const searchBarHeight = 72.0;
 
 class SearchTopBar extends StatefulWidget {
-  const SearchTopBar({super.key});
+  /// The keyword prefilled in the search bar.
+  final String? initialKeyword;
+
+  const SearchTopBar({super.key, this.initialKeyword});
 
   @override
   State<SearchTopBar> createState() => _SearchTopBarState();
@@ -20,7 +23,9 @@ class _SearchTopBarState extends State<SearchTopBar> {
   void initState() {
     super.initState();
     _searchBarFocusNode = FocusNode(debugLabel: 'Search Bar');
-    _searchController = SearchController();
+    _searchController = SearchController(
+      text: widget.initialKeyword ?? '',
+    );
   }
 
   @override

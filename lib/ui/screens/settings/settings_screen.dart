@@ -51,9 +51,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          ProfileCard(profile: state.profile),
+          ProfileCard(
+            profile: state.profile,
+            favoritesCount: state.favoritesCount,
+          ),
           const SizedBox(height: spacing),
-          const SignInCard(),
+          SignInCard(profile: state.profile),
           const AccountsCard(),
           const ThemeModeCard(),
           const ThemeColorCard(),

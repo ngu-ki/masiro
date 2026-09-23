@@ -90,17 +90,21 @@ class _NovelScreenState extends State<NovelScreen> {
       ),
       title: Text(localizations.detail),
       actions: [
-        IconButton(
-          onPressed: () {
-            bloc.add(
-              isFavorite
-                  ? NovelScreenNovelUnfavorited()
-                  : NovelScreenNovelFavorited(),
-            );
-            _isFavoriteToggled = true;
-          },
-          icon: Icon(
-            isFavorite ? Icons.favorite : Icons.favorite_outline_outlined,
+        TextButton(
+          onPressed: isFavorite
+              ? null
+              : () {
+                  bloc.add(NovelScreenNovelFavorited());
+                  _isFavoriteToggled = true;
+                },
+          style: TextButton.styleFrom(
+            foregroundColor:
+                isFavorite ? Colors.grey : Theme.of(context).colorScheme.primary,
+          ),
+          child: Text(
+            isFavorite
+                ? localizations.inBookshelf
+                : localizations.addToBookshelf,
           ),
         ),
       ],
@@ -121,7 +125,14 @@ class _NovelScreenState extends State<NovelScreen> {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          NovelHeader(header: header),
+          NovelHeader(
+            header: header,
+            chapterCount: volumes.fold<int>(
+              0,
+              (sum, volume) => sum + volume.chapters.length,
+            ),
+            onAuthorTap: (author) => _searchAuthor(context, author),
+          ),
           const SizedBox(height: 20),
           ExpandableBrief(brief: header.brief),
           const SizedBox(height: 20),
@@ -198,5 +209,13 @@ class _NovelScreenState extends State<NovelScreen> {
 
   void _backToPrevScreen(BuildContext context) {
     context.pop(_isFavoriteToggled);
+  }
+
+  void _searchAuthor(BuildContext context, String author) {
+    if (author.isEmpty) {
+      return;
+    }
+    final keyword = Uri.encodeQueryComponent(author);
+    context.go('${RoutePath.home}?keyword=$keyword');
   }
 }

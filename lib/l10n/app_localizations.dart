@@ -383,6 +383,12 @@ abstract class AppLocalizations {
   /// **'金币'**
   String get coin;
 
+  /// No description provided for @wallet.
+  ///
+  /// In zh, this message translates to:
+  /// **'钱包'**
+  String get wallet;
+
   /// No description provided for @fan.
   ///
   /// In zh, this message translates to:
@@ -658,6 +664,78 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'目录'**
   String get contents;
+
+  /// No description provided for @totalChapters.
+  ///
+  /// In zh, this message translates to:
+  /// **'共{count}话'**
+  String totalChapters(int count);
+
+  /// No description provided for @commentShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'章评'**
+  String get commentShort;
+
+  /// No description provided for @indentMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'缩进模式'**
+  String get indentMode;
+
+  /// No description provided for @indentNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'无'**
+  String get indentNone;
+
+  /// No description provided for @indentOne.
+  ///
+  /// In zh, this message translates to:
+  /// **'1格'**
+  String get indentOne;
+
+  /// No description provided for @indentTwo.
+  ///
+  /// In zh, this message translates to:
+  /// **'2格'**
+  String get indentTwo;
+
+  /// No description provided for @addToBookshelf.
+  ///
+  /// In zh, this message translates to:
+  /// **'加入书架'**
+  String get addToBookshelf;
+
+  /// No description provided for @inBookshelf.
+  ///
+  /// In zh, this message translates to:
+  /// **'已在书架'**
+  String get inBookshelf;
+
+  /// No description provided for @exitAppHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'再滑一次退出应用'**
+  String get exitAppHint;
+
+  /// No description provided for @gridView.
+  ///
+  /// In zh, this message translates to:
+  /// **'宫格视图'**
+  String get gridView;
+
+  /// No description provided for @listView.
+  ///
+  /// In zh, this message translates to:
+  /// **'列表视图'**
+  String get listView;
+
+  /// No description provided for @unreadChapters.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count}话未读'**
+  String unreadChapters(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

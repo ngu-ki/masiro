@@ -140,9 +140,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
             isVisible: !isHudVisible,
           ),
           TopBar(
-            title: chapterDetail.title,
             isVisible: isHudVisible,
             onNavigateBack: () => _backToPrevScreen(context),
+            onNavigateToDetail: () {
+              context.push(
+                RoutePath.novel,
+                extra: {'novelId': widget.novelId},
+              );
+            },
           ),
           BottomBar(
             isVisible: isHudVisible,
@@ -194,6 +199,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     pageTurnMode: state.pageTurnMode,
                     onPageTurnModeChanged: (mode) {
                       bloc.add(ReaderScreenPageTurnModeChanged(pageTurnMode: mode));
+                    },
+                    indentMode: state.indentMode,
+                    onIndentModeChanged: (mode) {
+                      bloc.add(ReaderScreenIndentModeChanged(indentMode: mode));
                     },
                   );
                 },
@@ -265,6 +274,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         bloc.add(ReaderScreenChapterNavigated(chapterId: nextChapter.id));
       },
       pagerController: _pagerController,
+      indentMode: state.indentMode,
     );
   }
 

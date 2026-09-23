@@ -64,6 +64,7 @@ List<ReaderPageContent> paginateChapterContent({
   required double maxHeight,
   required TextStyle style,
   required double paragraphGap,
+  String indentPrefix = '',
 }) {
   final pages = <ReaderPageContent>[];
   var currentRuns = <ReaderTextRun>[];
@@ -93,8 +94,12 @@ List<ReaderPageContent> paginateChapterContent({
       continue;
     }
 
+    // The indentation prefix is part of the laid out text so that the first
+    // line is offset by the requested number of character cells.
+    final displayText = '$indentPrefix$text';
+
     final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
+      text: TextSpan(text: displayText, style: style),
       textDirection: TextDirection.ltr,
     );
     painter.layout(minWidth: 0, maxWidth: maxWidth);
@@ -113,7 +118,7 @@ List<ReaderPageContent> paginateChapterContent({
       final start = lineStarts[line];
       final end = line + 1 < metrics.length
           ? lineStarts[line + 1]
-          : text.length;
+          : displayText.length;
       if (end < start) {
         continue;
       }

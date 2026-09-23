@@ -27,6 +27,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get contents => '目录';
 
   @override
+  String totalChapters(int count) {
+    return '共${count}话';
+  }
+
+  @override
+  String get commentShort => '章评';
+
+  @override
+  String get indentMode => '缩进模式';
+
+  @override
+  String get indentNone => '无';
+
+  @override
+  String get indentOne => '1格';
+
+  @override
+  String get indentTwo => '2格';
+
+  @override
+  String get addToBookshelf => '加入书架';
+
+  @override
+  String get inBookshelf => '已在书架';
+
+  @override
+  String get exitAppHint => '再滑一次退出应用';
+
+  @override
+  String get gridView => '宫格视图';
+
+  @override
+  String get listView => '列表视图';
+
+  @override
+  String unreadChapters(int count) {
+    return '${count}话未读';
+  }
+
+  @override
   String get home => '首页';
 
   @override
@@ -297,6 +337,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get manualSort => '调整排序';
+
+  @override
+  String get wallet => '钱包';
 }
 
 /// The translations for Chinese, as used in Hong Kong, using the Han script (`zh_Hant_HK`).
@@ -322,6 +365,46 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get contents => '目錄';
 
   @override
+  String totalChapters(int count) {
+    return '共${count}話';
+  }
+
+  @override
+  String get commentShort => '章評';
+
+  @override
+  String get indentMode => '縮進模式';
+
+  @override
+  String get indentNone => '無';
+
+  @override
+  String get indentOne => '1格';
+
+  @override
+  String get indentTwo => '2格';
+
+  @override
+  String get addToBookshelf => '加入書架';
+
+  @override
+  String get inBookshelf => '已在書架';
+
+  @override
+  String get exitAppHint => '再滑一次退出應用';
+
+  @override
+  String get gridView => '宮格視圖';
+
+  @override
+  String get listView => '列表視圖';
+
+  @override
+  String unreadChapters(int count) {
+    return '${count}話未讀';
+  }
+
+  @override
   String get home => '首页';
 
   @override
@@ -592,6 +675,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get manualSort => '调整排序';
+
+  @override
+  String get wallet => '錢包';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -617,6 +703,46 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get contents => '目錄';
 
   @override
+  String totalChapters(int count) {
+    return '共${count}話';
+  }
+
+  @override
+  String get commentShort => '章評';
+
+  @override
+  String get indentMode => '縮進模式';
+
+  @override
+  String get indentNone => '無';
+
+  @override
+  String get indentOne => '1格';
+
+  @override
+  String get indentTwo => '2格';
+
+  @override
+  String get addToBookshelf => '加入書架';
+
+  @override
+  String get inBookshelf => '已在書架';
+
+  @override
+  String get exitAppHint => '再滑一次退出應用';
+
+  @override
+  String get gridView => '宮格視圖';
+
+  @override
+  String get listView => '列表視圖';
+
+  @override
+  String unreadChapters(int count) {
+    return '${count}話未讀';
+  }
+
+  @override
   String get home => '首页';
 
   @override
@@ -887,4 +1013,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get manualSort => '调整排序';
+
+  @override
+  String get wallet => '錢包';
 }

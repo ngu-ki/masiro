@@ -5,7 +5,7 @@ import 'package:masiro/misc/context.dart';
 const Duration _duration = Duration(milliseconds: 500);
 const Curve _curve = Curves.fastOutSlowIn;
 
-const bottomBarHeight = kToolbarHeight * 2;
+const bottomBarHeight = kToolbarHeight * 2 + 16;
 
 class BottomBar extends StatelessWidget {
   final bool isVisible;
@@ -36,6 +36,7 @@ class BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     const horizontalPadding = 8.0;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final localizations = context.localizations();
     final theme = context.theme();
     final appBarThemeColor = theme.appBarTheme.backgroundColor;
     final surfaceContainerColor = theme.colorScheme.surfaceContainer;
@@ -96,26 +97,51 @@ class BottomBar extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                IconButton(
+                _buildLabeledButton(
+                  icon: Icons.comment,
+                  label: localizations.commentShort,
+                  color: foregroundColor,
                   onPressed: onCommentClicked,
-                  icon: const Icon(Icons.comment),
-                  color: foregroundColor,
                 ),
-                IconButton(
+                _buildLabeledButton(
+                  icon: Icons.menu_book_rounded,
+                  label: localizations.contents,
+                  color: foregroundColor,
                   onPressed: onContentsClicked,
-                  icon: const Icon(Icons.menu_book_rounded),
-                  color: foregroundColor,
                 ),
-                IconButton(
-                  onPressed: onSettingsClicked,
-                  icon: const Icon(Icons.settings_rounded),
+                _buildLabeledButton(
+                  icon: Icons.settings_rounded,
+                  label: localizations.settings,
                   color: foregroundColor,
+                  onPressed: onSettingsClicked,
                 ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLabeledButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required void Function() onPressed,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          color: color,
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: color),
+        ),
+      ],
     );
   }
 }

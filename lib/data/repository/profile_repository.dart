@@ -23,7 +23,7 @@ class ProfileRepository {
   }
 
   Future<Profile> refreshProfile() async {
-    _cachedProfile = await _masiroRepository.getProfile();
+    _cachedProfile = await _masiroRepository.getProfile(forceRefresh: true);
     _needsRefresh = false;
     return _cachedProfile!;
   }

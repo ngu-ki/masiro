@@ -33,8 +33,14 @@ class MasiroRepository {
     return allNovels;
   }
 
-  Future<NovelDetail> getNovelDetail(int novelId) async {
-    final response = await MasiroApi.getNovelDetail(novelId);
+  Future<NovelDetail> getNovelDetail(
+    int novelId, {
+    bool forceRefresh = false,
+  }) async {
+    final response = await MasiroApi.getNovelDetail(
+      novelId: novelId,
+      forceRefresh: forceRefresh,
+    );
     return novelDetailResponseToNovelDetail(response);
   }
 
@@ -85,8 +91,8 @@ class MasiroRepository {
     return response.code == 1 ? response.msg : throw Exception(response.msg);
   }
 
-  Future<Profile> getProfile() async {
-    final response = await MasiroApi.getProfile();
+  Future<Profile> getProfile({bool forceRefresh = false}) async {
+    final response = await MasiroApi.getProfile(forceRefresh: forceRefresh);
     return profileResponseToProfile(response);
   }
 

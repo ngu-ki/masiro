@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:masiro/data/repository/model/indent_mode.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
 
@@ -61,4 +62,13 @@ final class ReaderScreenPageTurnModeChanged extends ReaderScreenEvent {
 
   @override
   List<Object> get props => [pageTurnMode];
+}
+
+final class ReaderScreenIndentModeChanged extends ReaderScreenEvent {
+  final IndentMode indentMode;
+
+  ReaderScreenIndentModeChanged({required this.indentMode});
+
+  @override
+  List<Object> get props => [indentMode];
 }

@@ -60,15 +60,16 @@ class ContentsSheet extends StatelessWidget {
                 final chapter = entry.chapter;
                 if (chapter == null) {
                   return Padding(
-                    padding: const EdgeInsets.only(
+                    padding: EdgeInsets.only(
                       left: 20,
-                      top: 12,
+                      top: index == 0 ? 8 : 24,
                       bottom: 4,
                     ),
                     child: Text(
                       entry.title!,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: theme.colorScheme.primary,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   );
@@ -84,7 +85,7 @@ class ContentsSheet extends StatelessWidget {
                     style: TextStyle(
                       color: isCurrent
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface,
+                          : Colors.black,
                       fontWeight: isCurrent ? FontWeight.bold : null,
                     ),
                   ),

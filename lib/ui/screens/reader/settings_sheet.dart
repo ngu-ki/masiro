@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:masiro/data/repository/model/indent_mode.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/ui/screens/reader/reader_palette.dart';
@@ -10,6 +11,8 @@ class SettingsSheet extends StatefulWidget {
   final void Function(int colorValue) onBackgroundColorChanged;
   final PageTurnMode pageTurnMode;
   final void Function(PageTurnMode mode) onPageTurnModeChanged;
+  final IndentMode indentMode;
+  final void Function(IndentMode mode) onIndentModeChanged;
 
   const SettingsSheet({
     super.key,
@@ -19,6 +22,8 @@ class SettingsSheet extends StatefulWidget {
     required this.onBackgroundColorChanged,
     required this.pageTurnMode,
     required this.onPageTurnModeChanged,
+    required this.indentMode,
+    required this.onIndentModeChanged,
   });
 
   @override
@@ -29,6 +34,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   late int fontSize;
   late int backgroundColor;
   late PageTurnMode pageTurnMode;
+  late IndentMode indentMode;
 
   @override
   void initState() {
@@ -36,6 +42,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
     fontSize = widget.fontSize;
     backgroundColor = widget.backgroundColor;
     pageTurnMode = widget.pageTurnMode;
+    indentMode = widget.indentMode;
   }
 
   @override
@@ -92,6 +99,26 @@ class _SettingsSheetState extends State<SettingsSheet> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Text(localizations.indentMode),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              _buildIndentChip(
+                localizations.indentNone,
+                IndentMode.none,
+              ),
+              _buildIndentChip(
+                localizations.indentOne,
+                IndentMode.one,
+              ),
+              _buildIndentChip(
+                localizations.indentTwo,
+                IndentMode.two,
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -140,6 +167,21 @@ class _SettingsSheetState extends State<SettingsSheet> {
         }
         setState(() => pageTurnMode = mode);
         widget.onPageTurnModeChanged(mode);
+      },
+    );
+  }
+
+  Widget _buildIndentChip(String label, IndentMode mode) {
+    final isSelected = indentMode == mode;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (!selected) {
+          return;
+        }
+        setState(() => indentMode = mode);
+        widget.onIndentModeChanged(mode);
       },
     );
   }

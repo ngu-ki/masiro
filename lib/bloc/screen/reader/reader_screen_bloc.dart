@@ -7,6 +7,7 @@ import 'package:masiro/data/repository/app_configuration_repository.dart';
 import 'package:masiro/data/repository/masiro_repository.dart';
 import 'package:masiro/data/repository/model/chapter_detail.dart';
 import 'package:masiro/data/repository/model/chapter_record.dart';
+import 'package:masiro/data/repository/model/indent_mode.dart';
 import 'package:masiro/data/repository/model/loading_status.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
@@ -40,6 +41,7 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
       _onReaderScreenBackgroundColorChanged,
     );
     on<ReaderScreenPageTurnModeChanged>(_onReaderScreenPageTurnModeChanged);
+    on<ReaderScreenIndentModeChanged>(_onReaderScreenIndentModeChanged);
   }
 
   ReadingMode _readingModeOf(PageTurnMode pageTurnMode) {
@@ -59,6 +61,9 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
       final currentUser = await userRepository.getCurrentUser();
       final pageTurnMode =
           pageTurnModeFromName(preferencesRepository.pageTurnMode);
+      final indentMode = indentModeFromName(
+        preferencesRepository.getIndentMode(novelId),
+      );
       final chapterRecord = await novelRecordRepository.findChapterRecord(
         currentUser!.userId,
         chapterId,
@@ -72,6 +77,7 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
           fontSize: appConfig.fontSize,
           backgroundColor: preferencesRepository.readerBackgroundColor,
           pageTurnMode: pageTurnMode,
+          indentMode: indentMode,
           readingMode: _readingModeOf(pageTurnMode),
         ),
       );
@@ -173,6 +179,18 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
         readingMode: _readingModeOf(event.pageTurnMode),
       ),
     );
+  }
+
+  Future<void> _onReaderScreenIndentModeChanged(
+    ReaderScreenIndentModeChanged event,
+    Emitter<ReaderScreenState> emit,
+  ) async {
+    if (state is! ReaderScreenLoadedState) {
+      return;
+    }
+    preferencesRepository.setIndentMode(novelId, event.indentMode.name);
+    final loadedState = state as ReaderScreenLoadedState;
+    emit(loadedState.copyWith(indentMode: event.indentMode));
   }
 
   Future<String> purchasePaidChapter(PaymentInfo paymentInfo) async {

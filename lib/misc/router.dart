@@ -111,7 +111,9 @@ final _applicationShellRoutes = ShellRoute(
   routes: <RouteBase>[
     GoRoute(
       path: RoutePath.home,
-      builder: (context, state) => const SearchScreen(),
+      builder: (context, state) => SearchScreen(
+        initialKeyword: state.uri.queryParameters['keyword'],
+      ),
     ),
     GoRoute(
       path: RoutePath.favorites,

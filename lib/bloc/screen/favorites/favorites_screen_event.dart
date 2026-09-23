@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:masiro/bloc/screen/favorites/favorites_screen_state.dart';
+import 'package:masiro/data/repository/model/bookshelf_stat.dart';
 
 sealed class FavoritesScreenEvent extends Equatable {
   @override
@@ -33,4 +34,26 @@ final class FavoritesScreenNovelMoved extends FavoritesScreenEvent {
 
   @override
   List<Object> get props => [novelId, moveUp];
+}
+
+/// Switches between the list and grid display modes.
+final class FavoritesScreenViewModeChanged extends FavoritesScreenEvent {
+  final FavoritesViewMode mode;
+
+  FavoritesScreenViewModeChanged(this.mode);
+
+  @override
+  List<Object> get props => [mode];
+}
+
+/// Updates the cached bookshelf statistics of a novel, e.g. after the
+/// reader is popped.
+final class FavoritesScreenNovelStatUpdated extends FavoritesScreenEvent {
+  final int novelId;
+  final BookshelfStat stat;
+
+  FavoritesScreenNovelStatUpdated({required this.novelId, required this.stat});
+
+  @override
+  List<Object> get props => [novelId, stat];
 }

@@ -4,12 +4,29 @@ import 'package:masiro/bloc/global/user/user_bloc.dart';
 import 'package:masiro/bloc/global/user/user_state.dart';
 import 'package:masiro/bloc/screen/settings/settings_screen_bloc.dart';
 import 'package:masiro/bloc/screen/settings/settings_screen_event.dart';
+import 'package:masiro/data/repository/model/profile.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/time.dart';
 import 'package:masiro/misc/toast.dart';
 
+/// Height of a regular settings row, matching a single-line [ListTile].
+const double _regularRowHeight = 56;
+
+/// The wallet row is 1.5 times as tall as the other rows.
+const double _walletRowHeight = _regularRowHeight * 1.5;
+
+/// Font size of the "wallet" label, matching the [ListTile] title size.
+const double _walletLabelFontSize = 16;
+
+/// The coin amount is slightly smaller than the wallet label.
+const double _coinAmountFontSize = 14;
+
+const _placeholder = '-';
+
 class SignInCard extends StatelessWidget {
-  const SignInCard({super.key});
+  final Profile? profile;
+
+  const SignInCard({super.key, this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -21,19 +38,62 @@ class SignInCard extends StatelessWidget {
       builder: (context, state) {
         final lastSignInTime = state.currentUser?.lastSignInTime ?? 0;
         final hasSignedIn = isTimestampToday(lastSignInTime);
+        final coinCount = profile?.coinCount ?? _placeholder;
 
         return Card(
           clipBehavior: Clip.hardEdge,
-          child: ListTile(
-            onTap: hasSignedIn
-                ? null
-                : () => _signIn(userBloc, settingsScreenBloc),
-            leading: hasSignedIn
-                ? const Icon(Icons.lightbulb_rounded)
-                : const Icon(Icons.lightbulb_outline_rounded),
-            title: Text(
-              hasSignedIn ? localizations.hasSignedIn : localizations.signIn,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: _walletRowHeight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.monetization_on_rounded,
+                        color: Colors.amber,
+                        size: 40,
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            localizations.wallet,
+                            style: const TextStyle(
+                              fontSize: _walletLabelFontSize,
+                            ),
+                          ),
+                          Text(
+                            '$coinCount ${localizations.coin}',
+                            style: const TextStyle(
+                              fontSize: _coinAmountFontSize,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                onTap: hasSignedIn
+                    ? null
+                    : () => _signIn(userBloc, settingsScreenBloc),
+                leading: hasSignedIn
+                    ? const Icon(Icons.lightbulb_rounded)
+                    : const Icon(Icons.lightbulb_outline_rounded),
+                title: Text(
+                  hasSignedIn
+                      ? localizations.hasSignedIn
+                      : localizations.signIn,
+                ),
+              ),
+            ],
           ),
         );
       },

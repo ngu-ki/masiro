@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:masiro/data/network/response/chapter_detail_response.dart';
 import 'package:masiro/data/network/response/common_response.dart';
 import 'package:masiro/data/network/response/novel_detail_response.dart';
@@ -23,10 +24,16 @@ class MasiroApi {
     return PagedNovelResponse.fromJson(response.data);
   }
 
-  static Future<NovelDetailResponse> getNovelDetail(int novelId) async {
+  static Future<NovelDetailResponse> getNovelDetail({
+    required int novelId,
+    bool forceRefresh = false,
+  }) async {
     final response = await _dio.get(
       MasiroUrl.novelViewUrl,
       queryParameters: {'novel_id': novelId},
+      options: forceRefresh
+          ? const CacheOptions(policy: CachePolicy.refresh).toOptions()
+          : null,
     );
     return NovelDetailResponse.fromHtml(response.data);
   }
@@ -123,8 +130,15 @@ class MasiroApi {
     return CommonResponse.fromJson(response.data);
   }
 
-  static Future<ProfileResponse> getProfile() async {
-    final response = await _dio.get(MasiroUrl.adminUrl);
+  static Future<ProfileResponse> getProfile({
+    bool forceRefresh = false,
+  }) async {
+    final response = await _dio.get(
+      MasiroUrl.adminUrl,
+      options: forceRefresh
+          ? const CacheOptions(policy: CachePolicy.refresh).toOptions()
+          : null,
+    );
     return ProfileResponse.fromHtml(response.data);
   }
 

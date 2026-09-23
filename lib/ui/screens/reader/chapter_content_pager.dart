@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:masiro/data/repository/model/chapter_detail.dart';
+import 'package:masiro/data/repository/model/indent_mode.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
 import 'package:masiro/misc/context.dart';
@@ -41,6 +42,7 @@ class ChapterContentPager extends StatefulWidget {
   final void Function() onToggleMenu;
   final void Function() onNextChapter;
   final ReaderPagerController pagerController;
+  final IndentMode indentMode;
 
   const ChapterContentPager({
     super.key,
@@ -58,6 +60,7 @@ class ChapterContentPager extends StatefulWidget {
     required this.onToggleMenu,
     required this.onNextChapter,
     required this.pagerController,
+    this.indentMode = IndentMode.none,
   });
 
   @override
@@ -109,7 +112,8 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   }
 
   String _buildConfigSignature() {
-    return '${widget.chapterId}-${widget.fontSize}-${widget.mode.name}';
+    return '${widget.chapterId}-${widget.fontSize}-${widget.mode.name}'
+        '-${widget.indentMode.name}';
   }
 
   TextStyle _buildTextStyle(BuildContext context) {
@@ -148,6 +152,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
             maxHeight: contentHeight,
             style: style,
             paragraphGap: paragraphGap,
+            indentPrefix: widget.indentMode.prefix,
           );
           final restore = _pendingRestore ?? widget.initialPosition;
           _pendingRestore = null;
@@ -234,7 +239,8 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         children.add(SizedBox(height: paragraphGap));
       }
       final element = elements[run.elementIndex] as TextContent;
-      var fragment = element.text.substring(run.start, run.end);
+      final displayText = '${widget.indentMode.prefix}${element.text}';
+      var fragment = displayText.substring(run.start, run.end);
       if (fragment.endsWith('\n')) {
         fragment = fragment.substring(0, fragment.length - 1);
       }

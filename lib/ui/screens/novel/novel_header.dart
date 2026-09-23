@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:masiro/data/repository/model/novel_detail.dart';
 import 'package:masiro/misc/constant.dart';
@@ -6,16 +7,48 @@ import 'package:masiro/misc/platform.dart';
 import 'package:masiro/misc/url.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
 
-class NovelHeader extends StatelessWidget {
+class NovelHeader extends StatefulWidget {
   final NovelDetailHeader header;
 
-  const NovelHeader({super.key, required this.header});
+  /// Total number of chapters across all volumes.
+  final int chapterCount;
+
+  /// Called when the author name is tapped.
+  final void Function(String author)? onAuthorTap;
+
+  const NovelHeader({
+    super.key,
+    required this.header,
+    required this.chapterCount,
+    this.onAuthorTap,
+  });
+
+  @override
+  State<NovelHeader> createState() => _NovelHeaderState();
+}
+
+class _NovelHeaderState extends State<NovelHeader> {
+  TapGestureRecognizer? _authorTapRecognizer;
+
+  @override
+  void dispose() {
+    _authorTapRecognizer?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final localizations = context.localizations();
     final textTheme = context.textTheme();
+    final header = widget.header;
     const coverWidth = 160.0;
+
+    final onAuthorTap = widget.onAuthorTap;
+    if (onAuthorTap != null) {
+      _authorTapRecognizer?.dispose();
+      _authorTapRecognizer = TapGestureRecognizer()
+        ..onTap = () => onAuthorTap(header.author);
+    }
 
     return Row(
       children: [
@@ -38,9 +71,20 @@ class NovelHeader extends StatelessWidget {
                     style: textTheme.titleLarge,
                   ),
                 ),
-                Text(
-                  '${localizations.author}: ${header.author}',
-                  style: textTheme.bodyLarge,
+                Text.rich(
+                  TextSpan(
+                    text: '${localizations.author}: ',
+                    style: textTheme.bodyLarge,
+                    children: [
+                      TextSpan(
+                        text: header.author,
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: Colors.blue,
+                        ),
+                        recognizer: _authorTapRecognizer,
+                      ),
+                    ],
+                  ),
                 ),
                 Text(
                   '${localizations.translator}: ${header.translators.join(', ')}',
@@ -48,6 +92,10 @@ class NovelHeader extends StatelessWidget {
                 ),
                 Text(
                   '${localizations.status}: ${header.status}',
+                  style: textTheme.bodyLarge,
+                ),
+                Text(
+                  localizations.totalChapters(widget.chapterCount),
                   style: textTheme.bodyLarge,
                 ),
                 if (isDesktop)

@@ -53,22 +53,13 @@ class _NovelListState extends State<NovelList> {
       return Message(message: localizations.noContentMessage);
     }
 
-    final infiniteList = GridView.builder(
+    final infiniteList = ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(10),
       itemCount: novels.length,
-      gridDelegate: isDesktop
-          ? const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 600,
-              mainAxisExtent: 150,
-            )
-          : const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: double.infinity,
-              mainAxisExtent: 120,
-            ),
       itemBuilder: (context, index) {
         final n = novels[index];
-        return NovelCard(
+        Widget card = NovelCard(
           title: n.title,
           coverImg: n.coverImg,
           author: n.author,
@@ -77,6 +68,15 @@ class _NovelListState extends State<NovelList> {
           lvLimit: n.lvLimit,
           onTap: () => context.push(RoutePath.novel, extra: {'novelId': n.id}),
         );
+        if (isDesktop) {
+          card = Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: card,
+            ),
+          );
+        }
+        return card;
       },
     );
 

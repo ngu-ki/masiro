@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:masiro/data/repository/model/bookshelf_stat.dart';
 import 'package:masiro/data/repository/model/novel.dart';
 
 /// The sort mode of the favorites list.
@@ -20,6 +21,12 @@ enum FavoritesSortMode {
 enum FavoritesSortDirection {
   ascending,
   descending,
+}
+
+/// The display mode of the favorites list.
+enum FavoritesViewMode {
+  list,
+  grid,
 }
 
 sealed class FavoritesScreenState extends Equatable {
@@ -46,11 +53,19 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
   /// Whether the manual adjustment mode is on.
   final bool manualAdjusting;
 
+  /// The list/grid display mode.
+  final FavoritesViewMode viewMode;
+
+  /// Reading statistics keyed by novel id.
+  final Map<int, BookshelfStat> stats;
+
   FavoritesScreenLoadedState({
     this.novels = const [],
     this.sortMode = FavoritesSortMode.defaultOrder,
     this.sortDirection = FavoritesSortDirection.ascending,
     this.manualAdjusting = false,
+    this.viewMode = FavoritesViewMode.list,
+    this.stats = const {},
   });
 
   FavoritesScreenLoadedState copyWith({
@@ -58,12 +73,16 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
     FavoritesSortMode? sortMode,
     FavoritesSortDirection? sortDirection,
     bool? manualAdjusting,
+    FavoritesViewMode? viewMode,
+    Map<int, BookshelfStat>? stats,
   }) {
     return FavoritesScreenLoadedState(
       novels: novels ?? this.novels,
       sortMode: sortMode ?? this.sortMode,
       sortDirection: sortDirection ?? this.sortDirection,
       manualAdjusting: manualAdjusting ?? this.manualAdjusting,
+      viewMode: viewMode ?? this.viewMode,
+      stats: stats ?? this.stats,
     );
   }
 
@@ -73,5 +92,7 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
         sortMode,
         sortDirection,
         manualAdjusting,
+        viewMode,
+        stats,
       ];
 }

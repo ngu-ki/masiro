@@ -47,6 +47,7 @@
   "pay": "支付",
   "isPaying": "支付中...",
   "coin": "金币",
+  "wallet": "钱包",
   "fan": "粉丝",
   "id": "ID",
   "signIn": "签到",
@@ -92,5 +93,31 @@
   "pageTurnSlide": "平移",
   "pageTurnNone": "无动画",
   "chapterEndHint": "本章完，点击进入下一章",
-  "contents": "目录"
+  "contents": "目录",
+  "totalChapters": "共{count}话",
+  "@totalChapters": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commentShort": "章评",
+  "indentMode": "缩进模式",
+  "indentNone": "无",
+  "indentOne": "1格",
+  "indentTwo": "2格",
+  "addToBookshelf": "加入书架",
+  "inBookshelf": "已在书架",
+  "exitAppHint": "再滑一次退出应用",
+  "gridView": "宫格视图",
+  "listView": "列表视图",
+  "unreadChapters": "{count}话未读",
+  "@unreadChapters": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
