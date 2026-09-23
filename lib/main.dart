@@ -12,7 +12,7 @@ Future<void> main() async {
 
   if (isDesktop) {
     await windowManager.ensureInitialized();
-    const windowOptions = WindowOptions(title: 'Masiro', center: true);
+    const windowOptions = WindowOptions(title: '真白萌', center: true);
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
