@@ -72,8 +72,16 @@ class _AppState extends State<App> with WindowListener, TrayListener {
               colorScheme: ColorScheme.fromSeed(
                 seedColor: Color(themeColor),
                 brightness: Brightness.light,
+              ).copyWith(
+                surface: Colors.white,
+                surfaceContainer: Colors.white,
+                surfaceContainerHighest: Colors.white,
+                surfaceContainerHigh: Colors.white,
+                surfaceContainerLow: Colors.white,
+                surfaceContainerLowest: Colors.white,
               ),
               scaffoldBackgroundColor: Colors.white,
+              cardColor: Colors.white,
             ),
             darkTheme: ThemeData(
               useMaterial3: true,
