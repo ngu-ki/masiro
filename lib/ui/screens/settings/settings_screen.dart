@@ -54,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             bloc.add(SettingsScreenProfileRefreshed());
           },
           child: ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
             children: [
               ProfileCard(
                 profile: state.profile,
@@ -67,12 +67,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         Positioned(
           top: 4,
-          left: 4,
+          left: 12,
           child: _buildSettingsButton(context),
         ),
         Positioned(
           top: 4,
-          right: 4,
+          right: 12,
           child: _buildThemeModeButton(context),
         ),
       ],

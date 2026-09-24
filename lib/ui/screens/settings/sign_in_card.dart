@@ -98,29 +98,13 @@ class SignInCard extends StatelessWidget {
                           size: 40,
                         ),
                         const SizedBox(width: 16),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              hasSignedIn
-                                  ? localizations.hasSignedIn
-                                  : localizations.signIn,
-                              style: const TextStyle(
-                                fontSize: _walletLabelFontSize,
-                              ),
-                            ),
-                            // Invisible spacer matching the coin amount line
-                            // height so the sign-in label aligns with the
-                            // wallet label.
-                            Text(
-                              '',
-                              style: TextStyle(
-                                fontSize: _coinAmountFontSize,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          hasSignedIn
+                              ? localizations.hasSignedIn
+                              : localizations.signIn,
+                          style: const TextStyle(
+                            fontSize: _walletLabelFontSize,
+                          ),
                         ),
                       ],
                     ),

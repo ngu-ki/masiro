@@ -215,7 +215,10 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     }
     _stats[event.novelId] = event.stat;
     _preferencesRepository.bookshelfStats = _stats;
-    emit(current.copyWith(stats: _stats));
+    final novels = current.sortMode == FavoritesSortMode.recentlyRead
+        ? _sortNovels(_novels, current.sortMode, current.sortDirection)
+        : null;
+    emit(current.copyWith(stats: _stats, novels: novels));
   }
 
   /// Builds the unread statistics from a novel detail: chapters are flattened
@@ -233,6 +236,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     return BookshelfStat(
       totalChapters: chapters.length,
       unreadCount: unread,
+      lastReadChapterId: detail.lastReadChapterId,
     );
   }
 
@@ -274,7 +278,17 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         _preferencesRepository.bookshelfStats = _stats;
         final current = state;
         if (current is FavoritesScreenLoadedState) {
-          emit(current.copyWith(stats: _stats));
+          // Re-sort novels if currently in recentlyRead mode, since the
+          // sort depends on the enriched lastReadChapterId.
+          final novels = current.sortMode == FavoritesSortMode.recentlyRead
+              ? _sortNovels(_novels, current.sortMode, current.sortDirection)
+              : null;
+          emit(
+            current.copyWith(
+              stats: _stats,
+              novels: novels,
+            ),
+          );
         }
       } catch (_) {
         // Keep the cached value when the detail cannot be loaded.
@@ -291,23 +305,16 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       case FavoritesSortMode.defaultOrder:
         return _sortByManualOrder(novels);
       case FavoritesSortMode.recentlyRead:
-        // The server returns favorites in recently-read order; use the
-        // original index as the sort key.
-        final indexed = novels.asMap().entries.toList();
-        final positions = {
-          for (final n in _novels.asMap().entries) n.value.id: n.key,
-        };
-        indexed.sort((a, b) {
-          final pa = positions[a.value.id];
-          final pb = positions[b.value.id];
-          if (pa != null && pb != null) {
-            return pa.compareTo(pb);
-          }
-          if (pa != null) return -1;
-          if (pb != null) return 1;
-          return a.key.compareTo(b.key);
-        });
-        final sorted = indexed.map((e) => e.value).toList();
+        // Sort by the last read chapter ID from the enriched stats.
+        // A higher chapter ID generally means more recently read.
+        // Novels without stats go to the end.
+        final sorted = [...novels]..sort((a, b) {
+            final sa = _stats[a.id];
+            final sb = _stats[b.id];
+            final la = sa?.lastReadChapterId ?? -1;
+            final lb = sb?.lastReadChapterId ?? -1;
+            return lb.compareTo(la);
+          });
         return direction == FavoritesSortDirection.descending
             ? sorted.reversed.toList()
             : sorted;

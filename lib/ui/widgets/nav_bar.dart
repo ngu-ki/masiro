@@ -73,7 +73,7 @@ class _NavBarState extends State<NavBar> {
   Widget buildNavigationBar(BuildContext context) {
     final localizations = context.localizations();
     return NavigationBar(
-      height: 53,
+      height: 60,
       onDestinationSelected: _onDestinationSelected,
       selectedIndex: _calculateSelectedIndex(context) ?? 0,
       destinations: [
