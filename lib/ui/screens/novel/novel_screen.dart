@@ -31,7 +31,7 @@ class _NovelScreenState extends State<NovelScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         child: BlocProvider(
           create: (context) => NovelScreenBloc(novelId: widget.novelId)
@@ -91,23 +91,26 @@ class _NovelScreenState extends State<NovelScreen> {
       ),
       title: Text(localizations.detail),
       actions: [
-        TextButton(
-          onPressed: () {
-            if (isFavorite) {
-              bloc.add(NovelScreenNovelUnfavorited());
-            } else {
-              bloc.add(NovelScreenNovelFavorited());
-            }
-            _isFavoriteToggled = true;
-          },
-          style: TextButton.styleFrom(
-            foregroundColor:
-                isFavorite ? Colors.grey : Theme.of(context).colorScheme.primary,
-          ),
-          child: Text(
-            isFavorite
-                ? localizations.inBookshelf
-                : localizations.addToBookshelf,
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: TextButton(
+            onPressed: () {
+              if (isFavorite) {
+                bloc.add(NovelScreenNovelUnfavorited());
+              } else {
+                bloc.add(NovelScreenNovelFavorited());
+              }
+              _isFavoriteToggled = true;
+            },
+            style: TextButton.styleFrom(
+              foregroundColor:
+                  isFavorite ? Colors.grey : Theme.of(context).colorScheme.primary,
+            ),
+            child: Text(
+              isFavorite
+                  ? localizations.inBookshelf
+                  : localizations.addToBookshelf,
+            ),
           ),
         ),
       ],
