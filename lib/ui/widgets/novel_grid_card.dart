@@ -14,9 +14,8 @@ class NovelGridCard extends StatelessWidget {
   final String coverImg;
   final int lvLimit;
 
-  /// Reading progress of the novel. When more than half of the chapters are
-  /// unread, the badge shows the read/total counts instead of the unread
-  /// count.
+  /// Reading progress of the novel. When available, the badge always
+  /// shows the read/total chapter counts.
   final BookshelfStat? stat;
 
   final void Function()? onTap;
@@ -52,11 +51,6 @@ class NovelGridCard extends StatelessWidget {
         final titleHeight = titleFontSize * 1.4 * 3;
         final unread = stat?.unreadCount ?? 0;
         final total = stat?.totalChapters ?? 0;
-        final hasUnread = unread > 0;
-
-        // When more than half of the chapters are unread, show the reading
-        // progress as "read/total" instead of the unread count.
-        final showProgress = hasUnread && total > 0 && unread * 2 > total;
 
         return InkWell(
           onTap: onTap,
@@ -114,19 +108,15 @@ class NovelGridCard extends StatelessWidget {
                   height: 20,
                   child: Row(
                     children: [
-                      if (hasUnread)
+                      if (total > 0)
                         Expanded(
                           child: Text(
-                            showProgress
-                                ? '${total - unread}/$total'
-                                : localizations.unreadChapters(unread),
+                            '${total - unread}/$total',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: unreadFontSize,
-                              color: showProgress
-                                  ? colorScheme.outline
-                                  : colorScheme.error,
+                              color: colorScheme.outline,
                             ),
                           ),
                         )
