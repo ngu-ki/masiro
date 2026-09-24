@@ -98,7 +98,7 @@ abstract class AppLocalizations {
   /// No description provided for @home.
   ///
   /// In zh, this message translates to:
-  /// **'首页'**
+  /// **'发现'**
   String get home;
 
   /// No description provided for @favorites.
@@ -116,7 +116,7 @@ abstract class AppLocalizations {
   /// No description provided for @more.
   ///
   /// In zh, this message translates to:
-  /// **'更多'**
+  /// **'我的'**
   String get more;
 
   /// No description provided for @showWindow.
@@ -598,6 +598,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'默认'**
   String get sortDefault;
+
+  /// No description provided for @recentlyRead.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近阅读'**
+  String get recentlyRead;
 
   /// No description provided for @sortByName.
   ///

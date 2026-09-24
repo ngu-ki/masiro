@@ -80,17 +80,51 @@ class SignInCard extends StatelessWidget {
                 ),
               ),
               const Divider(height: 1),
-              ListTile(
-                onTap: hasSignedIn
-                    ? null
-                    : () => _signIn(userBloc, settingsScreenBloc),
-                leading: hasSignedIn
-                    ? const Icon(Icons.lightbulb_rounded)
-                    : const Icon(Icons.lightbulb_outline_rounded),
-                title: Text(
-                  hasSignedIn
-                      ? localizations.hasSignedIn
-                      : localizations.signIn,
+              SizedBox(
+                height: _walletRowHeight,
+                child: InkWell(
+                  onTap: hasSignedIn
+                      ? null
+                      : () => _signIn(userBloc, settingsScreenBloc),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          hasSignedIn
+                              ? Icons.lightbulb_rounded
+                              : Icons.lightbulb_outline_rounded,
+                          color: hasSignedIn ? Colors.amber : null,
+                          size: 40,
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              hasSignedIn
+                                  ? localizations.hasSignedIn
+                                  : localizations.signIn,
+                              style: const TextStyle(
+                                fontSize: _walletLabelFontSize,
+                              ),
+                            ),
+                            // Invisible spacer matching the coin amount line
+                            // height so the sign-in label aligns with the
+                            // wallet label.
+                            Text(
+                              '',
+                              style: TextStyle(
+                                fontSize: _coinAmountFontSize,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],

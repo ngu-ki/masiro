@@ -7,6 +7,9 @@ enum FavoritesSortMode {
   /// The manually adjusted order.
   defaultOrder,
 
+  /// Sort by the recently read order (server order).
+  recentlyRead,
+
   /// Sort by the last updated time.
   lastUpdated,
 

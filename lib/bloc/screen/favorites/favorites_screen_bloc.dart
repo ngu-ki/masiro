@@ -236,14 +236,13 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     );
   }
 
-  /// Enriches the unread counts only when the grid mode is active. Normal
+  /// Enriches the unread counts for both list and grid modes. Normal
   /// loads run once; pull-to-refresh always forces a reload.
   Future<void> _enrichUnreadCountsIfNeeded({
     bool forceRefresh = false,
   }) async {
     final current = state;
-    if (current is! FavoritesScreenLoadedState ||
-        current.viewMode != FavoritesViewMode.grid) {
+    if (current is! FavoritesScreenLoadedState) {
       return;
     }
     if (_statsEnriched && !forceRefresh) {
@@ -291,6 +290,27 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     switch (mode) {
       case FavoritesSortMode.defaultOrder:
         return _sortByManualOrder(novels);
+      case FavoritesSortMode.recentlyRead:
+        // The server returns favorites in recently-read order; use the
+        // original index as the sort key.
+        final indexed = novels.asMap().entries.toList();
+        final positions = {
+          for (final n in _novels.asMap().entries) n.value.id: n.key,
+        };
+        indexed.sort((a, b) {
+          final pa = positions[a.value.id];
+          final pb = positions[b.value.id];
+          if (pa != null && pb != null) {
+            return pa.compareTo(pb);
+          }
+          if (pa != null) return -1;
+          if (pb != null) return 1;
+          return a.key.compareTo(b.key);
+        });
+        final sorted = indexed.map((e) => e.value).toList();
+        return direction == FavoritesSortDirection.descending
+            ? sorted.reversed.toList()
+            : sorted;
       case FavoritesSortMode.lastUpdated:
         final sorted = [...novels]
           ..sort(

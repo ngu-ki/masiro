@@ -49,18 +49,18 @@ class _NavBarState extends State<NavBar> {
     return NavigationRail(
       destinations: [
         NavigationRailDestination(
-          icon: const Icon(Icons.receipt_long_outlined),
-          selectedIcon: const Icon(Icons.receipt_long),
+          icon: const Icon(Icons.explore_outlined),
+          selectedIcon: const Icon(Icons.explore),
           label: Text(localizations.home),
         ),
         NavigationRailDestination(
-          icon: const Icon(Icons.favorite_outline_outlined),
-          selectedIcon: const Icon(Icons.favorite),
+          icon: const Icon(Icons.menu_book_outlined),
+          selectedIcon: const Icon(Icons.menu_book),
           label: Text(localizations.favorites),
         ),
         NavigationRailDestination(
-          icon: const Icon(Icons.more_horiz_rounded),
-          selectedIcon: const Icon(Icons.more_horiz_rounded),
+          icon: const Icon(Icons.person_outline_rounded),
+          selectedIcon: const Icon(Icons.person_rounded),
           label: Text(localizations.more),
         ),
       ],
@@ -73,22 +73,23 @@ class _NavBarState extends State<NavBar> {
   Widget buildNavigationBar(BuildContext context) {
     final localizations = context.localizations();
     return NavigationBar(
+      height: 53,
       onDestinationSelected: _onDestinationSelected,
       selectedIndex: _calculateSelectedIndex(context) ?? 0,
       destinations: [
         NavigationDestination(
-          icon: const Icon(Icons.receipt_long_outlined),
-          selectedIcon: const Icon(Icons.receipt_long),
+          icon: const Icon(Icons.explore_outlined),
+          selectedIcon: const Icon(Icons.explore),
           label: localizations.home,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.favorite_outline_outlined),
-          selectedIcon: const Icon(Icons.favorite),
+          icon: const Icon(Icons.menu_book_outlined),
+          selectedIcon: const Icon(Icons.menu_book),
           label: localizations.favorites,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.more_horiz_rounded),
-          selectedIcon: const Icon(Icons.more_horiz_rounded),
+          icon: const Icon(Icons.person_outline_rounded),
+          selectedIcon: const Icon(Icons.person_rounded),
           label: localizations.more,
         ),
       ],

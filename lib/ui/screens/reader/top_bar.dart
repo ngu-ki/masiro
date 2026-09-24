@@ -33,10 +33,28 @@ class TopBar extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         actions: [
-          IconButton(
-            tooltip: localizations.detail,
-            onPressed: onNavigateToDetail,
-            icon: const Icon(Icons.info_outline_rounded),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: onNavigateToDetail,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  localizations.detail,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

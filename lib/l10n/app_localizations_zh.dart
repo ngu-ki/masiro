@@ -67,7 +67,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get home => '首页';
+  String get home => '发现';
 
   @override
   String get favorites => '收藏';
@@ -76,7 +76,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settings => '设置';
 
   @override
-  String get more => '更多';
+  String get more => '我的';
 
   @override
   String get showWindow => '显示窗口';
@@ -322,6 +322,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sortDefault => '默认';
+
+  @override
+  String get recentlyRead => '最近阅读';
 
   @override
   String get sortByName => '名称';
@@ -405,7 +408,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   }
 
   @override
-  String get home => '首页';
+  String get home => '发现';
 
   @override
   String get favorites => '收藏';
@@ -414,7 +417,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get settings => '设置';
 
   @override
-  String get more => '更多';
+  String get more => '我的';
 
   @override
   String get showWindow => '显示窗口';
@@ -660,6 +663,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get sortDefault => '默认';
+
+  @override
+  String get recentlyRead => '最近阅读';
 
   @override
   String get sortByName => '名称';
@@ -743,7 +749,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   }
 
   @override
-  String get home => '首页';
+  String get home => '发现';
 
   @override
   String get favorites => '收藏';
@@ -752,7 +758,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get settings => '设置';
 
   @override
-  String get more => '更多';
+  String get more => '我的';
 
   @override
   String get showWindow => '显示窗口';
@@ -998,6 +1004,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get sortDefault => '默认';
+
+  @override
+  String get recentlyRead => '最近阅读';
 
   @override
   String get sortByName => '名称';

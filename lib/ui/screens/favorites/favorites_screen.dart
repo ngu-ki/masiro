@@ -156,6 +156,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               buildSortMenuItem(
                 context,
                 state,
+                mode: FavoritesSortMode.recentlyRead,
+                label: localizations.recentlyRead,
+              ),
+              buildSortMenuItem(
+                context,
+                state,
                 mode: FavoritesSortMode.lastUpdated,
                 label: localizations.lastUpdated,
               ),

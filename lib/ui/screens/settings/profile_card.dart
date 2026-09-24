@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:masiro/data/repository/model/profile.dart';
 import 'package:masiro/misc/context.dart';
+import 'package:masiro/misc/router.dart';
 import 'package:masiro/misc/url.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
 
@@ -84,10 +86,13 @@ class ProfileCard extends StatelessWidget {
                     color: Colors.grey,
                   ),
                   Expanded(
-                    child: _buildStatBlock(
-                      context,
-                      value: collectedCount,
-                      label: localizations.favorites,
+                    child: InkWell(
+                      onTap: () => context.go(RoutePath.favorites),
+                      child: _buildStatBlock(
+                        context,
+                        value: collectedCount,
+                        label: localizations.favorites,
+                      ),
                     ),
                   ),
                 ],

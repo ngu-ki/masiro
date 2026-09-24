@@ -62,34 +62,37 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(defaultReaderBackgroundColor),
-      body: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) {
-            return;
-          }
-          _backToPrevScreen(context);
-        },
-        child: BlocProvider(
-          create: (_) => ReaderScreenBloc(novelId: widget.novelId)
-            ..add(
-              ReaderScreenChapterDetailRequested(chapterId: widget.chapterId),
-            ),
-          child: BlocBuilder<ReaderScreenBloc, ReaderScreenState>(
-            builder: (context, state) {
-              switch (state) {
-                case ReaderScreenInitialState():
-                  return const Column(children: [LinearProgressIndicator()]);
-                case ReaderScreenErrorState():
-                  return ErrorMessage(message: state.message);
-                case ReaderScreenLoadedState():
-                  return buildLoadedScreen(context, state);
-              }
-            },
-          ),
+    return BlocProvider(
+      create: (_) => ReaderScreenBloc(novelId: widget.novelId)
+        ..add(
+          ReaderScreenChapterDetailRequested(chapterId: widget.chapterId),
         ),
+      child: BlocBuilder<ReaderScreenBloc, ReaderScreenState>(
+        builder: (context, state) {
+          final bgColor = state is ReaderScreenLoadedState
+              ? Color(state.backgroundColor)
+              : const Color(defaultReaderBackgroundColor);
+          return Scaffold(
+            backgroundColor: bgColor,
+            body: PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (didPop, result) {
+                if (didPop) {
+                  return;
+                }
+                _backToPrevScreen(context);
+              },
+              child: switch (state) {
+                ReaderScreenInitialState() => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ReaderScreenErrorState() =>
+                  ErrorMessage(message: state.message),
+                ReaderScreenLoadedState() => buildLoadedScreen(context, state),
+              },
+            ),
+          );
+        },
       ),
     );
   }
