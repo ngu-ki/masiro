@@ -73,6 +73,7 @@ class _AppState extends State<App> with WindowListener, TrayListener {
                 seedColor: Color(themeColor),
                 brightness: Brightness.light,
               ),
+              scaffoldBackgroundColor: Colors.white,
             ),
             darkTheme: ThemeData(
               useMaterial3: true,
