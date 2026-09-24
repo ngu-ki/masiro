@@ -19,7 +19,14 @@ import 'package:masiro/ui/widgets/error_message.dart';
 class NovelScreen extends StatefulWidget {
   final int novelId;
 
-  const NovelScreen({super.key, required this.novelId});
+  /// Minimum user level required to read this novel. Zero means no limit.
+  final int lvLimit;
+
+  const NovelScreen({
+    super.key,
+    required this.novelId,
+    this.lvLimit = 0,
+  });
 
   @override
   State<NovelScreen> createState() => _NovelScreenState();
@@ -186,6 +193,7 @@ class _NovelScreenState extends State<NovelScreen> {
               0,
               (sum, volume) => sum + volume.chapters.length,
             ),
+            lvLimit: widget.lvLimit,
             onAuthorTap: (author) => _searchAuthor(context, author),
           ),
           const SizedBox(height: 20),

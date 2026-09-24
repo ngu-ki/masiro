@@ -25,15 +25,21 @@ final class FavoritesScreenSortSelected extends FavoritesScreenEvent {
 /// Turns the manual adjustment mode on or off.
 final class FavoritesScreenManualModeToggled extends FavoritesScreenEvent {}
 
-/// Moves a novel up or down in the manual order.
-final class FavoritesScreenNovelMoved extends FavoritesScreenEvent {
-  final int novelId;
-  final bool moveUp;
+/// Reorders the novels while the manual adjustment mode is on.
+final class FavoritesScreenNovelsReordered extends FavoritesScreenEvent {
+  /// Original position of the dragged novel.
+  final int oldIndex;
 
-  FavoritesScreenNovelMoved({required this.novelId, required this.moveUp});
+  /// Target insert position measured after the dragged item is removed.
+  final int newIndex;
+
+  FavoritesScreenNovelsReordered({
+    required this.oldIndex,
+    required this.newIndex,
+  });
 
   @override
-  List<Object> get props => [novelId, moveUp];
+  List<Object> get props => [oldIndex, newIndex];
 }
 
 /// Switches between the list and grid display modes.

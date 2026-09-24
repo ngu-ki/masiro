@@ -333,6 +333,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sortByName => '名称';
 
   @override
+  String get sortByChapterCount => '话数';
+
+  @override
   String get sortByWordCount => '字数';
 
   @override
@@ -364,6 +367,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get forceSimplified => '强制简体';
+
+  @override
+  String get searchInFavorites => '搜索书架';
+
+  @override
+  String get noSearchResults => '未找到相关书籍';
 }
 
 /// The translations for Chinese, as used in Hong Kong, using the Han script (`zh_Hant_HK`).
@@ -695,7 +704,10 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get sortByName => '名称';
 
   @override
-  String get sortByWordCount => '字数';
+  String get sortByChapterCount => '話數';
+
+  @override
+  String get sortByWordCount => '字數';
 
   @override
   String get sortAscending => '正序';
@@ -717,6 +729,12 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get forceSimplified => '強制簡體';
+
+  @override
+  String get searchInFavorites => '搜尋書架';
+
+  @override
+  String get noSearchResults => '未找到相關書籍';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -1048,7 +1066,10 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get sortByName => '名称';
 
   @override
-  String get sortByWordCount => '字数';
+  String get sortByChapterCount => '話數';
+
+  @override
+  String get sortByWordCount => '字數';
 
   @override
   String get sortAscending => '正序';
@@ -1070,4 +1091,10 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get forceSimplified => '強制簡體';
+
+  @override
+  String get searchInFavorites => '搜尋書架';
+
+  @override
+  String get noSearchResults => '未找到相關書籍';
 }

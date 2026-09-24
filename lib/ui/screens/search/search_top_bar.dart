@@ -12,10 +12,10 @@ class SearchTopBar extends StatefulWidget {
   const SearchTopBar({super.key, this.initialKeyword});
 
   @override
-  State<SearchTopBar> createState() => _SearchTopBarState();
+  State<SearchTopBar> createState() => SearchTopBarState();
 }
 
-class _SearchTopBarState extends State<SearchTopBar> {
+class SearchTopBarState extends State<SearchTopBar> {
   late final FocusNode _searchBarFocusNode;
   late final SearchController _searchController;
 
@@ -32,6 +32,18 @@ class _SearchTopBarState extends State<SearchTopBar> {
     _searchBarFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Focuses the search bar and submits its current text, as if the user
+  /// had tapped the search bar and pressed Enter.
+  void submitCurrentText() {
+    final keyword = _searchController.text;
+    _searchBarFocusNode.requestFocus();
+    context.read<SearchScreenBloc>().add(
+          SearchScreenSearched(keyword: keyword),
+        );
+    _searchController.closeView(keyword);
+    _searchBarFocusNode.unfocus();
   }
 
   @override

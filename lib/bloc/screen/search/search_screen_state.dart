@@ -33,6 +33,10 @@ class SearchScreenLoadedState extends SearchScreenState {
   /// Indicates the loading status of the infinitely scrollable list of novels
   final InfiniteListStatus infiniteListStatus;
 
+  /// Whether a search has been performed. Before the first search the
+  /// discovery page shows a mascot instead of the "no content" message.
+  final bool hasSearched;
+
   SearchScreenLoadedState({
     this.keyword = '',
     this.novels = const [],
@@ -40,6 +44,7 @@ class SearchScreenLoadedState extends SearchScreenState {
     this.totalCount = 0,
     this.totalPages = 0,
     this.infiniteListStatus = InfiniteListStatus.success,
+    this.hasSearched = false,
   });
 
   SearchScreenLoadedState copyWith({
@@ -49,6 +54,7 @@ class SearchScreenLoadedState extends SearchScreenState {
     int? totalCount,
     int? totalPages,
     InfiniteListStatus? infiniteListStatus,
+    bool? hasSearched,
   }) {
     return SearchScreenLoadedState(
       keyword: keyword ?? this.keyword,
@@ -57,6 +63,7 @@ class SearchScreenLoadedState extends SearchScreenState {
       totalCount: totalCount ?? this.totalCount,
       totalPages: totalPages ?? this.totalPages,
       infiniteListStatus: infiniteListStatus ?? this.infiniteListStatus,
+      hasSearched: hasSearched ?? this.hasSearched,
     );
   }
 
@@ -68,6 +75,7 @@ class SearchScreenLoadedState extends SearchScreenState {
         totalCount,
         totalPages,
         infiniteListStatus,
+        hasSearched,
       ];
 }
 

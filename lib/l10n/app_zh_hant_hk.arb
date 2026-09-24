@@ -85,7 +85,8 @@
   "sortDefault": "默认",
   "recentlyRead": "最近阅读",
   "sortByName": "名称",
-  "sortByWordCount": "字数",
+  "sortByChapterCount": "話數",
+  "sortByWordCount": "字數",
   "sortAscending": "正序",
   "sortDescending": "倒序",
   "manualSort": "调整排序",
@@ -113,5 +114,7 @@
   "removeFromFavorites": "移除收藏",
   "selectAll": "全選",
   "shrinkEmptyLines": "空行縮小",
-  "forceSimplified": "強制簡體"
+  "forceSimplified": "強制簡體",
+  "searchInFavorites": "搜尋書架",
+  "noSearchResults": "未找到相關書籍"
 }

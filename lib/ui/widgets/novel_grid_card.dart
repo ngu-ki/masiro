@@ -3,7 +3,6 @@ import 'package:masiro/data/repository/model/bookshelf_stat.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/url.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
-import 'package:masiro/ui/widgets/manual_tooltip.dart';
 
 /// The bookshelf card used in the grid display mode.
 ///
@@ -12,7 +11,6 @@ import 'package:masiro/ui/widgets/manual_tooltip.dart';
 class NovelGridCard extends StatelessWidget {
   final String title;
   final String coverImg;
-  final int lvLimit;
 
   /// Reading progress of the novel. When available, the badge always
   /// shows the read/total chapter counts.
@@ -30,7 +28,6 @@ class NovelGridCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.coverImg,
-    required this.lvLimit,
     this.stat,
     this.onTap,
     this.onDetailTap,
@@ -39,7 +36,6 @@ class NovelGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = context.localizations();
     final colorScheme = context.colorScheme();
 
     return LayoutBuilder(
@@ -66,32 +62,14 @@ class NovelGridCard extends StatelessWidget {
             children: [
               InkWell(
                 onTap: onTap,
-                child: AspectRatio(
-                  aspectRatio: 7 / 10,
-                  child: Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: CachedImage(
-                          url: coverImg.toUrl(),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      if (lvLimit > 0)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: ManualTooltip(
-                            icon: Icon(
-                              Icons.info_outline_rounded,
-                              size: 18,
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
-                            tooltip:
-                                localizations.levelLimitMessage(lvLimit),
-                          ),
-                        ),
-                    ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: AspectRatio(
+                    aspectRatio: 7 / 10,
+                    child: CachedImage(
+                      url: coverImg.toUrl(),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),

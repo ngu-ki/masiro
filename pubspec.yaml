@@ -52,6 +52,7 @@ dependencies:
   flutter_widget_from_html_core: ^0.15.2
   battery_plus: ^6.2.0
   pinyin: ^3.3.0
+  reorderable_grid_view: ^2.2.8
 
 
 dev_dependencies:
@@ -72,3 +73,4 @@ flutter:
   assets:
     - pubspec.yaml
     - assets/icon/icon.png
+    - assets/img/click_me.png

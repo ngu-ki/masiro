@@ -611,6 +611,12 @@ abstract class AppLocalizations {
   /// **'名称'**
   String get sortByName;
 
+  /// No description provided for @sortByChapterCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'话数'**
+  String get sortByChapterCount;
+
   /// No description provided for @sortByWordCount.
   ///
   /// In zh, this message translates to:
@@ -784,6 +790,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'强制简体'**
   String get forceSimplified;
+
+  /// No description provided for @searchInFavorites.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索书架'**
+  String get searchInFavorites;
+
+  /// No description provided for @noSearchResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'未找到相关书籍'**
+  String get noSearchResults;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

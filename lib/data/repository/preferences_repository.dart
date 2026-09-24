@@ -55,7 +55,7 @@ class PreferencesRepository {
 
   /// Display mode of the favorites screen ('list' or 'grid').
   String get favoritesViewMode =>
-      _prefs.getString(_favoritesViewModeKey) ?? 'list';
+      _prefs.getString(_favoritesViewModeKey) ?? 'grid';
 
   set favoritesViewMode(String value) =>
       _prefs.setString(_favoritesViewModeKey, value);

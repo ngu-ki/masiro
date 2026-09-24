@@ -18,6 +18,9 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  final GlobalKey<SearchTopBarState> _searchBarKey =
+      GlobalKey<SearchTopBarState>();
+
   @override
   Widget build(BuildContext context) {
     final initialKeyword = widget.initialKeyword;
@@ -34,7 +37,10 @@ class _SearchScreenState extends State<SearchScreen> {
           },
           child: Column(
             children: [
-              SearchTopBar(initialKeyword: initialKeyword),
+              SearchTopBar(
+                key: _searchBarKey,
+                initialKeyword: initialKeyword,
+              ),
               Expanded(child: buildBody(context)),
             ],
           ),
@@ -62,6 +68,9 @@ class _SearchScreenState extends State<SearchScreen> {
               novels: state.novels,
               status: state.infiniteListStatus,
               totalCount: state.totalCount,
+              hasSearched: state.hasSearched,
+              onTapMascot: () =>
+                  _searchBarKey.currentState?.submitCurrentText(),
             );
         }
       },

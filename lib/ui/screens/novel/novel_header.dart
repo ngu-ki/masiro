@@ -6,12 +6,16 @@ import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/platform.dart';
 import 'package:masiro/misc/url.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
+import 'package:masiro/ui/widgets/manual_tooltip.dart';
 
 class NovelHeader extends StatefulWidget {
   final NovelDetailHeader header;
 
   /// Total number of chapters across all volumes.
   final int chapterCount;
+
+  /// Minimum user level required to read this novel. Zero means no limit.
+  final int lvLimit;
 
   /// Called when the author name is tapped.
   final void Function(String author)? onAuthorTap;
@@ -20,6 +24,7 @@ class NovelHeader extends StatefulWidget {
     super.key,
     required this.header,
     required this.chapterCount,
+    this.lvLimit = 0,
     this.onAuthorTap,
   });
 
@@ -52,11 +57,32 @@ class _NovelHeaderState extends State<NovelHeader> {
 
     return Row(
       children: [
-        CachedImage(
-          url: header.coverImg.toUrl(),
+        SizedBox(
           width: coverWidth,
           height: coverWidth / coverRatio,
-          fit: BoxFit.cover,
+          child: Stack(
+            children: [
+              CachedImage(
+                url: header.coverImg.toUrl(),
+                width: coverWidth,
+                height: coverWidth / coverRatio,
+                fit: BoxFit.cover,
+              ),
+              if (widget.lvLimit > 0)
+                Positioned(
+                  right: 6,
+                  bottom: 6,
+                  child: ManualTooltip(
+                    icon: Icon(
+                      Icons.info_outline_rounded,
+                      size: 20,
+                      color: Colors.white.withValues(alpha: 0.95),
+                    ),
+                    tooltip: localizations.levelLimitMessage(widget.lvLimit),
+                  ),
+                ),
+            ],
+          ),
         ),
         const SizedBox(width: 20),
         Expanded(

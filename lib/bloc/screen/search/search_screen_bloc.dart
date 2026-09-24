@@ -31,6 +31,7 @@ class SearchScreenBloc extends Bloc<SearchScreenEvent, SearchScreenState> {
           totalCount: result.totalCount,
           totalPages: result.totalPages,
           infiniteListStatus: InfiniteListStatus.success,
+          hasSearched: true,
         ),
       );
     } catch (e) {

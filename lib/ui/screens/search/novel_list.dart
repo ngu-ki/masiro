@@ -16,11 +16,21 @@ class NovelList extends StatefulWidget {
   final InfiniteListStatus status;
   final int totalCount;
 
+  /// Whether a search has already been performed. Before the first search
+  /// the discovery page shows a tappable mascot instead of the empty
+  /// message.
+  final bool hasSearched;
+
+  /// Called when the mascot on the initial empty discovery page is tapped.
+  final void Function()? onTapMascot;
+
   const NovelList({
     super.key,
     required this.novels,
     required this.status,
     required this.totalCount,
+    this.hasSearched = true,
+    this.onTapMascot,
   });
 
   @override
@@ -50,6 +60,17 @@ class _NovelListState extends State<NovelList> {
     final status = widget.status;
 
     if (novels.isEmpty) {
+      if (!widget.hasSearched) {
+        return Center(
+          child: GestureDetector(
+            onTap: widget.onTapMascot,
+            child: Image.asset(
+              'assets/img/click_me.png',
+              width: MediaQuery.of(context).size.width * 0.6,
+            ),
+          ),
+        );
+      }
       return Message(message: localizations.noContentMessage);
     }
 
@@ -65,8 +86,10 @@ class _NovelListState extends State<NovelList> {
           author: n.author,
           lastUpdated: n.lastUpdated,
           brief: n.brief,
-          lvLimit: n.lvLimit,
-          onTap: () => context.push(RoutePath.novel, extra: {'novelId': n.id}),
+          onTap: () => context.push(
+            RoutePath.novel,
+            extra: {'novelId': n.id, 'lvLimit': n.lvLimit},
+          ),
         );
         if (isDesktop) {
           card = Center(

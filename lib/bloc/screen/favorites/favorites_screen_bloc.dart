@@ -33,7 +33,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     on<FavoritesScreenRefreshed>(_onRefreshFavoritesScreen);
     on<FavoritesScreenSortSelected>(_onSortSelected);
     on<FavoritesScreenManualModeToggled>(_onManualModeToggled);
-    on<FavoritesScreenNovelMoved>(_onNovelMoved);
+    on<FavoritesScreenNovelsReordered>(_onNovelsReordered);
     on<FavoritesScreenViewModeChanged>(_onViewModeChanged);
     on<FavoritesScreenNovelStatUpdated>(_onNovelStatUpdated);
     on<FavoritesScreenBatchModeToggled>(_onBatchModeToggled);
@@ -50,12 +50,23 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       return FavoritesScreenInitialState();
     }
     final prefs = PreferencesRepository();
+    final stats = prefs.bookshelfStats;
+    // The default sort mode is recently read, so sort the cached list by
+    // the last-read chapter id (most recently read on top) on the first
+    // paint as well, instead of showing the manual order until the network
+    // returns.
+    final novels = List<Novel>.from(cached)
+      ..sort((a, b) {
+        final la = stats[a.id]?.lastReadChapterId ?? -1;
+        final lb = stats[b.id]?.lastReadChapterId ?? -1;
+        return lb.compareTo(la);
+      });
     return FavoritesScreenLoadedState(
-      novels: List.from(cached),
+      novels: novels,
       viewMode: prefs.favoritesViewMode == FavoritesViewMode.grid.name
           ? FavoritesViewMode.grid
           : FavoritesViewMode.list,
-      stats: prefs.bookshelfStats,
+      stats: stats,
     );
   }
 
@@ -85,7 +96,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       } else {
         emit(
           FavoritesScreenLoadedState(
-            novels: _sortNovels(_novels),
+            novels: _sortNovels(_novels, FavoritesSortMode.recentlyRead),
             viewMode: _storedViewMode,
             stats: _stats,
           ),
@@ -115,7 +126,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         _stats = _preferencesRepository.bookshelfStats;
         emit(
           FavoritesScreenLoadedState(
-            novels: _sortNovels(_novels),
+            novels: _sortNovels(_novels, FavoritesSortMode.recentlyRead),
             viewMode: _storedViewMode,
             stats: _stats,
           ),
@@ -137,8 +148,21 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     }
 
     final mode = event.mode;
-    var direction = FavoritesSortDirection.ascending;
-    if (current.sortMode == mode && mode != FavoritesSortMode.defaultOrder) {
+    // Last updated, word count and chapter count start descending on the
+    // first tap (newest / largest on top).
+    final startsDescending = mode == FavoritesSortMode.lastUpdated ||
+        mode == FavoritesSortMode.wordCount ||
+        mode == FavoritesSortMode.chapterCount;
+    var direction = startsDescending
+        ? FavoritesSortDirection.descending
+        : FavoritesSortDirection.ascending;
+    // Default order, recently read, word count and chapter count never flip
+    // on re-tap; only the other modes toggle their direction.
+    if (current.sortMode == mode &&
+        mode != FavoritesSortMode.defaultOrder &&
+        mode != FavoritesSortMode.recentlyRead &&
+        mode != FavoritesSortMode.wordCount &&
+        mode != FavoritesSortMode.chapterCount) {
       direction = current.sortDirection == FavoritesSortDirection.ascending
           ? FavoritesSortDirection.descending
           : FavoritesSortDirection.ascending;
@@ -276,8 +300,8 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     );
   }
 
-  void _onNovelMoved(
-    FavoritesScreenNovelMoved event,
+  void _onNovelsReordered(
+    FavoritesScreenNovelsReordered event,
     Emitter<FavoritesScreenState> emit,
   ) {
     final current = state;
@@ -285,24 +309,21 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       return;
     }
 
-    final ids = current.novels.map((n) => n.id).toList();
-    final from = ids.indexOf(event.novelId);
-    final to = event.moveUp ? from - 1 : from + 1;
-    if (from < 0 || to < 0 || to >= ids.length) {
+    if (event.oldIndex < 0 ||
+        event.newIndex < 0 ||
+        event.oldIndex >= current.novels.length ||
+        event.newIndex >= current.novels.length) {
       return;
     }
-    ids.removeAt(from);
-    ids.insert(to, event.novelId);
+
+    final novels = [...current.novels];
+    final novel = novels.removeAt(event.oldIndex);
+    novels.insert(event.newIndex, novel);
 
     _preferencesRepository.favoritesOrder =
-        ids.map((id) => '$id').toList();
+        novels.map((n) => '${n.id}').toList();
 
-    final byId = {for (final n in current.novels) n.id: n};
-    emit(
-      current.copyWith(
-        novels: ids.map((id) => byId[id]).whereType<Novel>().toList(),
-      ),
-    );
+    emit(current.copyWith(novels: novels));
   }
 
   Future<void> _onViewModeChanged(
@@ -333,7 +354,8 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     newStats[event.novelId] = event.stat;
     _stats = newStats;
     _preferencesRepository.bookshelfStats = _stats;
-    final novels = current.sortMode == FavoritesSortMode.recentlyRead
+    final novels = current.sortMode == FavoritesSortMode.recentlyRead ||
+            current.sortMode == FavoritesSortMode.chapterCount
         ? _sortNovels(_novels, current.sortMode, current.sortDirection)
         : null;
     emit(current.copyWith(stats: _stats, novels: novels));
@@ -402,9 +424,10 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         _preferencesRepository.bookshelfStats = _stats;
         final current = state;
         if (current is FavoritesScreenLoadedState) {
-          // Re-sort novels if currently in recentlyRead mode, since the
-          // sort depends on the enriched lastReadChapterId.
-          final novels = current.sortMode == FavoritesSortMode.recentlyRead
+          // Re-sort novels if the current order depends on the enriched
+          // stats (recently read or chapter count).
+          final novels = current.sortMode == FavoritesSortMode.recentlyRead ||
+                  current.sortMode == FavoritesSortMode.chapterCount
               ? _sortNovels(_novels, current.sortMode, current.sortDirection)
               : null;
           emit(
@@ -429,19 +452,16 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       case FavoritesSortMode.defaultOrder:
         return _sortByManualOrder(novels);
       case FavoritesSortMode.recentlyRead:
-        // Sort by the last read chapter ID from the enriched stats.
-        // A higher chapter ID generally means more recently read.
-        // Novels without stats go to the end.
-        final sorted = [...novels]..sort((a, b) {
+        // Fixed order: the most recently read novel on top. A higher
+        // last-read chapter ID generally means more recently read; novels
+        // without stats go to the end.
+        return [...novels]..sort((a, b) {
             final sa = _stats[a.id];
             final sb = _stats[b.id];
             final la = sa?.lastReadChapterId ?? -1;
             final lb = sb?.lastReadChapterId ?? -1;
             return lb.compareTo(la);
           });
-        return direction == FavoritesSortDirection.descending
-            ? sorted.reversed.toList()
-            : sorted;
       case FavoritesSortMode.lastUpdated:
         final sorted = [...novels]
           ..sort(
@@ -457,10 +477,25 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
             ? sorted.reversed.toList()
             : sorted;
       case FavoritesSortMode.wordCount:
-        final sorted = [...novels]..sort((a, b) => a.words.compareTo(b.words));
-        return direction == FavoritesSortDirection.descending
-            ? sorted.reversed.toList()
-            : sorted;
+        // Always descending: novels with more words come first.
+        return [...novels]
+          ..sort((a, b) => b.words.compareTo(a.words));
+      case FavoritesSortMode.chapterCount:
+        // Always descending: sort by the total chapter count from the
+        // enriched stats. Novels whose stats are not loaded yet (count 0)
+        // always sink to the bottom.
+        int countOf(Novel n) => _stats[n.id]?.totalChapters ?? 0;
+        return [...novels]..sort((a, b) {
+          final ca = countOf(a);
+          final cb = countOf(b);
+          if (ca == 0 && cb != 0) {
+            return 1;
+          }
+          if (cb == 0 && ca != 0) {
+            return -1;
+          }
+          return cb.compareTo(ca);
+        });
     }
   }
 

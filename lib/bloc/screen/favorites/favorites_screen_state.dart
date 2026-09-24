@@ -16,8 +16,11 @@ enum FavoritesSortMode {
   /// Sort by the novel title.
   name,
 
-  /// Sort by the word count.
+  /// Sort by the word count (descending only).
   wordCount,
+
+  /// Sort by the total chapter count (descending only).
+  chapterCount,
 }
 
 /// The sort direction of the favorites list.
@@ -70,10 +73,10 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
 
   FavoritesScreenLoadedState({
     this.novels = const [],
-    this.sortMode = FavoritesSortMode.defaultOrder,
+    this.sortMode = FavoritesSortMode.recentlyRead,
     this.sortDirection = FavoritesSortDirection.ascending,
     this.manualAdjusting = false,
-    this.viewMode = FavoritesViewMode.list,
+    this.viewMode = FavoritesViewMode.grid,
     this.stats = const {},
     this.isBatchMode = false,
     this.selectedNovelIds = const {},

@@ -143,7 +143,8 @@ final _novelScreenRoute = GoRoute(
   builder: (context, state) {
     final extra = state.extra as Map;
     final novelId = extra['novelId']!;
-    return NovelScreen(novelId: novelId);
+    final lvLimit = extra['lvLimit'] as int? ?? 0;
+    return NovelScreen(novelId: novelId, lvLimit: lvLimit);
   },
 );
 
