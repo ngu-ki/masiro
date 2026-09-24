@@ -13,6 +13,8 @@ class SettingsSheet extends StatefulWidget {
   final void Function(PageTurnMode mode) onPageTurnModeChanged;
   final IndentMode indentMode;
   final void Function(IndentMode mode) onIndentModeChanged;
+  final bool shrinkEmptyLines;
+  final void Function(bool enabled) onShrinkEmptyLinesChanged;
 
   const SettingsSheet({
     super.key,
@@ -24,6 +26,8 @@ class SettingsSheet extends StatefulWidget {
     required this.onPageTurnModeChanged,
     required this.indentMode,
     required this.onIndentModeChanged,
+    required this.shrinkEmptyLines,
+    required this.onShrinkEmptyLinesChanged,
   });
 
   @override
@@ -35,6 +39,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   late int backgroundColor;
   late PageTurnMode pageTurnMode;
   late IndentMode indentMode;
+  late bool shrinkEmptyLines;
 
   @override
   void initState() {
@@ -43,6 +48,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
     backgroundColor = widget.backgroundColor;
     pageTurnMode = widget.pageTurnMode;
     indentMode = widget.indentMode;
+    shrinkEmptyLines = widget.shrinkEmptyLines;
   }
 
   @override
@@ -118,6 +124,16 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 IndentMode.two,
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(localizations.shrinkEmptyLines),
+            value: shrinkEmptyLines,
+            onChanged: (enabled) {
+              setState(() => shrinkEmptyLines = enabled);
+              widget.onShrinkEmptyLinesChanged(enabled);
+            },
           ),
         ],
       ),

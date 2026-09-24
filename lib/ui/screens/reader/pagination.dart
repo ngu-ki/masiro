@@ -21,7 +21,12 @@ class ReaderTextRun {
     required this.start,
     required this.end,
     required this.height,
+    this.isBlankGap = false,
   });
+
+  /// Whether this run is a shrunk blank line (e.g. a paragraph made of
+  /// `&nbsp;`) rendered as a small gap instead of a full text line.
+  final bool isBlankGap;
 }
 
 /// The paginated content of a single reader page.
@@ -58,6 +63,18 @@ class ReaderPageContent {
 /// Each paragraph (text element) is measured with a [TextPainter] and split
 /// into lines; lines are then packed into pages. A full page image always
 /// occupies a page of its own.
+/// Height (relative to the font size) of a blank line when blank-line
+/// shrinking is enabled, e.g. a paragraph consisting only of `&nbsp;`.
+const double shrunkBlankLineFactor = 0.4;
+
+/// Whether [text] consists solely of white space, including no-break spaces
+/// (`&nbsp;`) and full-width spaces used by some sources.
+bool isBlankTextLine(String text) => text
+    .replaceAll('\u00A0', '')
+    .replaceAll('\u3000', '')
+    .trim()
+    .isEmpty;
+
 List<ReaderPageContent> paginateChapterContent({
   required List<ChapterContentElement> elements,
   required double maxWidth,
@@ -65,10 +82,16 @@ List<ReaderPageContent> paginateChapterContent({
   required TextStyle style,
   required double paragraphGap,
   String indentPrefix = '',
+  bool shrinkEmptyLines = false,
+  double firstPageHeaderHeight = 0.0,
 }) {
   final pages = <ReaderPageContent>[];
   var currentRuns = <ReaderTextRun>[];
   var usedHeight = 0.0;
+
+  // Space reserved on the first page for the chapter title rendered above
+  // the body text. Consumed before the first run is placed.
+  var pendingHeaderHeight = firstPageHeaderHeight;
 
   void flush() {
     if (currentRuns.isNotEmpty) {
@@ -83,6 +106,9 @@ List<ReaderPageContent> paginateChapterContent({
 
     if (element is ImageContent) {
       flush();
+      // A chapter starting with a full-page image has no room for the
+      // chapter title header; drop the reservation to avoid a blank gap.
+      pendingHeaderHeight = 0.0;
       pages.add(
         ReaderPageContent(image: element, imageElementIndex: elementIndex),
       );
@@ -91,6 +117,31 @@ List<ReaderPageContent> paginateChapterContent({
 
     final text = (element as TextContent).text;
     if (text.isEmpty) {
+      continue;
+    }
+
+    // Blank lines (e.g. paragraphs made only of `&nbsp;`) are collapsed into
+    // a small gap so adjacent paragraphs are not separated too far.
+    if (shrinkEmptyLines && isBlankTextLine(text)) {
+      // Drop blanks at the top of a page and collapse consecutive blanks.
+      if (currentRuns.isEmpty || currentRuns.last.isBlankGap) {
+        continue;
+      }
+      final blankGap = (style.fontSize ?? 14.0) * shrunkBlankLineFactor;
+      if (usedHeight + blankGap > maxHeight) {
+        flush();
+      } else {
+        currentRuns.add(
+          ReaderTextRun(
+            elementIndex: elementIndex,
+            start: 0,
+            end: 0,
+            height: blankGap,
+            isBlankGap: true,
+          ),
+        );
+        usedHeight += blankGap;
+      }
       continue;
     }
 
@@ -131,6 +182,13 @@ List<ReaderPageContent> paginateChapterContent({
         } else {
           usedHeight += paragraphGap;
         }
+      }
+
+      // Consume the chapter title reservation before the very first run,
+      // so the first page leaves room for the rendered title.
+      if (pendingHeaderHeight > 0.0 && currentRuns.isEmpty) {
+        usedHeight += pendingHeaderHeight;
+        pendingHeaderHeight = 0.0;
       }
 
       if (currentRuns.isNotEmpty && usedHeight + lineHeight > maxHeight) {

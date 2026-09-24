@@ -5,6 +5,7 @@ import 'package:masiro/data/network/response/volume_response.dart';
 class ChapterDetailResponse {
   int chapterId;
   String title;
+  String? novelTitle;
   String textContent;
   String csrfToken;
   List<VolumeResponse> volumes;
@@ -16,6 +17,7 @@ class ChapterDetailResponse {
   ChapterDetailResponse({
     required this.chapterId,
     required this.title,
+    this.novelTitle,
     required this.textContent,
     required this.csrfToken,
     required this.volumes,
@@ -43,10 +45,17 @@ class ChapterDetailResponse {
     final paymentInfo =
         didPay ? null : PaymentInfoResponse.fromDocument(document);
     final titleHint = querySelectorAll('div.hint p a').lastOrNull?.text;
+    final breadcrumbLinks = querySelectorAll('div.hint p a');
+    final novelTitle = breadcrumbLinks
+        .where((a) => (a.attributes['href'] ?? '').contains('novelView'))
+        .map((a) => a.text.trim())
+        .where((t) => t.isNotEmpty)
+        .firstOrNull;
 
     return ChapterDetailResponse(
       chapterId: int.parse(chapterId),
       title: title ?? titleHint ?? '',
+      novelTitle: novelTitle,
       textContent: textContent,
       csrfToken: csrfToken,
       volumes: volumes,

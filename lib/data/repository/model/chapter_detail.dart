@@ -4,6 +4,7 @@ import 'package:masiro/data/repository/model/volume.dart';
 class ChapterDetail extends Equatable {
   final int chapterId;
   final String title;
+  final String? novelTitle;
   final ChapterContent content;
   final String textContent;
   final List<Volume> volumes;
@@ -14,6 +15,7 @@ class ChapterDetail extends Equatable {
   const ChapterDetail({
     required this.chapterId,
     required this.title,
+    this.novelTitle,
     required this.content,
     required this.textContent,
     required this.csrfToken,
@@ -25,6 +27,7 @@ class ChapterDetail extends Equatable {
   List<Object?> get props => [
         chapterId,
         title,
+        novelTitle,
         content,
         textContent,
         volumes,
@@ -43,17 +46,27 @@ class ChapterContent extends Equatable {
 
 sealed class ChapterContentElement extends Equatable {}
 
+/// A half-open character range `[start, end)` within [TextContent.text].
+typedef MutedRange = ({int start, int end});
+
 class TextContent extends ChapterContentElement {
   final String text;
 
-  TextContent({required this.text});
+  /// Ranges of [text] whose source color is non-black (e.g. inline colored
+  /// spans). They are rendered in a muted gray instead of the body color.
+  final List<MutedRange> mutedRanges;
 
-  TextContent copyWith({String? text}) {
-    return TextContent(text: text ?? this.text);
+  TextContent({required this.text, this.mutedRanges = const []});
+
+  TextContent copyWith({String? text, List<MutedRange>? mutedRanges}) {
+    return TextContent(
+      text: text ?? this.text,
+      mutedRanges: mutedRanges ?? this.mutedRanges,
+    );
   }
 
   @override
-  List<Object?> get props => [text];
+  List<Object?> get props => [text, mutedRanges];
 }
 
 class ImageContent extends ChapterContentElement {

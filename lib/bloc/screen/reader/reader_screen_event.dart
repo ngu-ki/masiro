@@ -72,3 +72,12 @@ final class ReaderScreenIndentModeChanged extends ReaderScreenEvent {
   @override
   List<Object> get props => [indentMode];
 }
+
+final class ReaderScreenShrinkEmptyLinesChanged extends ReaderScreenEvent {
+  final bool shrinkEmptyLines;
+
+  ReaderScreenShrinkEmptyLinesChanged({required this.shrinkEmptyLines});
+
+  @override
+  List<Object> get props => [shrinkEmptyLines];
+}

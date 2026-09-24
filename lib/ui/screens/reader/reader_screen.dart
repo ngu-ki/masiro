@@ -41,6 +41,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   int? _loadedChapterId;
   ReadPosition _currentPosition = startPosition;
   final _progressNotifier = ValueNotifier<double>(0.0);
+  final _currentPageNotifier = ValueNotifier<int>(0);
   final _pagerController = ReaderPagerController();
 
   @override
@@ -54,6 +55,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   void dispose() {
     _progressNotifier.dispose();
+    _currentPageNotifier.dispose();
     if (!isDesktop) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
@@ -124,6 +126,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
       _loadedChapterId = chapterDetail.chapterId;
       _currentPosition = state.position;
       _progressNotifier.value = 0.0;
+      _currentPageNotifier.value = 0;
+    }
+
+    // While the menu is visible the system status bar is shown; reading
+    // itself stays fully immersive.
+    if (!isDesktop) {
+      SystemChrome.setEnabledSystemUIMode(
+        isHudVisible ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
+      );
     }
 
     final volumes = chapterDetail.volumes;
@@ -137,7 +148,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
         children: [
           buildReaderContent(context, state),
           ReadingHud(
-            title: chapterDetail.title,
+            chapterTitle: chapterDetail.title,
+            novelTitle: chapterDetail.novelTitle,
+            currentPage: _currentPageNotifier,
             progress: _progressNotifier,
             color: contentColor,
             isVisible: !isHudVisible,
@@ -206,6 +219,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     indentMode: state.indentMode,
                     onIndentModeChanged: (mode) {
                       bloc.add(ReaderScreenIndentModeChanged(indentMode: mode));
+                    },
+                    shrinkEmptyLines: state.shrinkEmptyLines,
+                    onShrinkEmptyLinesChanged: (enabled) {
+                      bloc.add(
+                        ReaderScreenShrinkEmptyLinesChanged(
+                          shrinkEmptyLines: enabled,
+                        ),
+                      );
                     },
                   );
                 },
@@ -278,6 +299,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
       },
       pagerController: _pagerController,
       indentMode: state.indentMode,
+      shrinkEmptyLines: state.shrinkEmptyLines,
+      chapterTitle: chapterDetail.title,
+      onPageChanged: (index) => _currentPageNotifier.value = index,
     );
   }
 

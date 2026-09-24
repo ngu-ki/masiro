@@ -43,6 +43,14 @@ class ChapterContentPager extends StatefulWidget {
   final void Function() onNextChapter;
   final ReaderPagerController pagerController;
   final IndentMode indentMode;
+  final bool shrinkEmptyLines;
+
+  /// Title of the current chapter, shown at the top of the first page.
+  final String chapterTitle;
+
+  /// Called whenever the current page index changes (0-based, including the
+  /// chapter-end page).
+  final void Function(int index)? onPageChanged;
 
   const ChapterContentPager({
     super.key,
@@ -61,6 +69,9 @@ class ChapterContentPager extends StatefulWidget {
     required this.onNextChapter,
     required this.pagerController,
     this.indentMode = IndentMode.none,
+    this.shrinkEmptyLines = false,
+    required this.chapterTitle,
+    this.onPageChanged,
   });
 
   @override
@@ -113,13 +124,24 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
   String _buildConfigSignature() {
     return '${widget.chapterId}-${widget.fontSize}-${widget.mode.name}'
-        '-${widget.indentMode.name}';
+        '-${widget.indentMode.name}-${widget.shrinkEmptyLines}';
   }
 
   TextStyle _buildTextStyle(BuildContext context) {
     final defaultStyle = DefaultTextStyle.of(context).style;
     return defaultStyle.copyWith(
       fontSize: widget.fontSize.toDouble(),
+      color: widget.textColor,
+      height: 1.5,
+    );
+  }
+
+  /// Style of the chapter title: bold and two points larger than the body.
+  TextStyle _buildTitleStyle(BuildContext context) {
+    final defaultStyle = DefaultTextStyle.of(context).style;
+    return defaultStyle.copyWith(
+      fontSize: (widget.fontSize + 2).toDouble(),
+      fontWeight: FontWeight.bold,
       color: widget.textColor,
       height: 1.5,
     );
@@ -134,13 +156,24 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final style = _buildTextStyle(context);
+        final titleStyle = _buildTitleStyle(context);
         final paragraphGap = _buildParagraphGap();
+        final blankGap = widget.fontSize * shrunkBlankLineFactor;
         final mediaQuery = MediaQuery.of(context);
         final topInset = mediaQuery.padding.top + 44;
         final bottomInset = mediaQuery.padding.bottom + 44;
         final contentWidth =
             constraints.maxWidth - widget.padding.horizontal;
         final contentHeight = constraints.maxHeight - topInset - bottomInset;
+
+        // Measure the chapter title so the first page reserves its height.
+        final titlePainter = TextPainter(
+          text: TextSpan(text: widget.chapterTitle, style: titleStyle),
+          textDirection: TextDirection.ltr,
+          maxLines: 2,
+        )..layout(maxWidth: contentWidth);
+        final headerHeight = titlePainter.height + paragraphGap;
+        titlePainter.dispose();
 
         final signature =
             '$_configSignature-${contentWidth.toStringAsFixed(1)}x${contentHeight.toStringAsFixed(1)}';
@@ -153,6 +186,8 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
             style: style,
             paragraphGap: paragraphGap,
             indentPrefix: widget.indentMode.prefix,
+            shrinkEmptyLines: widget.shrinkEmptyLines,
+            firstPageHeaderHeight: headerHeight,
           );
           final restore = _pendingRestore ?? widget.initialPosition;
           _pendingRestore = null;
@@ -170,6 +205,10 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
           _pageController = PageController(initialPage: _currentPage);
         }
 
+        final firstPage = _pages.isNotEmpty ? _pages.first : null;
+        final showHeaderOnFirstPage = firstPage != null &&
+            !firstPage.isImagePage() &&
+            firstPage.runs.isNotEmpty;
         final pageWidgets = [
           for (var i = 0; i < _pages.length; i++)
             _buildPage(
@@ -177,10 +216,19 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
               _pages[i],
               style,
               paragraphGap,
+              blankGap,
               topInset: topInset,
               bottomInset: bottomInset,
               contentWidth: contentWidth,
               contentHeight: contentHeight,
+              header: i == 0 && showHeaderOnFirstPage
+                  ? Text(
+                      widget.chapterTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle,
+                    )
+                  : null,
             ),
         ];
         final chapterEndPage = _buildChapterEndPage(context);
@@ -216,11 +264,13 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     BuildContext context,
     ReaderPageContent page,
     TextStyle style,
-    double paragraphGap, {
+    double paragraphGap,
+    double blankGap, {
     required double topInset,
     required double bottomInset,
     required double contentWidth,
     required double contentHeight,
+    Widget? header,
   }) {
     if (page.isImagePage()) {
       return CachedImage(
@@ -234,17 +284,47 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     final elements = widget.content.elements;
     final children = <Widget>[];
     var lastElementIndex = -1;
+    // The chapter title already carries its own trailing gap, so the first
+    // body run must not add another paragraph gap.
+    var suppressNextGap = false;
+    if (header != null) {
+      children.add(header);
+      children.add(SizedBox(height: paragraphGap));
+      suppressNextGap = true;
+    }
     for (final run in page.runs) {
-      if (children.isNotEmpty && run.elementIndex != lastElementIndex) {
+      if (run.isBlankGap) {
+        children.add(SizedBox(height: blankGap));
+        lastElementIndex = run.elementIndex;
+        suppressNextGap = false;
+        continue;
+      }
+      if (!suppressNextGap &&
+          children.isNotEmpty &&
+          run.elementIndex != lastElementIndex) {
         children.add(SizedBox(height: paragraphGap));
       }
+      suppressNextGap = false;
       final element = elements[run.elementIndex] as TextContent;
       final displayText = '${widget.indentMode.prefix}${element.text}';
       var fragment = displayText.substring(run.start, run.end);
       if (fragment.endsWith('\n')) {
         fragment = fragment.substring(0, fragment.length - 1);
       }
-      children.add(Text(fragment, style: style));
+      children.add(
+        Text.rich(
+          TextSpan(
+            children: _buildFragmentSpans(
+              element: element,
+              fragment: fragment,
+              runStart: run.start,
+              prefixLength: widget.indentMode.prefix.length,
+              mutedColor: widget.textColor.withValues(alpha: 0.45),
+            ),
+          ),
+          style: style,
+        ),
+      );
       lastElementIndex = run.elementIndex;
     }
 
@@ -257,6 +337,63 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         children: children,
       ),
     );
+  }
+
+  /// Builds the spans of a page [fragment], splitting the source-colored
+  /// (muted) ranges out so they are rendered in gray.
+  ///
+  /// [runStart] is the fragment's start offset within
+  /// `indentPrefix + element.text`; [prefixLength] is the indent prefix
+  /// length, used to map element-level ranges to fragment offsets.
+  List<InlineSpan> _buildFragmentSpans({
+    required TextContent element,
+    required String fragment,
+    required int runStart,
+    required int prefixLength,
+    required Color mutedColor,
+  }) {
+    if (element.mutedRanges.isEmpty || fragment.isEmpty) {
+      return [TextSpan(text: fragment)];
+    }
+
+    // Intersect the element-level muted ranges with the visible fragment.
+    final textLength = element.text.length;
+    final elementStart = (runStart - prefixLength).clamp(0, textLength);
+    final elementEnd =
+        (runStart + fragment.length - prefixLength).clamp(0, textLength);
+    final localRanges = <(int, int)>[];
+    for (final range in element.mutedRanges) {
+      final start = range.start > elementStart ? range.start : elementStart;
+      final end = range.end < elementEnd ? range.end : elementEnd;
+      if (start < end) {
+        // Map element offset to fragment-local offset.
+        localRanges.add((prefixLength + start - runStart,
+            prefixLength + end - runStart));
+      }
+    }
+    if (localRanges.isEmpty) {
+      return [TextSpan(text: fragment)];
+    }
+    localRanges.sort((a, b) => a.$1.compareTo(b.$1));
+
+    final spans = <InlineSpan>[];
+    var cursor = 0;
+    for (final (start, end) in localRanges) {
+      if (start > cursor) {
+        spans.add(TextSpan(text: fragment.substring(cursor, start)));
+      }
+      spans.add(
+        TextSpan(
+          text: fragment.substring(start, end),
+          style: TextStyle(color: mutedColor),
+        ),
+      );
+      cursor = end;
+    }
+    if (cursor < fragment.length) {
+      spans.add(TextSpan(text: fragment.substring(cursor)));
+    }
+    return spans;
   }
 
   Widget _buildChapterEndPage(BuildContext context) {
@@ -397,6 +534,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     final total = _pages.length;
     widget.progressNotifier.value =
         total == 0 ? 0.0 : ((_currentPage + 1) / total).clamp(0.0, 1.0);
+    widget.onPageChanged?.call(_currentPage);
   }
 
   void _reportPosition(int index) {

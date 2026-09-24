@@ -32,6 +32,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
   final int backgroundColor;
   final PageTurnMode pageTurnMode;
   final IndentMode indentMode;
+  final bool shrinkEmptyLines;
 
   ReaderScreenLoadedState({
     required this.chapterDetail,
@@ -43,6 +44,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     this.backgroundColor = 0xFFFFFFFF,
     this.pageTurnMode = PageTurnMode.slide,
     this.indentMode = IndentMode.none,
+    this.shrinkEmptyLines = false,
   });
 
   ReaderScreenLoadedState copyWith({
@@ -55,6 +57,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     int? backgroundColor,
     PageTurnMode? pageTurnMode,
     IndentMode? indentMode,
+    bool? shrinkEmptyLines,
   }) {
     return ReaderScreenLoadedState(
       chapterDetail: chapterDetail ?? this.chapterDetail,
@@ -66,6 +69,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
       backgroundColor: backgroundColor ?? this.backgroundColor,
       pageTurnMode: pageTurnMode ?? this.pageTurnMode,
       indentMode: indentMode ?? this.indentMode,
+      shrinkEmptyLines: shrinkEmptyLines ?? this.shrinkEmptyLines,
     );
   }
 
@@ -80,5 +84,6 @@ class ReaderScreenLoadedState extends ReaderScreenState {
         backgroundColor,
         pageTurnMode,
         indentMode,
+        shrinkEmptyLines,
       ];
 }

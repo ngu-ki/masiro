@@ -355,6 +355,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get selectAll => '全选';
+
+  @override
+  String get shrinkEmptyLines => '空行缩小';
 }
 
 /// The translations for Chinese, as used in Hong Kong, using the Han script (`zh_Hant_HK`).
@@ -699,6 +702,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get selectAll => '全選';
+
+  @override
+  String get shrinkEmptyLines => '空行縮小';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -1043,4 +1049,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get selectAll => '全選';
+
+  @override
+  String get shrinkEmptyLines => '空行縮小';
 }

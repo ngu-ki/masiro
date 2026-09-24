@@ -13,6 +13,7 @@ ChapterDetail chapterDetailResponseToChapterDetail(ChapterDetailResponse d) {
   return ChapterDetail(
     chapterId: d.chapterId,
     title: d.title,
+    novelTitle: d.novelTitle,
     content: chapterContent,
     textContent: d.textContent,
     csrfToken: d.csrfToken,
@@ -74,6 +75,9 @@ ChapterContent _htmlToChapterContent(String html) {
 /// Image nodes are extracted as `ImageContent`.
 /// The extracted content is added to [contentElementList].
 ///
+/// [muted] indicates that the node inherits a non-black inline color, in which
+/// case its text ranges are recorded for muted (gray) rendering.
+///
 /// Example:
 /// ```
 /// input: '<p>he<span>llo</span> <img src="123"> <span>world</span></p>'
@@ -85,8 +89,9 @@ ChapterContent _htmlToChapterContent(String html) {
 /// - [contentElementList]: A list that will store the extracted `ChapterContentElement` objects.
 void _traverseNodeToExtractContent(
   Node node,
-  List<ChapterContentElement> contentElementList,
-) {
+  List<ChapterContentElement> contentElementList, {
+  bool muted = false,
+}) {
   final nodeType = node.nodeType;
 
   if (nodeType == Node.TEXT_NODE) {
@@ -94,9 +99,24 @@ void _traverseNodeToExtractContent(
     if (contentElementList.isNotEmpty &&
         contentElementList.last is TextContent) {
       final last = contentElementList.removeLast() as TextContent;
-      contentElementList.add(last.copyWith(text: last.text + text));
+      final mergedRanges = [...last.mutedRanges];
+      if (muted && text.isNotEmpty) {
+        mergedRanges.add(
+          (start: last.text.length, end: last.text.length + text.length),
+        );
+      }
+      contentElementList.add(
+        last.copyWith(text: last.text + text, mutedRanges: mergedRanges),
+      );
     } else {
-      contentElementList.add(TextContent(text: text));
+      contentElementList.add(
+        TextContent(
+          text: text,
+          mutedRanges: muted && text.isNotEmpty
+              ? [(start: 0, end: text.length)]
+              : const [],
+        ),
+      );
     }
     return;
   }
@@ -114,7 +134,39 @@ void _traverseNodeToExtractContent(
     return;
   }
 
-  for (final e in node.nodes) {
-    _traverseNodeToExtractContent(e, contentElementList);
+  var childMuted = muted;
+  if (nodeType == Node.ELEMENT_NODE && _hasNonBlackColor(node as Element)) {
+    childMuted = true;
   }
+
+  for (final e in node.nodes) {
+    _traverseNodeToExtractContent(e, contentElementList, muted: childMuted);
+  }
+}
+
+/// Matches a CSS `color:` declaration inside an inline `style` attribute.
+final _inlineColorRegExp = RegExp(r'color\s*:\s*([^;]+)', caseSensitive: false);
+
+/// Whether [element] declares a non-black color via an inline `style` color or
+/// a legacy `<font color>` attribute.
+bool _hasNonBlackColor(Element element) {
+  final fontColor = element.localName == 'font'
+      ? element.attributes['color']
+      : null;
+  final style = element.attributes['style'] ?? '';
+  final inlineColor = _inlineColorRegExp.firstMatch(style)?.group(1);
+  final raw = (fontColor ?? inlineColor ?? '').trim().toLowerCase();
+  if (raw.isEmpty) {
+    return false;
+  }
+  final normalized = raw.replaceAll(RegExp(r'\s+'), '');
+  const blackValues = {
+    'black',
+    '#000',
+    '#000000',
+    'rgb(0,0,0)',
+    'rgba(0,0,0,1)',
+    'rgba(0,0,0,1.0)',
+  };
+  return !blackValues.contains(normalized);
 }

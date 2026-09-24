@@ -14,6 +14,7 @@ const _bookshelfStatsKey = 'bookshelfStats';
 const _readerBackgroundColorKey = 'readerBackgroundColor';
 const _pageTurnModeKey = 'pageTurnMode';
 const _indentModeKeyPrefix = 'indentMode_';
+const _shrinkEmptyLinesKeyPrefix = 'shrinkEmptyLines_';
 
 // Represents the current version of the shared preferences data
 const _currentVersion = 10;
@@ -107,5 +108,16 @@ class PreferencesRepository {
 
   void setIndentMode(int novelId, String value) {
     _prefs.setString('$_indentModeKeyPrefix$novelId', value);
+  }
+
+  /// Whether blank lines (e.g. paragraphs made of `&nbsp;`) are shrunk for
+  /// the given novel.
+  ///
+  /// The preference is kept separately for each novel.
+  bool getShrinkEmptyLines(int novelId) =>
+      _prefs.getBool('$_shrinkEmptyLinesKeyPrefix$novelId') ?? false;
+
+  void setShrinkEmptyLines(int novelId, bool value) {
+    _prefs.setBool('$_shrinkEmptyLinesKeyPrefix$novelId', value);
   }
 }

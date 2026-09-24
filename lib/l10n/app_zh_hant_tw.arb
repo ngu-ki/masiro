@@ -110,5 +110,6 @@
   "moreActions": "更多",
   "batchManagement": "批量管理",
   "removeFromFavorites": "移除收藏",
-  "selectAll": "全選"
+  "selectAll": "全選",
+  "shrinkEmptyLines": "空行縮小"
 }

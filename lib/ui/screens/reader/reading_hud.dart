@@ -8,14 +8,24 @@ import 'package:flutter/material.dart';
 /// the chapter title at the top left, the reading progress at the bottom
 /// left and the clock with the battery level at the bottom right.
 class ReadingHud extends StatefulWidget {
-  final String title;
+  /// Title of the current chapter, shown on every page except the first one.
+  final String chapterTitle;
+
+  /// Title of the novel, shown at the top left of the first page.
+  final String? novelTitle;
+
+  /// Current 0-based page index, used to switch the top-left title.
+  final ValueListenable<int> currentPage;
+
   final ValueListenable<double> progress;
   final Color color;
   final bool isVisible;
 
   const ReadingHud({
     super.key,
-    required this.title,
+    required this.chapterTitle,
+    required this.novelTitle,
+    required this.currentPage,
     required this.progress,
     required this.color,
     required this.isVisible,
@@ -44,11 +54,24 @@ class _ReadingHudState extends State<ReadingHud> {
               left: 16,
               right: 16,
               top: mediaQuery.padding.top + 10,
-              child: Text(
-                widget.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: hudStyle,
+              child: ValueListenableBuilder<int>(
+                valueListenable: widget.currentPage,
+                builder: (context, pageIndex, _) {
+                  // The first page shows the novel title; other pages show
+                  // the current chapter title.
+                  final novelTitle = widget.novelTitle;
+                  final displayTitle = pageIndex == 0 &&
+                          novelTitle != null &&
+                          novelTitle.isNotEmpty
+                      ? novelTitle
+                      : widget.chapterTitle;
+                  return Text(
+                    displayTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: hudStyle,
+                  );
+                },
               ),
             ),
             Positioned(

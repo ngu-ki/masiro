@@ -42,6 +42,9 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     );
     on<ReaderScreenPageTurnModeChanged>(_onReaderScreenPageTurnModeChanged);
     on<ReaderScreenIndentModeChanged>(_onReaderScreenIndentModeChanged);
+    on<ReaderScreenShrinkEmptyLinesChanged>(
+      _onReaderScreenShrinkEmptyLinesChanged,
+    );
   }
 
   ReadingMode _readingModeOf(PageTurnMode pageTurnMode) {
@@ -64,6 +67,8 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
       final indentMode = indentModeFromName(
         preferencesRepository.getIndentMode(novelId),
       );
+      final shrinkEmptyLines =
+          preferencesRepository.getShrinkEmptyLines(novelId);
       final chapterRecord = await novelRecordRepository.findChapterRecord(
         currentUser!.userId,
         chapterId,
@@ -78,6 +83,7 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
           backgroundColor: preferencesRepository.readerBackgroundColor,
           pageTurnMode: pageTurnMode,
           indentMode: indentMode,
+          shrinkEmptyLines: shrinkEmptyLines,
           readingMode: _readingModeOf(pageTurnMode),
         ),
       );
@@ -191,6 +197,18 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     preferencesRepository.setIndentMode(novelId, event.indentMode.name);
     final loadedState = state as ReaderScreenLoadedState;
     emit(loadedState.copyWith(indentMode: event.indentMode));
+  }
+
+  Future<void> _onReaderScreenShrinkEmptyLinesChanged(
+    ReaderScreenShrinkEmptyLinesChanged event,
+    Emitter<ReaderScreenState> emit,
+  ) async {
+    if (state is! ReaderScreenLoadedState) {
+      return;
+    }
+    preferencesRepository.setShrinkEmptyLines(novelId, event.shrinkEmptyLines);
+    final loadedState = state as ReaderScreenLoadedState;
+    emit(loadedState.copyWith(shrinkEmptyLines: event.shrinkEmptyLines));
   }
 
   Future<String> purchasePaidChapter(PaymentInfo paymentInfo) async {

@@ -766,6 +766,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'全选'**
   String get selectAll;
+
+  /// No description provided for @shrinkEmptyLines.
+  ///
+  /// In zh, this message translates to:
+  /// **'空行缩小'**
+  String get shrinkEmptyLines;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
