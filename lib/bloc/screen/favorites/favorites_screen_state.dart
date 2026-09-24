@@ -13,9 +13,6 @@ enum FavoritesSortMode {
   /// Sort by the last updated time.
   lastUpdated,
 
-  /// Sort by the novel title.
-  name,
-
   /// Sort by the word count (descending only).
   wordCount,
 
@@ -73,7 +70,7 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
 
   FavoritesScreenLoadedState({
     this.novels = const [],
-    this.sortMode = FavoritesSortMode.recentlyRead,
+    this.sortMode = FavoritesSortMode.defaultOrder,
     this.sortDirection = FavoritesSortDirection.ascending,
     this.manualAdjusting = false,
     this.viewMode = FavoritesViewMode.grid,

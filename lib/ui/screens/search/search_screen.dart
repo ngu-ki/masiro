@@ -69,8 +69,9 @@ class _SearchScreenState extends State<SearchScreen> {
               status: state.infiniteListStatus,
               totalCount: state.totalCount,
               hasSearched: state.hasSearched,
-              onTapMascot: () =>
-                  _searchBarKey.currentState?.openSearchView(),
+              onTapMascot: () => context
+                  .read<SearchScreenBloc>()
+                  .add(const SearchScreenSearched(keyword: '')),
             );
         }
       },

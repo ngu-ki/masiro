@@ -596,7 +596,7 @@ abstract class AppLocalizations {
   /// No description provided for @sortDefault.
   ///
   /// In zh, this message translates to:
-  /// **'默认'**
+  /// **'默认排序'**
   String get sortDefault;
 
   /// No description provided for @recentlyRead.
@@ -604,12 +604,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'最近阅读'**
   String get recentlyRead;
-
-  /// No description provided for @sortByName.
-  ///
-  /// In zh, this message translates to:
-  /// **'名称'**
-  String get sortByName;
 
   /// No description provided for @sortByChapterCount.
   ///

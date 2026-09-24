@@ -50,23 +50,12 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       return FavoritesScreenInitialState();
     }
     final prefs = PreferencesRepository();
-    final stats = prefs.bookshelfStats;
-    // The default sort mode is recently read, so sort the cached list by
-    // the last-read chapter id (most recently read on top) on the first
-    // paint as well, instead of showing the manual order until the network
-    // returns.
-    final novels = List<Novel>.from(cached)
-      ..sort((a, b) {
-        final la = stats[a.id]?.lastReadChapterId ?? -1;
-        final lb = stats[b.id]?.lastReadChapterId ?? -1;
-        return lb.compareTo(la);
-      });
     return FavoritesScreenLoadedState(
-      novels: novels,
+      novels: List.from(cached),
       viewMode: prefs.favoritesViewMode == FavoritesViewMode.grid.name
           ? FavoritesViewMode.grid
           : FavoritesViewMode.list,
-      stats: stats,
+      stats: prefs.bookshelfStats,
     );
   }
 
@@ -96,7 +85,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       } else {
         emit(
           FavoritesScreenLoadedState(
-            novels: _sortNovels(_novels, FavoritesSortMode.recentlyRead),
+            novels: _sortNovels(_novels),
             viewMode: _storedViewMode,
             stats: _stats,
           ),
@@ -126,7 +115,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         _stats = _preferencesRepository.bookshelfStats;
         emit(
           FavoritesScreenLoadedState(
-            novels: _sortNovels(_novels, FavoritesSortMode.recentlyRead),
+            novels: _sortNovels(_novels),
             viewMode: _storedViewMode,
             stats: _stats,
           ),
@@ -468,11 +457,6 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
             (a, b) => _parseTime(a.lastUpdatedTime)
                 .compareTo(_parseTime(b.lastUpdatedTime)),
           );
-        return direction == FavoritesSortDirection.descending
-            ? sorted.reversed.toList()
-            : sorted;
-      case FavoritesSortMode.name:
-        final sorted = [...novels]..sort((a, b) => a.title.compareTo(b.title));
         return direction == FavoritesSortDirection.descending
             ? sorted.reversed.toList()
             : sorted;

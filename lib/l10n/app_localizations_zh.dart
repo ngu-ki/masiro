@@ -324,13 +324,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sortMode => '排序方式';
 
   @override
-  String get sortDefault => '默认';
+  String get sortDefault => '默认排序';
 
   @override
   String get recentlyRead => '最近阅读';
-
-  @override
-  String get sortByName => '名称';
 
   @override
   String get sortByChapterCount => '话数';
@@ -695,13 +692,10 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get sortMode => '排序方式';
 
   @override
-  String get sortDefault => '默认';
+  String get sortDefault => '預設排序';
 
   @override
-  String get recentlyRead => '最近阅读';
-
-  @override
-  String get sortByName => '名称';
+  String get recentlyRead => '最近閱讀';
 
   @override
   String get sortByChapterCount => '話數';
@@ -1057,13 +1051,10 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get sortMode => '排序方式';
 
   @override
-  String get sortDefault => '默认';
+  String get sortDefault => '預設排序';
 
   @override
-  String get recentlyRead => '最近阅读';
-
-  @override
-  String get sortByName => '名称';
+  String get recentlyRead => '最近閱讀';
 
   @override
   String get sortByChapterCount => '話數';

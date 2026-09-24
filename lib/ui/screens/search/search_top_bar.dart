@@ -34,14 +34,6 @@ class SearchTopBarState extends State<SearchTopBar> {
     super.dispose();
   }
 
-  /// Opens the full-screen search view and raises the keyboard, as if the
-  /// user had tapped the search bar. Used by the mascot on the initial
-  /// empty discovery page. An empty keyword must never be submitted to
-  /// the server, as it leaves the page stuck in a loading state.
-  void openSearchView() {
-    _searchController.openView();
-  }
-
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<SearchScreenBloc>();
