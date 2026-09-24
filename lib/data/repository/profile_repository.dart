@@ -11,6 +11,9 @@ class ProfileRepository {
 
   bool _needsRefresh = false;
 
+  /// Sync access to the cached profile, or null if not loaded yet.
+  Profile? get cachedProfile => _cachedProfile;
+
   Future<Profile> getProfile() async {
     if (_needsRefresh) {
       return refreshProfile();

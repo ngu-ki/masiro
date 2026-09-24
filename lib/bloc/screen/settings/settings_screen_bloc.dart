@@ -15,7 +15,17 @@ class SettingsScreenBloc extends _SettingsScreenBloc {
   final profileRepository = getIt<ProfileRepository>();
   final favoritesRepository = getIt<FavoritesRepository>();
 
-  SettingsScreenBloc() : super(const SettingsScreenState()) {
+  SettingsScreenBloc()
+      : super(
+          // Seed the first frame from cached data so switching to the
+          // settings tab doesn't briefly show the default avatar (and
+          // "-" placeholders) before the async profile load completes.
+          SettingsScreenState(
+            profile: getIt<ProfileRepository>().cachedProfile,
+            favoritesCount:
+                getIt<FavoritesRepository>().cachedFavorites?.length,
+          ),
+        ) {
     on<SettingsScreenInitialized>(_onSettingsScreenInitialized);
     on<SettingsScreenProfileRequested>(_onSettingsScreenProfileRequested);
     on<SettingsScreenProfileRefreshed>(_onSettingsScreenProfileRefreshed);

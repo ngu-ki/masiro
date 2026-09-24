@@ -10,6 +10,13 @@ import 'package:window_manager/window_manager.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Raise the decoded-image cache limits so book covers survive the memory
+  // pressure created by other pages; otherwise returning to the bookshelf
+  // briefly shows placeholders while covers are re-decoded from disk.
+  PaintingBinding.instance.imageCache
+    ..maximumSize = 2000
+    ..maximumSizeBytes = 300 * 1024 * 1024;
+
   if (isDesktop) {
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(title: '真白萌', center: true);

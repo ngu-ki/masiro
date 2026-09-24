@@ -17,30 +17,30 @@ class CachedImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use the surface color (white in light mode, dark in night mode) as
+    // the placeholder so that a brief re-decode after the in-memory image
+    // cache evicts a cover is visually indistinguishable from the card.
+    final backgroundColor = Theme.of(context).colorScheme.surface;
     return CachedNetworkImage(
       width: width,
       height: height,
       imageUrl: url,
       fit: fit,
+      // Show cached images immediately instead of fading them in, which
+      // otherwise looks like the image is being reloaded on every rebuild.
+      fadeInDuration: Duration.zero,
+      fadeOutDuration: Duration.zero,
       progressIndicatorBuilder: (context, url, progress) {
-        return Container(
-          color: Colors.black45,
-          child: Center(
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: CircularProgressIndicator(
-                value: progress.progress,
-              ),
-            ),
-          ),
-        );
+        return ColoredBox(color: backgroundColor);
       },
       errorWidget: (context, url, error) {
-        return Container(
-          color: Colors.black45,
-          child: const Center(
-            child: Icon(Icons.error),
+        return ColoredBox(
+          color: backgroundColor,
+          child: Center(
+            child: Icon(
+              Icons.broken_image_outlined,
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
         );
       },
