@@ -31,8 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: SafeArea(
         child: BlocProvider<SettingsScreenBloc>(
           create: (_) => SettingsScreenBloc()
-            ..add(SettingsScreenInitialized())
-            ..add(SettingsScreenProfileRequested()),
+            ..add(SettingsScreenInitialized()),
           child: BlocBuilder<SettingsScreenBloc, SettingsScreenState>(
             builder: (context, state) {
               return buildScreen(context, state);

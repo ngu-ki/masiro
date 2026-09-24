@@ -26,7 +26,15 @@ class SettingsScreenBloc extends _SettingsScreenBloc {
     Emitter<SettingsScreenState> emit,
   ) async {
     final config = await appConfigurationRepository.getAppConfiguration();
-    emit(state.copyWith(config: config));
+    final profile = await profileRepository.getProfile();
+    final favoritesCount = (await favoritesRepository.getFavorites()).length;
+    emit(
+      state.copyWith(
+        config: config,
+        profile: profile,
+        favoritesCount: favoritesCount,
+      ),
+    );
   }
 
   Future<void> _onSettingsScreenProfileRequested(
