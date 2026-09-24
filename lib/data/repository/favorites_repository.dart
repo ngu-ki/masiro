@@ -11,6 +11,9 @@ class FavoritesRepository {
 
   bool _needsRefresh = false;
 
+  /// Sync access to the cached favorites list, or null if not loaded yet.
+  List<Novel>? get cachedFavorites => _cachedFavorites;
+
   Future<List<Novel>> getFavorites() async {
     if (_needsRefresh) {
       return refreshFavorites();

@@ -28,7 +28,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
   /// Whether the unread counts have already been enriched once.
   bool _statsEnriched = false;
 
-  FavoritesScreenBloc() : super(FavoritesScreenInitialState()) {
+  FavoritesScreenBloc() : super(_computeInitialState()) {
     on<FavoritesScreenRequested>(_onRequestFavoritesScreen);
     on<FavoritesScreenRefreshed>(_onRefreshFavoritesScreen);
     on<FavoritesScreenSortSelected>(_onSortSelected);
@@ -40,6 +40,23 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     on<FavoritesScreenNovelSelectionToggled>(_onNovelSelectionToggled);
     on<FavoritesScreenAllSelectionToggled>(_onAllSelectionToggled);
     on<FavoritesScreenSelectedNovelsRemoved>(_onSelectedNovelsRemoved);
+  }
+
+  /// Builds the initial state from cached data if available, so the screen
+  /// doesn't flash a loading indicator on subsequent visits.
+  static FavoritesScreenState _computeInitialState() {
+    final cached = getIt<FavoritesRepository>().cachedFavorites;
+    if (cached == null || cached.isEmpty) {
+      return FavoritesScreenInitialState();
+    }
+    final prefs = PreferencesRepository();
+    return FavoritesScreenLoadedState(
+      novels: List.from(cached),
+      viewMode: prefs.favoritesViewMode == FavoritesViewMode.grid.name
+          ? FavoritesViewMode.grid
+          : FavoritesViewMode.list,
+      stats: prefs.bookshelfStats,
+    );
   }
 
   FavoritesViewMode get _storedViewMode {
