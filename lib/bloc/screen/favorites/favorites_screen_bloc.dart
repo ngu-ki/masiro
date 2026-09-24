@@ -269,7 +269,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     emit(
       current.copyWith(
         novels: _sortNovels(_novels, current.sortMode, current.sortDirection),
-        isBatchMode: false,
+        isBatchMode: true,
         selectedNovelIds: const {},
         stats: _stats,
       ),
