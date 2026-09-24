@@ -74,6 +74,9 @@ class _NavBarState extends State<NavBar> {
     final localizations = context.localizations();
     return NavigationBar(
       height: 60,
+      backgroundColor: Theme.of(context).brightness == Brightness.light
+          ? const Color(0xFFFAFAFA)
+          : null,
       onDestinationSelected: _onDestinationSelected,
       selectedIndex: _calculateSelectedIndex(context) ?? 0,
       destinations: [

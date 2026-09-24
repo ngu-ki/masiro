@@ -34,7 +34,7 @@ class ProfileCard extends StatelessWidget {
     final id = '${localizations.id}: ${profile?.id ?? _placeholder}';
 
     return Card(
-      elevation: 0.0,
+      elevation: 2.0,
       color: colorScheme.surfaceContainer,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),

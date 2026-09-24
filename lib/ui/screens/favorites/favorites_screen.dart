@@ -432,6 +432,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         FavoritesScreenNovelSelectionToggled(novelId: n.id),
                       )
                   : () => _openReader(context, n),
+              onDetailTap: isBatch
+                  ? () => bloc.add(
+                        FavoritesScreenNovelSelectionToggled(novelId: n.id),
+                      )
+                  : () => _navigateToNovelDetailScreen(context, n),
               onMore:
                   isBatch ? null : () => _navigateToNovelDetailScreen(context, n),
             );

@@ -20,6 +20,9 @@ class NovelGridCard extends StatelessWidget {
 
   final void Function()? onTap;
 
+  /// Called when the title or stats area is tapped (navigates to detail).
+  final void Function()? onDetailTap;
+
   /// Called when the vertical more button is tapped.
   final void Function()? onMore;
 
@@ -30,6 +33,7 @@ class NovelGridCard extends StatelessWidget {
     required this.lvLimit,
     this.stat,
     this.onTap,
+    this.onDetailTap,
     this.onMore,
   });
 
@@ -52,17 +56,17 @@ class NovelGridCard extends StatelessWidget {
         final unread = stat?.unreadCount ?? 0;
         final total = stat?.totalChapters ?? 0;
 
-        return InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: 4,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AspectRatio(
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 4,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
+                onTap: onTap,
+                child: AspectRatio(
                   aspectRatio: 7 / 10,
                   child: Stack(
                     children: [
@@ -90,51 +94,59 @@ class NovelGridCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: titleHeight,
-                  child: Text(
-                    title,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: titleFontSize,
-                      height: 1.4,
+              ),
+              InkWell(
+                onTap: onDetailTap,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      height: titleHeight,
+                      child: Text(
+                        title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: titleFontSize,
+                          height: 1.4,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                SizedBox(
-                  height: 20,
-                  child: Row(
-                    children: [
-                      if (total > 0)
-                        Expanded(
-                          child: Text(
-                            '${total - unread}话/$total话',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: unreadFontSize,
+                    const SizedBox(height: 2),
+                    SizedBox(
+                      height: 20,
+                      child: Row(
+                        children: [
+                          if (total > 0)
+                            Expanded(
+                              child: Text(
+                                '${total - unread}话/$total话',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: unreadFontSize,
+                                  color: colorScheme.outline,
+                                ),
+                              ),
+                            )
+                          else
+                            const Spacer(),
+                          InkWell(
+                            onTap: onMore,
+                            child: Icon(
+                              Icons.more_vert_rounded,
+                              size: 16,
                               color: colorScheme.outline,
                             ),
                           ),
-                        )
-                      else
-                        const Spacer(),
-                      InkWell(
-                        onTap: onMore,
-                        child: Icon(
-                          Icons.more_vert_rounded,
-                          size: 16,
-                          color: colorScheme.outline,
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

@@ -28,13 +28,16 @@ class TopBar extends StatelessWidget {
       duration: _duration,
       curve: _curve,
       child: AppBar(
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? const Color(0xFFFAFAFA)
+            : null,
         leading: IconButton(
           onPressed: onNavigateBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
               onTap: onNavigateToDetail,
               child: Container(

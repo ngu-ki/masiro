@@ -40,7 +40,9 @@ class BottomBar extends StatelessWidget {
     final theme = context.theme();
     final appBarThemeColor = theme.appBarTheme.backgroundColor;
     final surfaceContainerColor = theme.colorScheme.surfaceContainer;
-    final backgroundColor = appBarThemeColor ?? surfaceContainerColor;
+    final backgroundColor = theme.brightness == Brightness.light
+        ? const Color(0xFFFAFAFA)
+        : (appBarThemeColor ?? surfaceContainerColor);
     final foregroundColor = theme.colorScheme.onSurface;
 
     Widget slider = const Slider(
