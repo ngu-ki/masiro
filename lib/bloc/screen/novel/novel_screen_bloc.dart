@@ -51,6 +51,10 @@ class NovelScreenBloc extends Bloc<NovelScreenEvent, NovelScreenState> {
       return;
     }
     final loadedState = state as NovelScreenLoadedState;
+    // Guard against rapid double-tap: if already a favorite, do nothing.
+    if (loadedState.novelDetail.header.isFavorite) {
+      return;
+    }
     final csrfToken = loadedState.novelDetail.header.csrfToken;
     await _favoritesRepository.addToFavorites(novelId, csrfToken);
     final novelHeader = loadedState.novelDetail.header.copyWith(
