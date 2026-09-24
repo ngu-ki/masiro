@@ -111,7 +111,7 @@ class NovelGridCard extends StatelessWidget {
                       if (total > 0)
                         Expanded(
                           child: Text(
-                            '${total - unread}/$total',
+                            '${total - unread}话/$total话',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
