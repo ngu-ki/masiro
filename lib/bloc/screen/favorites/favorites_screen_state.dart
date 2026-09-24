@@ -62,6 +62,12 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
   /// Reading statistics keyed by novel id.
   final Map<int, BookshelfStat> stats;
 
+  /// Whether the batch management mode is on.
+  final bool isBatchMode;
+
+  /// The set of selected novel ids in batch mode.
+  final Set<int> selectedNovelIds;
+
   FavoritesScreenLoadedState({
     this.novels = const [],
     this.sortMode = FavoritesSortMode.defaultOrder,
@@ -69,6 +75,8 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
     this.manualAdjusting = false,
     this.viewMode = FavoritesViewMode.list,
     this.stats = const {},
+    this.isBatchMode = false,
+    this.selectedNovelIds = const {},
   });
 
   FavoritesScreenLoadedState copyWith({
@@ -78,6 +86,8 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
     bool? manualAdjusting,
     FavoritesViewMode? viewMode,
     Map<int, BookshelfStat>? stats,
+    bool? isBatchMode,
+    Set<int>? selectedNovelIds,
   }) {
     return FavoritesScreenLoadedState(
       novels: novels ?? this.novels,
@@ -86,6 +96,8 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
       manualAdjusting: manualAdjusting ?? this.manualAdjusting,
       viewMode: viewMode ?? this.viewMode,
       stats: stats ?? this.stats,
+      isBatchMode: isBatchMode ?? this.isBatchMode,
+      selectedNovelIds: selectedNovelIds ?? this.selectedNovelIds,
     );
   }
 
@@ -97,5 +109,7 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
         manualAdjusting,
         viewMode,
         stats,
+        isBatchMode,
+        selectedNovelIds,
       ];
 }

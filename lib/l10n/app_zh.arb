@@ -120,5 +120,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "moreActions": "更多",
+  "batchManagement": "批量管理",
+  "removeFromFavorites": "移除收藏",
+  "selectAll": "全选"
 }

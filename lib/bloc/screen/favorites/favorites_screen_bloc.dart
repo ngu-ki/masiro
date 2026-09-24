@@ -36,6 +36,10 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     on<FavoritesScreenNovelMoved>(_onNovelMoved);
     on<FavoritesScreenViewModeChanged>(_onViewModeChanged);
     on<FavoritesScreenNovelStatUpdated>(_onNovelStatUpdated);
+    on<FavoritesScreenBatchModeToggled>(_onBatchModeToggled);
+    on<FavoritesScreenNovelSelectionToggled>(_onNovelSelectionToggled);
+    on<FavoritesScreenAllSelectionToggled>(_onAllSelectionToggled);
+    on<FavoritesScreenSelectedNovelsRemoved>(_onSelectedNovelsRemoved);
   }
 
   FavoritesViewMode get _storedViewMode {
@@ -156,6 +160,99 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         ),
         sortMode: FavoritesSortMode.defaultOrder,
         manualAdjusting: true,
+        isBatchMode: false,
+        selectedNovelIds: const {},
+      ),
+    );
+  }
+
+  void _onBatchModeToggled(
+    FavoritesScreenBatchModeToggled event,
+    Emitter<FavoritesScreenState> emit,
+  ) {
+    final current = state;
+    if (current is! FavoritesScreenLoadedState) {
+      return;
+    }
+    final newBatchMode = !current.isBatchMode;
+    emit(
+      current.copyWith(
+        isBatchMode: newBatchMode,
+        selectedNovelIds: newBatchMode ? current.selectedNovelIds : const {},
+        manualAdjusting: false,
+      ),
+    );
+  }
+
+  void _onNovelSelectionToggled(
+    FavoritesScreenNovelSelectionToggled event,
+    Emitter<FavoritesScreenState> emit,
+  ) {
+    final current = state;
+    if (current is! FavoritesScreenLoadedState || !current.isBatchMode) {
+      return;
+    }
+    final selected = Set<int>.from(current.selectedNovelIds);
+    if (selected.contains(event.novelId)) {
+      selected.remove(event.novelId);
+    } else {
+      selected.add(event.novelId);
+    }
+    emit(current.copyWith(selectedNovelIds: selected));
+  }
+
+  void _onAllSelectionToggled(
+    FavoritesScreenAllSelectionToggled event,
+    Emitter<FavoritesScreenState> emit,
+  ) {
+    final current = state;
+    if (current is! FavoritesScreenLoadedState || !current.isBatchMode) {
+      return;
+    }
+    final allSelected =
+        current.selectedNovelIds.length == current.novels.length;
+    emit(
+      current.copyWith(
+        selectedNovelIds: allSelected
+            ? <int>{}
+            : current.novels.map((n) => n.id).toSet(),
+      ),
+    );
+  }
+
+  Future<void> _onSelectedNovelsRemoved(
+    FavoritesScreenSelectedNovelsRemoved event,
+    Emitter<FavoritesScreenState> emit,
+  ) async {
+    final current = state;
+    if (current is! FavoritesScreenLoadedState || !current.isBatchMode) {
+      return;
+    }
+    final selectedIds = current.selectedNovelIds;
+    if (selectedIds.isEmpty) {
+      return;
+    }
+    // The uncollect API requires a csrf token per novel, so we fetch each
+    // novel's detail to obtain it before removing.
+    for (final novelId in selectedIds) {
+      try {
+        final detail = await _masiroRepository.getNovelDetail(novelId);
+        await _favoritesRepository.removeFromFavorites(
+          novelId,
+          detail.header.csrfToken,
+        );
+      } catch (_) {
+        // Continue removing other novels even if one fails.
+      }
+    }
+    _novels.removeWhere((n) => selectedIds.contains(n.id));
+    _stats.removeWhere((key, _) => selectedIds.contains(key));
+    emit(
+      current.copyWith(
+        novels: _sortNovels(_novels, current.sortMode, current.sortDirection),
+        isBatchMode: false,
+        selectedNovelIds: const {},
+        stats: _stats,
       ),
     );
   }

@@ -106,5 +106,9 @@
   "exitAppHint": "再滑一次退出應用",
   "gridView": "宮格視圖",
   "listView": "列表視圖",
-  "unreadChapters": "{count}話未讀"
+  "unreadChapters": "{count}話未讀",
+  "moreActions": "更多",
+  "batchManagement": "批量管理",
+  "removeFromFavorites": "移除收藏",
+  "selectAll": "全選"
 }

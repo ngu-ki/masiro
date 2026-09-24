@@ -343,6 +343,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wallet => '钱包';
+
+  @override
+  String get moreActions => '更多';
+
+  @override
+  String get batchManagement => '批量管理';
+
+  @override
+  String get removeFromFavorites => '移除收藏';
+
+  @override
+  String get selectAll => '全选';
 }
 
 /// The translations for Chinese, as used in Hong Kong, using the Han script (`zh_Hant_HK`).
@@ -684,6 +696,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get wallet => '錢包';
+
+  @override
+  String get selectAll => '全選';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -1025,4 +1040,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get wallet => '錢包';
+
+  @override
+  String get selectAll => '全選';
 }

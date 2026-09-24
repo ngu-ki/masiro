@@ -103,11 +103,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   ),
           ),
         ),
+        if (state.isBatchMode) buildBatchBottomBar(context, state),
       ],
     );
   }
 
   Widget buildHeader(BuildContext context, FavoritesScreenLoadedState state) {
+    if (state.isBatchMode) {
+      return buildBatchHeader(context, state);
+    }
+
     final localizations = context.localizations();
     final colorScheme = context.colorScheme();
     final isGrid = state.viewMode == FavoritesViewMode.grid;
@@ -179,21 +184,109 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               ),
             ],
           ),
-          IconButton(
-            isSelected: state.manualAdjusting,
-            tooltip: localizations.manualSort,
-            icon: const Icon(Icons.swap_vert_rounded),
-            selectedIcon: Icon(
-              Icons.swap_vert_rounded,
-              color: colorScheme.primary,
-            ),
-            onPressed: () {
-              context
-                  .read<FavoritesScreenBloc>()
-                  .add(FavoritesScreenManualModeToggled());
+          PopupMenuButton<String>(
+            tooltip: localizations.moreActions,
+            icon: const Icon(Icons.more_vert_rounded),
+            onSelected: (value) {
+              final bloc = context.read<FavoritesScreenBloc>();
+              if (value == 'sort') {
+                bloc.add(FavoritesScreenManualModeToggled());
+              } else if (value == 'batch') {
+                bloc.add(FavoritesScreenBatchModeToggled());
+              }
             },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'sort',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.swap_vert_rounded,
+                      color: state.manualAdjusting
+                          ? colorScheme.primary
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(localizations.manualSort),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'batch',
+                child: Row(
+                  children: [
+                    const Icon(Icons.checklist_rounded),
+                    const SizedBox(width: 8),
+                    Text(localizations.batchManagement),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildBatchHeader(
+    BuildContext context,
+    FavoritesScreenLoadedState state,
+  ) {
+    final localizations = context.localizations();
+    final bloc = context.read<FavoritesScreenBloc>();
+    final count = state.selectedNovelIds.length;
+    final total = state.novels.length;
+    final allSelected = count == total && total > 0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => bloc.add(FavoritesScreenBatchModeToggled()),
+          ),
+          Text(
+            '$count',
+            style: context.textTheme().titleLarge,
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: total == 0
+                ? null
+                : () => bloc.add(FavoritesScreenAllSelectionToggled()),
+            child: Text(
+              allSelected ? localizations.cancel : localizations.selectAll,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildBatchBottomBar(
+    BuildContext context,
+    FavoritesScreenLoadedState state,
+  ) {
+    final localizations = context.localizations();
+    final bloc = context.read<FavoritesScreenBloc>();
+    final hasSelection = state.selectedNovelIds.isNotEmpty;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: hasSelection
+                ? () => bloc.add(FavoritesScreenSelectedNovelsRemoved())
+                : null,
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(localizations.removeFromFavorites),
+          ),
+        ),
       ),
     );
   }
@@ -235,6 +328,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   ) {
     final bloc = context.read<FavoritesScreenBloc>();
     final novels = state.novels;
+    final isBatch = state.isBatchMode;
 
     return ListView.builder(
       padding: const EdgeInsets.all(10),
@@ -248,18 +342,40 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           lastUpdated: n.lastUpdated,
           brief: n.brief,
           lvLimit: n.lvLimit,
-          onTap: () => _openReader(context, n),
-          onMoveUp: state.manualAdjusting && index > 0
+          onTap: isBatch
+              ? () => bloc.add(
+                    FavoritesScreenNovelSelectionToggled(novelId: n.id),
+                  )
+              : () => _openReader(context, n),
+          onMoveUp: !isBatch && state.manualAdjusting && index > 0
               ? () => bloc.add(
                     FavoritesScreenNovelMoved(novelId: n.id, moveUp: true),
                   )
               : null,
-          onMoveDown: state.manualAdjusting && index < novels.length - 1
+          onMoveDown: !isBatch &&
+                  state.manualAdjusting &&
+                  index < novels.length - 1
               ? () => bloc.add(
                     FavoritesScreenNovelMoved(novelId: n.id, moveUp: false),
                   )
               : null,
         );
+
+        if (isBatch) {
+          final isSelected = state.selectedNovelIds.contains(n.id);
+          card = Row(
+            children: [
+              Checkbox(
+                value: isSelected,
+                onChanged: (_) => bloc.add(
+                  FavoritesScreenNovelSelectionToggled(novelId: n.id),
+                ),
+              ),
+              Expanded(child: card),
+            ],
+          );
+        }
+
         if (isDesktop) {
           card = Center(
             child: ConstrainedBox(
@@ -277,7 +393,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     BuildContext context,
     FavoritesScreenLoadedState state,
   ) {
+    final bloc = context.read<FavoritesScreenBloc>();
     final novels = state.novels;
+    final isBatch = state.isBatchMode;
 
     Widget grid = LayoutBuilder(
       builder: (context, constraints) {
@@ -303,13 +421,39 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           itemCount: novels.length,
           itemBuilder: (context, index) {
             final n = novels[index];
-            return NovelGridCard(
+            final card = NovelGridCard(
               title: n.title,
               coverImg: n.coverImg,
               lvLimit: n.lvLimit,
               stat: state.stats[n.id],
-              onTap: () => _openReader(context, n),
-              onMore: () => _navigateToNovelDetailScreen(context, n),
+              onTap: isBatch
+                  ? () => bloc.add(
+                        FavoritesScreenNovelSelectionToggled(novelId: n.id),
+                      )
+                  : () => _openReader(context, n),
+              onMore:
+                  isBatch ? null : () => _navigateToNovelDetailScreen(context, n),
+            );
+
+            if (!isBatch) {
+              return card;
+            }
+
+            final isSelected = state.selectedNovelIds.contains(n.id);
+            return Stack(
+              children: [
+                card,
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => bloc.add(
+                      FavoritesScreenNovelSelectionToggled(novelId: n.id),
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         );

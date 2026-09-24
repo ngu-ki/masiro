@@ -91,12 +91,14 @@ class _NovelScreenState extends State<NovelScreen> {
       title: Text(localizations.detail),
       actions: [
         TextButton(
-          onPressed: isFavorite
-              ? null
-              : () {
-                  bloc.add(NovelScreenNovelFavorited());
-                  _isFavoriteToggled = true;
-                },
+          onPressed: () {
+            if (isFavorite) {
+              bloc.add(NovelScreenNovelUnfavorited());
+            } else {
+              bloc.add(NovelScreenNovelFavorited());
+            }
+            _isFavoriteToggled = true;
+          },
           style: TextButton.styleFrom(
             foregroundColor:
                 isFavorite ? Colors.grey : Theme.of(context).colorScheme.primary,

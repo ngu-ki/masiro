@@ -57,3 +57,22 @@ final class FavoritesScreenNovelStatUpdated extends FavoritesScreenEvent {
   @override
   List<Object> get props => [novelId, stat];
 }
+
+/// Toggles the batch management mode on or off.
+final class FavoritesScreenBatchModeToggled extends FavoritesScreenEvent {}
+
+/// Toggles the selection of a novel in batch mode.
+final class FavoritesScreenNovelSelectionToggled extends FavoritesScreenEvent {
+  final int novelId;
+
+  FavoritesScreenNovelSelectionToggled({required this.novelId});
+
+  @override
+  List<Object> get props => [novelId];
+}
+
+/// Removes all selected novels from favorites.
+final class FavoritesScreenSelectedNovelsRemoved extends FavoritesScreenEvent {}
+
+/// Toggles selection of all novels in batch mode.
+final class FavoritesScreenAllSelectionToggled extends FavoritesScreenEvent {}

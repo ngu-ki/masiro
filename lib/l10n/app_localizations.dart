@@ -742,6 +742,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'{count}话未读'**
   String unreadChapters(int count);
+
+  /// No description provided for @moreActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'更多'**
+  String get moreActions;
+
+  /// No description provided for @batchManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'批量管理'**
+  String get batchManagement;
+
+  /// No description provided for @removeFromFavorites.
+  ///
+  /// In zh, this message translates to:
+  /// **'移除收藏'**
+  String get removeFromFavorites;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全选'**
+  String get selectAll;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
