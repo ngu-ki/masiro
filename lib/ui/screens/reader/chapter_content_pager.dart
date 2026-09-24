@@ -48,10 +48,6 @@ class ChapterContentPager extends StatefulWidget {
   /// Title of the current chapter, shown at the top of the first page.
   final String chapterTitle;
 
-  /// Called whenever the current page index changes (0-based, including the
-  /// chapter-end page).
-  final void Function(int index)? onPageChanged;
-
   const ChapterContentPager({
     super.key,
     required this.mode,
@@ -71,7 +67,6 @@ class ChapterContentPager extends StatefulWidget {
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,
     required this.chapterTitle,
-    this.onPageChanged,
   });
 
   @override
@@ -147,8 +142,20 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     );
   }
 
+  /// Paragraph spacing. With blank-line shrinking on it is 1.5x the line
+  /// spacing (line height is 1.5x the font size, so line spacing is 0.5x
+  /// the font size); otherwise a slightly tighter default.
   double _buildParagraphGap() {
-    return widget.fontSize * 0.65;
+    return widget.shrinkEmptyLines
+        ? widget.fontSize * 0.75
+        : widget.fontSize * 0.65;
+  }
+
+  /// Fixed blank line between the chapter title and the body on the first
+  /// page (one body line). Always applied, independent of the
+  /// shrink-empty-lines setting.
+  double _buildTitleBodyGap() {
+    return widget.fontSize * 1.5;
   }
 
   @override
@@ -158,7 +165,11 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final style = _buildTextStyle(context);
         final titleStyle = _buildTitleStyle(context);
         final paragraphGap = _buildParagraphGap();
-        final blankGap = widget.fontSize * shrunkBlankLineFactor;
+        final titleBodyGap = _buildTitleBodyGap();
+        // Separation across a shrunk blank line is 2.5x the line spacing
+        // (1.25x the font size) in total; it consists of this blank gap
+        // plus one paragraph gap.
+        final blankGap = widget.fontSize * 1.25 - paragraphGap;
         final mediaQuery = MediaQuery.of(context);
         final topInset = mediaQuery.padding.top + 44;
         final bottomInset = mediaQuery.padding.bottom + 44;
@@ -172,7 +183,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
           textDirection: TextDirection.ltr,
           maxLines: 2,
         )..layout(maxWidth: contentWidth);
-        final headerHeight = titlePainter.height + paragraphGap;
+        final headerHeight = titlePainter.height + titleBodyGap;
         titlePainter.dispose();
 
         final signature =
@@ -187,6 +198,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
             paragraphGap: paragraphGap,
             indentPrefix: widget.indentMode.prefix,
             shrinkEmptyLines: widget.shrinkEmptyLines,
+            blankGap: blankGap,
             firstPageHeaderHeight: headerHeight,
           );
           final restore = _pendingRestore ?? widget.initialPosition;
@@ -221,6 +233,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
               bottomInset: bottomInset,
               contentWidth: contentWidth,
               contentHeight: contentHeight,
+              titleBodyGap: titleBodyGap,
               header: i == 0 && showHeaderOnFirstPage
                   ? Text(
                       widget.chapterTitle,
@@ -270,6 +283,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     required double bottomInset,
     required double contentWidth,
     required double contentHeight,
+    required double titleBodyGap,
     Widget? header,
   }) {
     if (page.isImagePage()) {
@@ -289,7 +303,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     var suppressNextGap = false;
     if (header != null) {
       children.add(header);
-      children.add(SizedBox(height: paragraphGap));
+      children.add(SizedBox(height: titleBodyGap));
       suppressNextGap = true;
     }
     for (final run in page.runs) {
@@ -534,7 +548,6 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     final total = _pages.length;
     widget.progressNotifier.value =
         total == 0 ? 0.0 : ((_currentPage + 1) / total).clamp(0.0, 1.0);
-    widget.onPageChanged?.call(_currentPage);
   }
 
   void _reportPosition(int index) {

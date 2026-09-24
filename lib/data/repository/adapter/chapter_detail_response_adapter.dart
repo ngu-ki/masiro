@@ -13,7 +13,6 @@ ChapterDetail chapterDetailResponseToChapterDetail(ChapterDetailResponse d) {
   return ChapterDetail(
     chapterId: d.chapterId,
     title: d.title,
-    novelTitle: d.novelTitle,
     content: chapterContent,
     textContent: d.textContent,
     csrfToken: d.csrfToken,

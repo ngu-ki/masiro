@@ -41,7 +41,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
   int? _loadedChapterId;
   ReadPosition _currentPosition = startPosition;
   final _progressNotifier = ValueNotifier<double>(0.0);
-  final _currentPageNotifier = ValueNotifier<int>(0);
   final _pagerController = ReaderPagerController();
 
   @override
@@ -55,7 +54,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   void dispose() {
     _progressNotifier.dispose();
-    _currentPageNotifier.dispose();
     if (!isDesktop) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
@@ -126,7 +124,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
       _loadedChapterId = chapterDetail.chapterId;
       _currentPosition = state.position;
       _progressNotifier.value = 0.0;
-      _currentPageNotifier.value = 0;
     }
 
     // While the menu is visible the system status bar is shown; reading
@@ -149,8 +146,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
           buildReaderContent(context, state),
           ReadingHud(
             chapterTitle: chapterDetail.title,
-            novelTitle: chapterDetail.novelTitle,
-            currentPage: _currentPageNotifier,
             progress: _progressNotifier,
             color: contentColor,
             isVisible: !isHudVisible,
@@ -273,7 +268,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
       return _tapToToggleHud(context, PaymentDetail(paymentInfo: paymentInfo));
     }
 
-    return ChapterContentPager(
+    // Keep the reader content insulated from system bar insets so that
+    // showing the status bar (when the menu opens) does not resize and shift
+    // the paginated content. The menu bars live outside this subtree and
+    // still avoid the status bar normally.
+    return MediaQuery.removePadding(
+      context: context,
+      removeTop: true,
+      removeBottom: true,
+      child: ChapterContentPager(
       mode: pageTurnMode,
       content: chapterDetail.content,
       chapterId: chapterDetail.chapterId,
@@ -301,7 +304,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       indentMode: state.indentMode,
       shrinkEmptyLines: state.shrinkEmptyLines,
       chapterTitle: chapterDetail.title,
-      onPageChanged: (index) => _currentPageNotifier.value = index,
+      ),
     );
   }
 

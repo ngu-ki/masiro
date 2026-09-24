@@ -8,14 +8,8 @@ import 'package:flutter/material.dart';
 /// the chapter title at the top left, the reading progress at the bottom
 /// left and the clock with the battery level at the bottom right.
 class ReadingHud extends StatefulWidget {
-  /// Title of the current chapter, shown on every page except the first one.
+  /// Title of the current chapter, shown at the top left of every page.
   final String chapterTitle;
-
-  /// Title of the novel, shown at the top left of the first page.
-  final String? novelTitle;
-
-  /// Current 0-based page index, used to switch the top-left title.
-  final ValueListenable<int> currentPage;
 
   final ValueListenable<double> progress;
   final Color color;
@@ -24,8 +18,6 @@ class ReadingHud extends StatefulWidget {
   const ReadingHud({
     super.key,
     required this.chapterTitle,
-    required this.novelTitle,
-    required this.currentPage,
     required this.progress,
     required this.color,
     required this.isVisible,
@@ -54,24 +46,11 @@ class _ReadingHudState extends State<ReadingHud> {
               left: 16,
               right: 16,
               top: mediaQuery.padding.top + 10,
-              child: ValueListenableBuilder<int>(
-                valueListenable: widget.currentPage,
-                builder: (context, pageIndex, _) {
-                  // The first page shows the novel title; other pages show
-                  // the current chapter title.
-                  final novelTitle = widget.novelTitle;
-                  final displayTitle = pageIndex == 0 &&
-                          novelTitle != null &&
-                          novelTitle.isNotEmpty
-                      ? novelTitle
-                      : widget.chapterTitle;
-                  return Text(
-                    displayTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: hudStyle,
-                  );
-                },
+              child: Text(
+                widget.chapterTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: hudStyle,
               ),
             ),
             Positioned(

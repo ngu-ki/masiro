@@ -72,10 +72,10 @@ class _NovelScreenState extends State<NovelScreen> {
         },
         child: buildBody(context, novelDetail),
       ),
-      floatingActionButton: buildFloatingActionButton(
+      bottomNavigationBar: buildBottomBar(
+        context,
         volumes,
         lastReadChapterId,
-        context,
       ),
     );
   }
@@ -154,47 +154,78 @@ class _NovelScreenState extends State<NovelScreen> {
     );
   }
 
-  Widget buildFloatingActionButton(
+  Widget buildBottomBar(
+    BuildContext context,
     List<Volume> volumes,
     int lastReadChapterId,
-    BuildContext context,
   ) {
     final localizations = context.localizations();
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FloatingActionButton(
-          heroTag: null,
-          tooltip: localizations.startReading,
-          child: const Icon(Icons.chrome_reader_mode_rounded),
-          onPressed: () async {
-            final firstChapter = volumes.firstOrNull?.chapters.firstOrNull;
-            final lastReadChapter = getChapterFromVolumes(
-              volumes,
-              lastReadChapterId,
-            );
-            final chapter = lastReadChapter ?? firstChapter;
-            if (chapter == null) {
-              return;
-            }
-            await _readChapter(context, chapter.novelId, chapter.id);
-          },
-        ),
-        const SizedBox(height: 10),
-        FloatingActionButton(
-          heroTag: null,
-          tooltip: localizations.novelComments,
-          onPressed: () {
-            context.push(
-              RoutePath.comments,
-              extra: {'novelId': widget.novelId},
-            );
-          },
-          child: const Icon(Icons.comment),
-        ),
-      ],
+    return Container(
+      height: 60,
+      color: isLight
+          ? const Color(0xFFFAFAFA)
+          : Theme.of(context).colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              context.push(
+                RoutePath.comments,
+                extra: {'novelId': widget.novelId},
+              );
+            },
+            child: Row(
+              children: [
+                const Icon(Icons.comment, size: 20, color: Colors.grey),
+                const SizedBox(width: 6),
+                Text(
+                  localizations.novelComments,
+                  style: const TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => _startReading(context, volumes, lastReadChapterId),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.6,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFC107),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                localizations.startReading,
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Future<void> _startReading(
+    BuildContext context,
+    List<Volume> volumes,
+    int lastReadChapterId,
+  ) async {
+    final firstChapter = volumes.firstOrNull?.chapters.firstOrNull;
+    final lastReadChapter = getChapterFromVolumes(
+      volumes,
+      lastReadChapterId,
+    );
+    final chapter = lastReadChapter ?? firstChapter;
+    if (chapter == null) {
+      return;
+    }
+    await _readChapter(context, chapter.novelId, chapter.id);
   }
 
   Future<void> _readChapter(

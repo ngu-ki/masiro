@@ -63,10 +63,6 @@ class ReaderPageContent {
 /// Each paragraph (text element) is measured with a [TextPainter] and split
 /// into lines; lines are then packed into pages. A full page image always
 /// occupies a page of its own.
-/// Height (relative to the font size) of a blank line when blank-line
-/// shrinking is enabled, e.g. a paragraph consisting only of `&nbsp;`.
-const double shrunkBlankLineFactor = 0.4;
-
 /// Whether [text] consists solely of white space, including no-break spaces
 /// (`&nbsp;`) and full-width spaces used by some sources.
 bool isBlankTextLine(String text) => text
@@ -83,6 +79,10 @@ List<ReaderPageContent> paginateChapterContent({
   required double paragraphGap,
   String indentPrefix = '',
   bool shrinkEmptyLines = false,
+
+  /// The height a blank line (e.g. a paragraph made only of `&nbsp;`)
+  /// collapses to when [shrinkEmptyLines] is enabled.
+  double blankGap = 0.0,
   double firstPageHeaderHeight = 0.0,
 }) {
   final pages = <ReaderPageContent>[];
@@ -127,7 +127,6 @@ List<ReaderPageContent> paginateChapterContent({
       if (currentRuns.isEmpty || currentRuns.last.isBlankGap) {
         continue;
       }
-      final blankGap = (style.fontSize ?? 14.0) * shrunkBlankLineFactor;
       if (usedHeight + blankGap > maxHeight) {
         flush();
       } else {

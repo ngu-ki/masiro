@@ -4,7 +4,6 @@ import 'package:masiro/data/repository/model/volume.dart';
 class ChapterDetail extends Equatable {
   final int chapterId;
   final String title;
-  final String? novelTitle;
   final ChapterContent content;
   final String textContent;
   final List<Volume> volumes;
@@ -15,7 +14,6 @@ class ChapterDetail extends Equatable {
   const ChapterDetail({
     required this.chapterId,
     required this.title,
-    this.novelTitle,
     required this.content,
     required this.textContent,
     required this.csrfToken,
@@ -27,7 +25,6 @@ class ChapterDetail extends Equatable {
   List<Object?> get props => [
         chapterId,
         title,
-        novelTitle,
         content,
         textContent,
         volumes,
