@@ -71,7 +71,7 @@ class _SearchScreenState extends State<SearchScreen> {
               hasSearched: state.hasSearched,
               onTapMascot: () => context
                   .read<SearchScreenBloc>()
-                  .add(const SearchScreenSearched(keyword: '')),
+                  .add(SearchScreenSearched(keyword: '')),
             );
         }
       },
