@@ -15,6 +15,7 @@ import 'package:masiro/misc/router.dart';
 import 'package:masiro/misc/cookie.dart';
 import 'package:masiro/ui/screens/settings/profile_card.dart';
 import 'package:masiro/ui/screens/settings/sign_in_card.dart';
+import 'package:masiro/ui/screens/settings/theme_color_card.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -90,6 +91,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         switch (value) {
           case 'about':
             context.push(RoutePath.about);
+          case 'themeColor':
+            ThemeColorCard.showColorPickerDialog(context);
           case 'accounts':
             _showAccountsDialog(context, settingsScreenBloc);
           case 'logout':
@@ -104,6 +107,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Icon(Icons.info_outline_rounded),
               const SizedBox(width: 12),
               Text(localizations.about),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'themeColor',
+          child: Row(
+            children: [
+              const Icon(Icons.palette_rounded),
+              const SizedBox(width: 12),
+              Text(localizations.themeColor),
             ],
           ),
         ),

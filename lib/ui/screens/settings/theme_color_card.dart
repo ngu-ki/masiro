@@ -9,6 +9,22 @@ import 'package:masiro/misc/context.dart';
 class ThemeColorCard extends StatelessWidget {
   const ThemeColorCard({super.key});
 
+  /// Opens the theme color picker dialog. Can be called from anywhere with
+  /// an [AppThemeCubit] in the widget tree.
+  static void showColorPickerDialog(BuildContext context) {
+    final cubit = context.read<AppThemeCubit>();
+    final themeColor = cubit.state.themeColor;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return _ThemeColorDialog(
+          themeColor: themeColor,
+          onThemeColorChanged: (color) => cubit.setThemeColor(color),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = context.localizations();
@@ -22,21 +38,8 @@ class ThemeColorCard extends StatelessWidget {
           child: ListTile(
             leading: const Icon(Icons.palette_rounded),
             title: Text(localizations.themeColor),
-            onTap: () => _selectThemeColor(context, themeColor),
+            onTap: () => showColorPickerDialog(context),
           ),
-        );
-      },
-    );
-  }
-
-  void _selectThemeColor(BuildContext context, int themeColor) {
-    final cubit = context.read<AppThemeCubit>();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return _ThemeColorDialog(
-          themeColor: themeColor,
-          onThemeColorChanged: (color) => cubit.setThemeColor(color),
         );
       },
     );
