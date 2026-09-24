@@ -34,16 +34,12 @@ class SearchTopBarState extends State<SearchTopBar> {
     super.dispose();
   }
 
-  /// Focuses the search bar and submits its current text, as if the user
-  /// had tapped the search bar and pressed Enter.
-  void submitCurrentText() {
-    final keyword = _searchController.text;
-    _searchBarFocusNode.requestFocus();
-    context.read<SearchScreenBloc>().add(
-          SearchScreenSearched(keyword: keyword),
-        );
-    _searchController.closeView(keyword);
-    _searchBarFocusNode.unfocus();
+  /// Opens the full-screen search view and raises the keyboard, as if the
+  /// user had tapped the search bar. Used by the mascot on the initial
+  /// empty discovery page. An empty keyword must never be submitted to
+  /// the server, as it leaves the page stuck in a loading state.
+  void openSearchView() {
+    _searchController.openView();
   }
 
   @override

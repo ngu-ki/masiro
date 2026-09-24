@@ -70,7 +70,7 @@ class _SearchScreenState extends State<SearchScreen> {
               totalCount: state.totalCount,
               hasSearched: state.hasSearched,
               onTapMascot: () =>
-                  _searchBarKey.currentState?.submitCurrentText(),
+                  _searchBarKey.currentState?.openSearchView(),
             );
         }
       },

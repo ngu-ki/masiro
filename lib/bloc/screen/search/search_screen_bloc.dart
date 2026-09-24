@@ -16,6 +16,11 @@ class SearchScreenBloc extends Bloc<SearchScreenEvent, SearchScreenState> {
     SearchScreenSearched event,
     Emitter<SearchScreenState> emit,
   ) async {
+    // Ignore empty keywords: otherwise the request hangs on the server and
+    // the screen gets stuck on the loading indicator with no way back.
+    if (event.keyword.trim().isEmpty) {
+      return;
+    }
     try {
       emit(SearchScreenLoadingState());
       final keyword = event.keyword;
