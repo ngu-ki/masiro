@@ -22,6 +22,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final initialKeyword = widget.initialKeyword;
     return Material(
+      color: Colors.white,
       child: SafeArea(
         child: BlocProvider(
           create: (_) {

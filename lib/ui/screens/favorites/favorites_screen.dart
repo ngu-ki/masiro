@@ -45,6 +45,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
+      color: Colors.white,
       child: SafeArea(
         child: BlocProvider(
           create: (_) =>

@@ -31,6 +31,7 @@ class _NovelScreenState extends State<NovelScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
+      color: Colors.white,
       child: SafeArea(
         child: BlocProvider(
           create: (context) => NovelScreenBloc(novelId: widget.novelId)
