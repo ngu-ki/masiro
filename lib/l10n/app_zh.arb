@@ -108,6 +108,7 @@
   "indentNone": "无",
   "indentOne": "1格",
   "indentTwo": "2格",
+  "indentAdaptive": "自适应",
   "addToBookshelf": "加入书架",
   "inBookshelf": "已在书架",
   "exitAppHint": "再滑一次退出应用",
@@ -125,5 +126,6 @@
   "batchManagement": "批量管理",
   "removeFromFavorites": "移除收藏",
   "selectAll": "全选",
-  "shrinkEmptyLines": "空行缩小"
+  "shrinkEmptyLines": "空行缩小",
+  "forceSimplified": "强制简体"
 }

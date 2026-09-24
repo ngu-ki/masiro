@@ -33,6 +33,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
   final PageTurnMode pageTurnMode;
   final IndentMode indentMode;
   final bool shrinkEmptyLines;
+  final bool forceSimplified;
 
   ReaderScreenLoadedState({
     required this.chapterDetail,
@@ -45,6 +46,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     this.pageTurnMode = PageTurnMode.slide,
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,
+    this.forceSimplified = false,
   });
 
   ReaderScreenLoadedState copyWith({
@@ -58,6 +60,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     PageTurnMode? pageTurnMode,
     IndentMode? indentMode,
     bool? shrinkEmptyLines,
+    bool? forceSimplified,
   }) {
     return ReaderScreenLoadedState(
       chapterDetail: chapterDetail ?? this.chapterDetail,
@@ -70,6 +73,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
       pageTurnMode: pageTurnMode ?? this.pageTurnMode,
       indentMode: indentMode ?? this.indentMode,
       shrinkEmptyLines: shrinkEmptyLines ?? this.shrinkEmptyLines,
+      forceSimplified: forceSimplified ?? this.forceSimplified,
     );
   }
 
@@ -85,5 +89,6 @@ class ReaderScreenLoadedState extends ReaderScreenState {
         pageTurnMode,
         indentMode,
         shrinkEmptyLines,
+        forceSimplified,
       ];
 }

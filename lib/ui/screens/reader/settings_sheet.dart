@@ -15,6 +15,8 @@ class SettingsSheet extends StatefulWidget {
   final void Function(IndentMode mode) onIndentModeChanged;
   final bool shrinkEmptyLines;
   final void Function(bool enabled) onShrinkEmptyLinesChanged;
+  final bool forceSimplified;
+  final void Function(bool enabled) onForceSimplifiedChanged;
 
   const SettingsSheet({
     super.key,
@@ -28,6 +30,8 @@ class SettingsSheet extends StatefulWidget {
     required this.onIndentModeChanged,
     required this.shrinkEmptyLines,
     required this.onShrinkEmptyLinesChanged,
+    required this.forceSimplified,
+    required this.onForceSimplifiedChanged,
   });
 
   @override
@@ -40,6 +44,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   late PageTurnMode pageTurnMode;
   late IndentMode indentMode;
   late bool shrinkEmptyLines;
+  late bool forceSimplified;
 
   @override
   void initState() {
@@ -49,6 +54,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
     pageTurnMode = widget.pageTurnMode;
     indentMode = widget.indentMode;
     shrinkEmptyLines = widget.shrinkEmptyLines;
+    forceSimplified = widget.forceSimplified;
   }
 
   @override
@@ -123,17 +129,47 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 localizations.indentTwo,
                 IndentMode.two,
               ),
+              _buildIndentChip(
+                localizations.indentAdaptive,
+                IndentMode.adaptive,
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(localizations.shrinkEmptyLines),
-            value: shrinkEmptyLines,
-            onChanged: (enabled) {
-              setState(() => shrinkEmptyLines = enabled);
-              widget.onShrinkEmptyLinesChanged(enabled);
-            },
+          // Two toggles on one row: the left half holds "shrink empty
+          // lines" and the right half (starting at the middle) holds
+          // "force simplified", each with the switch next to its label.
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(localizations.shrinkEmptyLines),
+                    Switch(
+                      value: shrinkEmptyLines,
+                      onChanged: (enabled) {
+                        setState(() => shrinkEmptyLines = enabled);
+                        widget.onShrinkEmptyLinesChanged(enabled);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(localizations.forceSimplified),
+                    Switch(
+                      value: forceSimplified,
+                      onChanged: (enabled) {
+                        setState(() => forceSimplified = enabled);
+                        widget.onForceSimplifiedChanged(enabled);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

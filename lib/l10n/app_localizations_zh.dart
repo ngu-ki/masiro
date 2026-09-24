@@ -47,6 +47,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get indentTwo => '2格';
 
   @override
+  String get indentAdaptive => '自适应';
+
+  @override
   String get addToBookshelf => '加入书架';
 
   @override
@@ -358,6 +361,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shrinkEmptyLines => '空行缩小';
+
+  @override
+  String get forceSimplified => '强制简体';
 }
 
 /// The translations for Chinese, as used in Hong Kong, using the Han script (`zh_Hant_HK`).
@@ -403,6 +409,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get indentTwo => '2格';
 
   @override
+  String get indentAdaptive => '自適應';
+
+  @override
   String get addToBookshelf => '加入書架';
 
   @override
@@ -705,6 +714,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get shrinkEmptyLines => '空行縮小';
+
+  @override
+  String get forceSimplified => '強制簡體';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -750,6 +762,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get indentTwo => '2格';
 
   @override
+  String get indentAdaptive => '自適應';
+
+  @override
   String get addToBookshelf => '加入書架';
 
   @override
@@ -1052,4 +1067,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get shrinkEmptyLines => '空行縮小';
+
+  @override
+  String get forceSimplified => '強制簡體';
 }

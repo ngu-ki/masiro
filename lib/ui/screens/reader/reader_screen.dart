@@ -19,6 +19,7 @@ import 'package:masiro/ui/screens/reader/reading_hud.dart';
 import 'package:masiro/ui/screens/reader/settings_sheet.dart';
 import 'package:masiro/ui/screens/reader/top_bar.dart';
 import 'package:masiro/ui/widgets/error_message.dart';
+import 'package:pinyin/pinyin.dart';
 
 class ReaderScreen extends StatefulWidget {
   final int novelId;
@@ -42,6 +43,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
   ReadPosition _currentPosition = startPosition;
   final _progressNotifier = ValueNotifier<double>(0.0);
   final _pagerController = ReaderPagerController();
+
+  /// System bar padding captured in reading mode (menu closed). The reader
+  /// content always lays out against this value: opening the menu reveals
+  /// the status bar and changes the live padding, but the paginated text
+  /// must not resize or shift. It also keeps the body clear of the HUD
+  /// title and progress texts, which use the same baseline.
+  EdgeInsets? _readingPadding;
+  EdgeInsets? _menuPadding;
 
   @override
   void initState() {
@@ -134,6 +143,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
       );
     }
 
+    // Track the live padding per mode. While the menu is closed, ignore the
+    // transient value seen right after closing (the status bar is still
+    // animating out) so the frozen reading padding never flaps.
+    final mqPadding = MediaQuery.of(context).padding;
+    if (isHudVisible) {
+      _menuPadding = mqPadding;
+    } else if (_readingPadding == null || mqPadding != _menuPadding) {
+      _readingPadding = mqPadding;
+    }
+
     final volumes = chapterDetail.volumes;
     final chapterId = chapterDetail.chapterId;
     final nextChapter = getNextChapter(volumes, chapterId);
@@ -145,7 +164,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
         children: [
           buildReaderContent(context, state),
           ReadingHud(
-            chapterTitle: chapterDetail.title,
+            chapterTitle: state.forceSimplified
+                ? ChineseHelper.convertToSimplifiedChinese(chapterDetail.title)
+                : chapterDetail.title,
             progress: _progressNotifier,
             color: contentColor,
             isVisible: !isHudVisible,
@@ -223,6 +244,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         ),
                       );
                     },
+                    forceSimplified: state.forceSimplified,
+                    onForceSimplifiedChanged: (enabled) {
+                      bloc.add(
+                        ReaderScreenForceSimplifiedChanged(enabled: enabled),
+                      );
+                    },
                   );
                 },
               );
@@ -268,14 +295,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
       return _tapToToggleHud(context, PaymentDetail(paymentInfo: paymentInfo));
     }
 
-    // Keep the reader content insulated from system bar insets so that
-    // showing the status bar (when the menu opens) does not resize and shift
-    // the paginated content. The menu bars live outside this subtree and
-    // still avoid the status bar normally.
-    return MediaQuery.removePadding(
-      context: context,
-      removeTop: true,
-      removeBottom: true,
+    // Lay the reader content out against the frozen reading-mode padding so
+    // that showing the status bar (when the menu opens) does not resize and
+    // shift the paginated content, while the body stays below the top-left
+    // HUD title and above the bottom progress text. The menu bars live
+    // outside this subtree and still avoid the status bar normally.
+    final mediaQuery = MediaQuery.of(context);
+    return MediaQuery(
+      data: mediaQuery.copyWith(
+        padding: _readingPadding ?? EdgeInsets.zero,
+      ),
       child: ChapterContentPager(
       mode: pageTurnMode,
       content: chapterDetail.content,
@@ -303,6 +332,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       pagerController: _pagerController,
       indentMode: state.indentMode,
       shrinkEmptyLines: state.shrinkEmptyLines,
+      forceSimplified: state.forceSimplified,
       chapterTitle: chapterDetail.title,
       ),
     );

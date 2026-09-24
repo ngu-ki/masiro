@@ -11,6 +11,10 @@ enum IndentMode {
 
   /// Indent by two full-width characters.
   two,
+
+  /// Always indent by two full-width characters, normalizing any
+  /// indentation already present in the source content.
+  adaptive,
 }
 
 IndentMode indentModeFromName(String name) {
@@ -27,5 +31,15 @@ extension IndentModeExtension on IndentMode {
   ///
   /// A full-width space takes up exactly one Chinese character cell, so the
   /// length of the prefix matches the number of indented characters.
-  String get prefix => '　' * index;
+  String get prefix {
+    switch (this) {
+      case IndentMode.none:
+        return '';
+      case IndentMode.one:
+        return '　';
+      case IndentMode.two:
+      case IndentMode.adaptive:
+        return '　　';
+    }
+  }
 }

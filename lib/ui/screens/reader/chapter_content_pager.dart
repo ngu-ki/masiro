@@ -7,6 +7,7 @@ import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/render.dart';
 import 'package:masiro/ui/screens/reader/pagination.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
+import 'package:pinyin/pinyin.dart';
 
 /// Controller that allows the menu slider to jump to a position fraction of
 /// the current chapter.
@@ -44,6 +45,7 @@ class ChapterContentPager extends StatefulWidget {
   final ReaderPagerController pagerController;
   final IndentMode indentMode;
   final bool shrinkEmptyLines;
+  final bool forceSimplified;
 
   /// Title of the current chapter, shown at the top of the first page.
   final String chapterTitle;
@@ -66,6 +68,7 @@ class ChapterContentPager extends StatefulWidget {
     required this.pagerController,
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,
+    this.forceSimplified = false,
     required this.chapterTitle,
   });
 
@@ -119,7 +122,82 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
   String _buildConfigSignature() {
     return '${widget.chapterId}-${widget.fontSize}-${widget.mode.name}'
-        '-${widget.indentMode.name}-${widget.shrinkEmptyLines}';
+        '-${widget.indentMode.name}-${widget.shrinkEmptyLines}'
+        '-${widget.forceSimplified}';
+  }
+
+  // Converting or normalizing a whole chapter is expensive, so the
+  // transformed elements are cached and recomputed only when the source
+  // content or a transform-relevant setting changes.
+  List<ChapterContentElement>? _transformedSource;
+  String _transformedKey = '';
+  List<ChapterContentElement>? _transformedElements;
+
+  List<ChapterContentElement> _effectiveElements() {
+    final source = widget.content.elements;
+    final adaptive = widget.indentMode == IndentMode.adaptive;
+    if (!widget.forceSimplified && !adaptive) {
+      return source;
+    }
+    final key = '${widget.forceSimplified}-$adaptive';
+    if (!identical(_transformedSource, source) || _transformedKey != key) {
+      _transformedSource = source;
+      _transformedKey = key;
+      _transformedElements = [
+        for (final e in source)
+          e is TextContent ? _transformTextContent(e, adaptive) : e,
+      ];
+    }
+    return _transformedElements!;
+  }
+
+  TextContent _transformTextContent(TextContent element, bool adaptive) {
+    var text = element.text;
+    var mutedRanges = element.mutedRanges;
+    if (adaptive) {
+      // Normalize any existing leading indentation (no space, one or two
+      // cells of `&nbsp;` or full-width spaces...) so every paragraph starts
+      // exactly at the two-cell indent added by the mode prefix.
+      var leading = 0;
+      while (leading < text.length &&
+          _isIndentBlank(text.codeUnitAt(leading))) {
+        leading++;
+      }
+      if (leading > 0) {
+        final stripped = text.substring(leading);
+        // Keep paragraphs made solely of spaces untouched so they still
+        // render as blank lines.
+        if (!isBlankTextLine(stripped)) {
+          text = stripped;
+          mutedRanges = [
+            for (final range in mutedRanges)
+              if (range.end > leading)
+                (
+                  start: range.start > leading ? range.start - leading : 0,
+                  end: range.end - leading,
+                ),
+          ];
+        }
+      }
+    }
+    if (widget.forceSimplified) {
+      text = ChineseHelper.convertToSimplifiedChinese(text);
+    }
+    return element.copyWith(text: text, mutedRanges: mutedRanges);
+  }
+
+  static bool _isIndentBlank(int codeUnit) {
+    return codeUnit == 0x20 || // space
+        codeUnit == 0x09 || // tab
+        codeUnit == 0xA0 || // no-break space (`&nbsp;`)
+        codeUnit == 0x3000; // ideographic (full-width) space
+  }
+
+  String _effectiveChapterTitle() {
+    if (!widget.forceSimplified) {
+      return widget.chapterTitle;
+    }
+    return ChineseHelper.convertToSimplifiedChinese(widget.chapterTitle);
   }
 
   TextStyle _buildTextStyle(BuildContext context) {
@@ -176,10 +254,12 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final contentWidth =
             constraints.maxWidth - widget.padding.horizontal;
         final contentHeight = constraints.maxHeight - topInset - bottomInset;
+        final elements = _effectiveElements();
+        final chapterTitle = _effectiveChapterTitle();
 
         // Measure the chapter title so the first page reserves its height.
         final titlePainter = TextPainter(
-          text: TextSpan(text: widget.chapterTitle, style: titleStyle),
+          text: TextSpan(text: chapterTitle, style: titleStyle),
           textDirection: TextDirection.ltr,
           maxLines: 2,
         )..layout(maxWidth: contentWidth);
@@ -191,7 +271,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         if (signature != _layoutSignature) {
           _layoutSignature = signature;
           _pages = paginateChapterContent(
-            elements: widget.content.elements,
+            elements: elements,
             maxWidth: contentWidth,
             maxHeight: contentHeight,
             style: style,
@@ -236,7 +316,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
               titleBodyGap: titleBodyGap,
               header: i == 0 && showHeaderOnFirstPage
                   ? Text(
-                      widget.chapterTitle,
+                      chapterTitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: titleStyle,
@@ -295,7 +375,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       );
     }
 
-    final elements = widget.content.elements;
+    final elements = _effectiveElements();
     final children = <Widget>[];
     var lastElementIndex = -1;
     // The chapter title already carries its own trailing gap, so the first
@@ -574,7 +654,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         elementTopOffset: 0,
         elementCharacterIndex: firstRun.start,
         articleCharacterIndex: getArticleCharacterIndex(
-          widget.content.elements,
+          _effectiveElements(),
           firstRun.elementIndex,
           firstRun.start,
         ),

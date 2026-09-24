@@ -15,6 +15,7 @@ const _readerBackgroundColorKey = 'readerBackgroundColor';
 const _pageTurnModeKey = 'pageTurnMode';
 const _indentModeKeyPrefix = 'indentMode_';
 const _shrinkEmptyLinesKeyPrefix = 'shrinkEmptyLines_';
+const _forceSimplifiedKeyPrefix = 'forceSimplified_';
 
 // Represents the current version of the shared preferences data
 const _currentVersion = 10;
@@ -119,5 +120,16 @@ class PreferencesRepository {
 
   void setShrinkEmptyLines(int novelId, bool value) {
     _prefs.setBool('$_shrinkEmptyLinesKeyPrefix$novelId', value);
+  }
+
+  /// Whether the chapter text is converted to Simplified Chinese for the
+  /// given novel.
+  ///
+  /// The preference is kept separately for each novel.
+  bool getForceSimplified(int novelId) =>
+      _prefs.getBool('$_forceSimplifiedKeyPrefix$novelId') ?? false;
+
+  void setForceSimplified(int novelId, bool value) {
+    _prefs.setBool('$_forceSimplifiedKeyPrefix$novelId', value);
   }
 }

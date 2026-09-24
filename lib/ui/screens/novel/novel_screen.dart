@@ -28,6 +28,10 @@ class NovelScreen extends StatefulWidget {
 class _NovelScreenState extends State<NovelScreen> {
   bool _isFavoriteToggled = false;
 
+  /// Whether the body has scrolled under the app bar (the bar shows its
+  /// scrolled-under tint at the same time).
+  bool _scrolledUnder = false;
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -61,7 +65,7 @@ class _NovelScreenState extends State<NovelScreen> {
     final isFavorite = header.isFavorite;
 
     return Scaffold(
-      appBar: buildAppBar(context, isFavorite),
+      appBar: buildAppBar(context, isFavorite, header.title),
       body: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -70,7 +74,16 @@ class _NovelScreenState extends State<NovelScreen> {
           }
           _backToPrevScreen(context);
         },
-        child: buildBody(context, novelDetail),
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            final scrolledUnder = notification.metrics.pixels > 0;
+            if (scrolledUnder != _scrolledUnder) {
+              setState(() => _scrolledUnder = scrolledUnder);
+            }
+            return false;
+          },
+          child: buildBody(context, novelDetail),
+        ),
       ),
       bottomNavigationBar: buildBottomBar(
         context,
@@ -80,7 +93,27 @@ class _NovelScreenState extends State<NovelScreen> {
     );
   }
 
-  AppBar buildAppBar(BuildContext context, bool isFavorite) {
+  /// Formats the novel title for the app bar: at most 12 characters per
+  /// line, wrapping onto a second line when needed, and ending the second
+  /// line with an ellipsis when the title is longer than two lines.
+  String _appBarNovelTitle(String title) {
+    final chars = title.characters;
+    if (chars.length <= 12) {
+      return title;
+    }
+    final firstLine = chars.take(12).toString();
+    final rest = chars.skip(12);
+    if (rest.length <= 12) {
+      return '$firstLine\n$rest';
+    }
+    return '$firstLine\n${rest.take(11)}…';
+  }
+
+  AppBar buildAppBar(
+    BuildContext context,
+    bool isFavorite,
+    String novelTitle,
+  ) {
     final bloc = context.read<NovelScreenBloc>();
     final localizations = context.localizations();
 
@@ -89,7 +122,23 @@ class _NovelScreenState extends State<NovelScreen> {
         onPressed: () => _backToPrevScreen(context),
         icon: const Icon(Icons.arrow_back_rounded),
       ),
-      title: Text(localizations.detail),
+      // While the page is scrolled under the bar (the bar changes color),
+      // show the novel title instead of the static label. It uses the same
+      // font size as the favorite button and sits at the same position,
+      // vertically centered with tight line spacing.
+      title: _scrolledUnder
+          ? Text(
+              _appBarNovelTitle(novelTitle),
+              maxLines: 2,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.1,
+                color: Theme.of(context).brightness == Brightness.light
+                    ? Colors.black
+                    : Colors.white,
+              ),
+            )
+          : Text(localizations.detail),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 8),

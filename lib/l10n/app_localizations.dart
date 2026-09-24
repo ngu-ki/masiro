@@ -707,6 +707,12 @@ abstract class AppLocalizations {
   /// **'2格'**
   String get indentTwo;
 
+  /// No description provided for @indentAdaptive.
+  ///
+  /// In zh, this message translates to:
+  /// **'自适应'**
+  String get indentAdaptive;
+
   /// No description provided for @addToBookshelf.
   ///
   /// In zh, this message translates to:
@@ -772,6 +778,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'空行缩小'**
   String get shrinkEmptyLines;
+
+  /// No description provided for @forceSimplified.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制简体'**
+  String get forceSimplified;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

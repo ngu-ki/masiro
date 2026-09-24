@@ -81,3 +81,12 @@ final class ReaderScreenShrinkEmptyLinesChanged extends ReaderScreenEvent {
   @override
   List<Object> get props => [shrinkEmptyLines];
 }
+
+final class ReaderScreenForceSimplifiedChanged extends ReaderScreenEvent {
+  final bool enabled;
+
+  ReaderScreenForceSimplifiedChanged({required this.enabled});
+
+  @override
+  List<Object> get props => [enabled];
+}
