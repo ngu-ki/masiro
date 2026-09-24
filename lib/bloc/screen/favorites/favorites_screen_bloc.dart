@@ -263,7 +263,9 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       }
     }
     _novels.removeWhere((n) => selectedIds.contains(n.id));
-    _stats.removeWhere((key, _) => selectedIds.contains(key));
+    _stats = Map.fromEntries(
+      _stats.entries.where((e) => !selectedIds.contains(e.key)),
+    );
     emit(
       current.copyWith(
         novels: _sortNovels(_novels, current.sortMode, current.sortDirection),
@@ -327,7 +329,9 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     if (current is! FavoritesScreenLoadedState) {
       return;
     }
-    _stats[event.novelId] = event.stat;
+    final newStats = Map<int, BookshelfStat>.from(_stats);
+    newStats[event.novelId] = event.stat;
+    _stats = newStats;
     _preferencesRepository.bookshelfStats = _stats;
     final novels = current.sortMode == FavoritesSortMode.recentlyRead
         ? _sortNovels(_novels, current.sortMode, current.sortDirection)
@@ -388,7 +392,13 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         if (token != _enrichToken || isClosed) {
           return;
         }
-        _stats[novel.id] = _buildStat(detail);
+        // Create a new map so the state change is detected by Equatable.
+        // Mutating _stats in place and passing the same reference would
+        // make the old and new states share the same map, so BlocBuilder
+        // would not rebuild and the grid card would never show the stats.
+        final newStats = Map<int, BookshelfStat>.from(_stats);
+        newStats[novel.id] = _buildStat(detail);
+        _stats = newStats;
         _preferencesRepository.bookshelfStats = _stats;
         final current = state;
         if (current is FavoritesScreenLoadedState) {
