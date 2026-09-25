@@ -24,6 +24,10 @@ class NovelList extends StatefulWidget {
   /// Called when the mascot on the initial empty discovery page is tapped.
   final void Function()? onTapMascot;
 
+  /// Extra space reserved at the top of the scrollable area for the
+  /// floating search bar that overlays the list.
+  final double topPadding;
+
   const NovelList({
     super.key,
     required this.novels,
@@ -31,6 +35,7 @@ class NovelList extends StatefulWidget {
     required this.totalCount,
     this.hasSearched = true,
     this.onTapMascot,
+    this.topPadding = 0,
   });
 
   @override
@@ -61,22 +66,33 @@ class _NovelListState extends State<NovelList> {
 
     if (novels.isEmpty) {
       if (!widget.hasSearched) {
-        return Center(
-          child: GestureDetector(
-            onTap: widget.onTapMascot,
-            child: Image.asset(
-              'assets/img/click_me.png',
-              width: MediaQuery.of(context).size.width * 0.6,
+        return Padding(
+          padding: EdgeInsets.only(top: widget.topPadding),
+          child: Center(
+            child: GestureDetector(
+              onTap: widget.onTapMascot,
+              child: Image.asset(
+                'assets/img/click_me.png',
+                width: MediaQuery.of(context).size.width * 0.6,
+              ),
             ),
           ),
         );
       }
-      return Message(message: localizations.noContentMessage);
+      return Padding(
+        padding: EdgeInsets.only(top: widget.topPadding),
+        child: Message(message: localizations.noContentMessage),
+      );
     }
 
     final infiniteList = ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.fromLTRB(
+        10,
+        10 + widget.topPadding,
+        10,
+        10,
+      ),
       itemCount: novels.length,
       itemBuilder: (context, index) {
         final n = novels[index];

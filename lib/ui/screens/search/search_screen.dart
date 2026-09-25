@@ -35,17 +35,46 @@ class _SearchScreenState extends State<SearchScreen> {
             }
             return bloc;
           },
-          child: Column(
+          child: Stack(
             children: [
-              SearchTopBar(
-                key: _searchBarKey,
-                initialKeyword: initialKeyword,
+              Positioned.fill(child: buildBody(context)),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: buildFloatingHeader(context),
               ),
-              Expanded(child: buildBody(context)),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// The floating search bar overlay.
+  ///
+  /// The opaque background deliberately ends exactly at the bottom edge of
+  /// the search pill ([searchBarHeight] includes an 8px bottom gap), so
+  /// scrolling cards travel underneath the pill and its elevation shadow
+  /// instead of being clipped on a hard white line below the shadow.
+  Widget buildFloatingHeader(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: searchBarHeight - 8,
+          child: ColoredBox(
+            color: Theme.of(context).colorScheme.surface,
+          ),
+        ),
+        SearchTopBar(
+          key: _searchBarKey,
+          initialKeyword: widget.initialKeyword,
+        ),
+      ],
     );
   }
 
@@ -54,21 +83,28 @@ class _SearchScreenState extends State<SearchScreen> {
       builder: (context, state) {
         switch (state) {
           case SearchScreenLoadingState():
-            return const Center(
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(),
+            return Padding(
+              padding: const EdgeInsets.only(top: searchBarHeight),
+              child: const Center(
+                child: SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(),
+                ),
               ),
             );
           case SearchScreenErrorState():
-            return ErrorMessage(message: state.message);
+            return Padding(
+              padding: const EdgeInsets.only(top: searchBarHeight),
+              child: ErrorMessage(message: state.message),
+            );
           case SearchScreenLoadedState():
             return NovelList(
               novels: state.novels,
               status: state.infiniteListStatus,
               totalCount: state.totalCount,
               hasSearched: state.hasSearched,
+              topPadding: searchBarHeight,
               onTapMascot: () => context
                   .read<SearchScreenBloc>()
                   .add(SearchScreenSearched(keyword: '')),
