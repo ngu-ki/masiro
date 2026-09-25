@@ -53,11 +53,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
   /// The floating search bar overlay.
   ///
-  /// The opaque background deliberately ends exactly at the bottom edge of
-  /// the search pill ([searchBarHeight] includes an 8px bottom gap), so
-  /// scrolling cards travel underneath the pill and its elevation shadow
-  /// instead of being clipped on a hard white line below the shadow.
+  /// The opaque background only extends to the horizontal midline of the
+  /// pill's rounded (stadium) ends. Below that line the pill's own opaque
+  /// background covers its interior, so scrolling cards stay visible beside
+  /// the rounded bottom corners instead of being blocked by a rectangular
+  /// patch. The 8px gap below the pill ([searchBarHeight] includes it) is
+  /// also left open, so cards travel underneath the pill and its elevation
+  /// shadow rather than being clipped on a hard line.
   Widget buildFloatingHeader(BuildContext context) {
+    final pillHeight = searchBarHeight - 2 * searchBarPadding;
+    final headerBackgroundHeight = searchBarPadding + pillHeight / 2;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -65,7 +70,7 @@ class _SearchScreenState extends State<SearchScreen> {
           top: 0,
           left: 0,
           right: 0,
-          height: searchBarHeight - 8,
+          height: headerBackgroundHeight,
           child: ColoredBox(
             color: Theme.of(context).colorScheme.surface,
           ),

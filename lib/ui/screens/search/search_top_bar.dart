@@ -5,6 +5,9 @@ import 'package:masiro/bloc/screen/search/search_screen_event.dart';
 
 const searchBarHeight = 72.0;
 
+/// Gap between the search pill and the edges of its floating header.
+const searchBarPadding = 8.0;
+
 class SearchTopBar extends StatefulWidget {
   /// The keyword prefilled in the search bar.
   final String? initialKeyword;
@@ -38,7 +41,7 @@ class SearchTopBarState extends State<SearchTopBar> {
   Widget build(BuildContext context) {
     final bloc = context.read<SearchScreenBloc>();
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(searchBarPadding),
       child: SearchAnchor(
         searchController: _searchController,
         // Flat search view: without this the full-screen panel carries the
