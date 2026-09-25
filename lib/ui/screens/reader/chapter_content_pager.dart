@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:masiro/data/repository/model/chapter_detail.dart';
 import 'package:masiro/data/repository/model/indent_mode.dart';
@@ -99,6 +100,20 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   DateTime? _pointerDownTime;
   double _chapterEndOverscroll = 0.0;
   double _chapterStartOverscroll = 0.0;
+
+  /// Page index whose image is currently (or has just been) prefetched.
+  int? _prefetchedImagePage;
+  bool _prefetchInFlight = false;
+
+  /// Physical-pixel decode size for prefetched images, matching the size
+  /// the on-screen [CachedImage] decodes at, so the prefetched bitmap is
+  /// reused directly instead of being decoded a second time.
+  int? _prefetchCacheWidth;
+  int? _prefetchCacheHeight;
+
+  /// Bumped whenever pagination runs, so a prefetch started for the
+  /// previous chapter/config doesn't schedule follow-up work.
+  int _paginationGeneration = 0;
 
   @override
   void initState() {
@@ -260,6 +275,10 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final contentWidth =
             constraints.maxWidth - widget.padding.horizontal;
         final contentHeight = constraints.maxHeight - topInset - bottomInset;
+        _prefetchCacheWidth =
+            (contentWidth * mediaQuery.devicePixelRatio).round();
+        _prefetchCacheHeight =
+            (contentHeight * mediaQuery.devicePixelRatio).round();
         final elements = _effectiveElements();
         final chapterTitle = _effectiveChapterTitle();
 
@@ -299,10 +318,14 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
             if (mounted) {
               _reportProgress();
               _reportPosition(_currentPage);
+              _scheduleImagePrefetch();
             }
           });
           _pageController?.dispose();
           _pageController = PageController(initialPage: _currentPage);
+          _paginationGeneration++;
+          _prefetchedImagePage = null;
+          _prefetchInFlight = false;
         }
 
         final firstPage = _pages.isNotEmpty ? _pages.first : null;
@@ -620,12 +643,67 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     _currentPage = target;
     _reportProgress();
     _reportPosition(target);
+    _scheduleImagePrefetch();
   }
 
   void _onPageViewChanged(int index) {
     _currentPage = index;
     _reportProgress();
     _reportPosition(index);
+    _scheduleImagePrefetch();
+  }
+
+  /// Warms the disk cache of the nearest full-page image ahead of the
+  /// current page, so reaching that page renders it instantly instead of
+  /// starting the download on the spot.
+  ///
+  /// Traffic shaping (this is a third-party client): at most one image
+  /// GET is in flight per chapter, and the next one only starts after the
+  /// reader actually reaches the previous prefetched image. Pacing is thus
+  /// driven by real reading speed, never a whole-chapter burst.
+  void _scheduleImagePrefetch() {
+    if (_prefetchInFlight || _pages.isEmpty) {
+      return;
+    }
+    // A prefetch for an image the reader hasn't reached yet is still
+    // pending: do not walk further through the chapter.
+    final pendingPage = _prefetchedImagePage;
+    if (pendingPage != null && _currentPage < pendingPage) {
+      return;
+    }
+    for (var i = _currentPage + 1; i < _pages.length; i++) {
+      final page = _pages[i];
+      if (!page.isImagePage()) {
+        continue;
+      }
+      _prefetchedImagePage = i;
+      _prefetchInFlight = true;
+      final generation = _paginationGeneration;
+      final targetPage = i;
+      // Decode at on-screen pixel size; this is the same ResizeImage key
+      // the visible CachedImage will use, so display is a direct cache hit.
+      final provider = ResizeImage(
+        CachedNetworkImageProvider(page.image!.src),
+        width: _prefetchCacheWidth,
+        height: _prefetchCacheHeight,
+      );
+      precacheImage(
+        provider,
+        context,
+        onError: (error, stackTrace) {},
+      ).then((_) {
+        if (!mounted || generation != _paginationGeneration) {
+          return;
+        }
+        _prefetchInFlight = false;
+        // Only chain to the following image once the reader has reached
+        // the one just prefetched.
+        if (_currentPage >= targetPage) {
+          _scheduleImagePrefetch();
+        }
+      });
+      return;
+    }
   }
 
   bool _onOverscroll(OverscrollNotification notification) {
