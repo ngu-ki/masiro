@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:isar/isar.dart';
 import 'package:masiro/bloc/screen/reader/reader_screen_event.dart';
@@ -25,6 +27,14 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
   final preferencesRepository = PreferencesRepository();
 
   final int novelId;
+
+  /// Cached current user id, so saving the reading position doesn't query
+  /// the user table on every page turn.
+  int? _currentUserId;
+
+  /// Isar record ids of per-chapter reading positions already seen this
+  /// session, keyed by chapter id. Avoids a lookup query on every save.
+  final Map<int, Id> _chapterRecordIds = {};
 
   ReaderScreenBloc({
     required this.novelId,
@@ -78,6 +88,10 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
         chapterId,
         _readingModeOf(pageTurnMode),
       );
+      _currentUserId = currentUser.userId;
+      if (chapterRecord != null) {
+        _chapterRecordIds[chapterId] = chapterRecord.id;
+      }
       final appConfig = await appConfigurationRepository.getAppConfiguration();
       emit(
         ReaderScreenLoadedState(
@@ -115,28 +129,71 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     ReaderScreenPositionChanged event,
     Emitter<ReaderScreenState> emit,
   ) async {
+    final state = this.state;
     if (state is! ReaderScreenLoadedState) {
       return;
     }
-    final loadedState = state as ReaderScreenLoadedState;
-    final chapterId = loadedState.chapterDetail.chapterId;
-    final readingMode = loadedState.readingMode;
-    final currentUser = await userRepository.getCurrentUser();
-    final chapterRecord = await novelRecordRepository.findChapterRecord(
-      currentUser!.userId,
-      chapterId,
-      readingMode,
+    final loadedState = state;
+    await _savePosition(
+      chapterId: loadedState.chapterDetail.chapterId,
+      readingMode: loadedState.readingMode,
+      position: event.position,
     );
-    await novelRecordRepository.putChapterRecord(
-      ChapterRecord(
-        id: chapterRecord?.id ?? Isar.autoIncrement,
-        chapterId: chapterId,
-        novelId: novelId,
-        position: event.position,
-        readingMode: readingMode,
-        userId: currentUser.userId,
+  }
+
+  /// Persists [position] immediately, bypassing the event debounce. Called
+  /// when the reader is popped so a page turn that happened inside the
+  /// debounce window is still saved.
+  void persistLatestPosition(ReadPosition position) {
+    final state = this.state;
+    if (state is! ReaderScreenLoadedState) {
+      return;
+    }
+    unawaited(
+      _savePosition(
+        chapterId: state.chapterDetail.chapterId,
+        readingMode: state.readingMode,
+        position: position,
       ),
     );
+  }
+
+  /// Writes the reading position with a single Isar write. The user id and
+  /// the chapter record id are cached after first lookup, so steady-state
+  /// page turns cost one put instead of two queries plus a put.
+  Future<void> _savePosition({
+    required int chapterId,
+    required ReadingMode readingMode,
+    required ReadPosition position,
+  }) async {
+    var userId = _currentUserId;
+    if (userId == null) {
+      userId = (await userRepository.getCurrentUser())?.userId;
+      _currentUserId = userId;
+    }
+    if (userId == null) {
+      return;
+    }
+    var recordId = _chapterRecordIds[chapterId];
+    if (recordId == null) {
+      final chapterRecord = await novelRecordRepository.findChapterRecord(
+        userId,
+        chapterId,
+        readingMode,
+      );
+      recordId = chapterRecord?.id;
+    }
+    final savedId = await novelRecordRepository.putChapterRecord(
+      ChapterRecord(
+        id: recordId ?? Isar.autoIncrement,
+        chapterId: chapterId,
+        novelId: novelId,
+        position: position,
+        readingMode: readingMode,
+        userId: userId,
+      ),
+    );
+    _chapterRecordIds[chapterId] = savedId;
   }
 
   Future<void> _onReaderScreenChapterNavigated(

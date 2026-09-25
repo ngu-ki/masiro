@@ -309,54 +309,59 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final showHeaderOnFirstPage = firstPage != null &&
             !firstPage.isImagePage() &&
             firstPage.runs.isNotEmpty;
-        final pageWidgets = [
-          for (var i = 0; i < _pages.length; i++)
-            _buildPage(
-              context,
-              _pages[i],
-              style,
-              paragraphGap,
-              blankGap,
-              topInset: topInset,
-              bottomInset: bottomInset,
-              contentWidth: contentWidth,
-              contentHeight: contentHeight,
-              titleBodyGap: titleBodyGap,
-              header: i == 0 && showHeaderOnFirstPage
-                  ? Text(
-                      chapterTitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStyle,
-                    )
-                  : null,
-            ),
-        ];
-        final chapterEndPage = _buildChapterEndPage(context);
+        // Pages are built lazily via the PageView.builder item builder:
+        // constructing every page up front made opening a long chapter
+        // build and lay out dozens of Text.rich widgets in one frame.
+        Widget buildItem(int index) {
+          if (index == _pages.length) {
+            return _buildChapterEndPage(context);
+          }
+          return _buildPage(
+            context,
+            _pages[index],
+            style,
+            paragraphGap,
+            blankGap,
+            topInset: topInset,
+            bottomInset: bottomInset,
+            contentWidth: contentWidth,
+            contentHeight: contentHeight,
+            titleBodyGap: titleBodyGap,
+            header: index == 0 && showHeaderOnFirstPage
+                ? Text(
+                    chapterTitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: titleStyle,
+                  )
+                : null,
+          );
+        }
 
         return Listener(
           behavior: HitTestBehavior.translucent,
           onPointerDown: _onPointerDown,
           onPointerUp: (event) => _onPointerUp(context, event),
-          child: _buildPageViewPager(pageWidgets, chapterEndPage),
+          child: _buildPageViewPager(_pages.length + 1, buildItem),
         );
       },
     );
   }
 
   Widget _buildPageViewPager(
-    List<Widget> pageWidgets,
-    Widget chapterEndPage,
+    int itemCount,
+    Widget Function(int index) itemBuilder,
   ) {
     return NotificationListener<OverscrollNotification>(
       onNotification: _onOverscroll,
-      child: PageView(
+      child: PageView.builder(
         controller: _pageController,
         physics: widget.mode == PageTurnMode.none
             ? const NeverScrollableScrollPhysics()
             : const PageScrollPhysics(),
         onPageChanged: _onPageViewChanged,
-        children: [...pageWidgets, chapterEndPage],
+        itemCount: itemCount,
+        itemBuilder: (context, index) => itemBuilder(index),
       ),
     );
   }

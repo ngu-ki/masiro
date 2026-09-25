@@ -481,63 +481,93 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     await _enrichUnreadCounts(forceRefresh: forceRefresh);
   }
 
-  /// Loads the unread count of every favorite novel one by one in the
-  /// background. Cached statistics are shown immediately and each novel is
-  /// updated in the state as soon as its detail is fetched.
+  /// Loads the unread count of every favorite novel in the background.
+  /// Cached statistics are shown immediately and stats are flushed to the
+  /// state as they arrive (throttled so a large shelf doesn't trigger one
+  /// whole-grid rebuild per book). A small bounded pool is used instead of
+  /// a fully serial loop so the radio isn't kept at high power for the
+  /// whole duration; preferences are serialized and written only once.
   Future<void> _enrichUnreadCounts({bool forceRefresh = false}) async {
     final token = ++_enrichToken;
     final novels = List<Novel>.from(_novels);
-    for (final novel in novels) {
-      if (token != _enrichToken || isClosed) {
-        return;
+
+    static const concurrency = 4;
+    static const minEmitInterval = Duration(milliseconds: 400);
+    var nextIndex = 0;
+    var lastEmitAt = DateTime.now().subtract(minEmitInterval);
+
+    void applyStat(int novelId, BookshelfStat fresh) {
+      final newStats = Map<int, BookshelfStat>.from(_stats);
+      final old = _stats[novelId];
+      // Preserve the locally recorded reading timestamp; stamp "now"
+      // when the server reports reading progress on a new chapter.
+      final progressChanged = old != null &&
+          old.lastReadChapterId != fresh.lastReadChapterId &&
+          fresh.lastReadChapterId != 0;
+      final stat = progressChanged
+          ? fresh.copyWith(lastReadAt: DateTime.now().millisecondsSinceEpoch)
+          : (old != null
+              ? fresh.copyWith(lastReadAt: old.lastReadAt)
+              : fresh);
+      newStats[novelId] = stat;
+      _stats = newStats;
+
+      final now = DateTime.now();
+      if (now.difference(lastEmitAt) >= minEmitInterval) {
+        lastEmitAt = now;
+        _emitStatsState();
       }
-      try {
-        final detail = await _masiroRepository.getNovelDetail(
-          novel.id,
-          forceRefresh: forceRefresh,
-        );
+      // Intermediate stats that arrive within the throttle window are only
+      // accumulated into _stats; the loop's final emit flushes them all.
+    }
+
+    Future<void> worker() async {
+      while (true) {
         if (token != _enrichToken || isClosed) {
           return;
         }
-        // Create a new map so the state change is detected by Equatable.
-        // Mutating _stats in place and passing the same reference would
-        // make the old and new states share the same map, so BlocBuilder
-        // would not rebuild and the grid card would never show the stats.
-        final newStats = Map<int, BookshelfStat>.from(_stats);
-        final fresh = _buildStat(detail);
-        final old = _stats[novel.id];
-        // Preserve the locally recorded reading timestamp; stamp "now"
-        // when the server reports reading progress on a new chapter.
-        final progressChanged = old != null &&
-            old.lastReadChapterId != fresh.lastReadChapterId &&
-            fresh.lastReadChapterId != 0;
-        final stat = progressChanged
-            ? fresh.copyWith(lastReadAt: DateTime.now().millisecondsSinceEpoch)
-            : (old != null
-                ? fresh.copyWith(lastReadAt: old.lastReadAt)
-                : fresh);
-        newStats[novel.id] = stat;
-        _stats = newStats;
-        _preferencesRepository.bookshelfStats = _stats;
-        final current = state;
-        if (current is FavoritesScreenLoadedState) {
-          // Re-sort novels if the current order depends on the enriched
-          // stats (recently read or chapter count).
-          final novels = current.sortMode == FavoritesSortMode.recentlyRead ||
-                  current.sortMode == FavoritesSortMode.chapterCount
-              ? _sortNovels(_novels, current.sortMode, current.sortDirection)
-              : null;
-          emit(
-            current.copyWith(
-              stats: _stats,
-              novels: novels,
-            ),
-          );
+        final index = nextIndex++;
+        if (index >= novels.length) {
+          return;
         }
-      } catch (_) {
-        // Keep the cached value when the detail cannot be loaded.
+        final novel = novels[index];
+        try {
+          final detail = await _masiroRepository.getNovelDetail(
+            novel.id,
+            forceRefresh: forceRefresh,
+          );
+          if (token != _enrichToken || isClosed) {
+            return;
+          }
+          applyStat(_buildStat(detail, novel.id));
+        } catch (_) {
+          // Keep the cached value when the detail cannot be loaded.
+        }
       }
     }
+
+    await Future.wait(List.generate(concurrency, (_) => worker()));
+
+    // Persist the whole map once instead of re-encoding it per book, and
+    // make sure the final state reflects everything that was fetched.
+    if (token == _enrichToken && !isClosed) {
+      _preferencesRepository.bookshelfStats = _stats;
+      _emitStatsState();
+    }
+  }
+
+  /// Emits the current stats map (re-sorting when the active order depends
+  /// on stats).
+  void _emitStatsState() {
+    final current = state;
+    if (current is! FavoritesScreenLoadedState) {
+      return;
+    }
+    final novels = current.sortMode == FavoritesSortMode.recentlyRead ||
+            current.sortMode == FavoritesSortMode.chapterCount
+        ? _sortNovels(_novels, current.sortMode, current.sortDirection)
+        : null;
+    emit(current.copyWith(stats: _stats, novels: novels));
   }
 
   List<Novel> _sortNovels(

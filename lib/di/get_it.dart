@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:dio_cache_interceptor_isar_store/dio_cache_interceptor_isar_store.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:isar/isar.dart';
 import 'package:logger/logger.dart';
@@ -32,7 +33,11 @@ Future<void> setupGetIt() async {
   );
   final dio = Dio(BaseOptions(baseUrl: MasiroUrl.baseUrl))
     ..interceptors.add(DioCacheInterceptor(options: options))
-    ..interceptors.add(LogInterceptor(responseBody: false))
+    // Building log strings for every request costs CPU (and logcat I/O) in
+    // release builds; keep the interceptor in debug builds only.
+    ..interceptors.addAll(
+      kDebugMode ? [LogInterceptor(responseBody: false)] : const [],
+    )
     ..options.headers[HttpHeaders.userAgentHeader] = _userAgent
     ..options.followRedirects = false
     ..options.validateStatus =

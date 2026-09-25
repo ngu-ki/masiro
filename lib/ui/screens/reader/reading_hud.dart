@@ -69,7 +69,10 @@ class _ReadingHudState extends State<ReadingHud> {
             Positioned(
               right: 16,
               bottom: mediaQuery.padding.bottom + 10,
-              child: _ClockBatteryText(style: hudStyle),
+              child: _ClockBatteryText(
+                style: hudStyle,
+                isActive: widget.isVisible,
+              ),
             ),
           ],
         ),
@@ -81,7 +84,14 @@ class _ReadingHudState extends State<ReadingHud> {
 class _ClockBatteryText extends StatefulWidget {
   final TextStyle style;
 
-  const _ClockBatteryText({required this.style});
+  /// Whether the HUD is currently shown. The clock only ticks while it is
+  /// visible, so opening the menu doesn't keep waking the CPU every minute.
+  final bool isActive;
+
+  const _ClockBatteryText({
+    required this.style,
+    required this.isActive,
+  });
 
   @override
   State<_ClockBatteryText> createState() => _ClockBatteryTextState();
@@ -96,15 +106,24 @@ class _ClockBatteryTextState extends State<_ClockBatteryText> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (mounted) {
-        setState(() {});
-      }
-    });
     _fetchBatteryLevel();
     _batterySubscription = _battery.onBatteryStateChanged.listen((_) {
       _fetchBatteryLevel();
     });
+    _syncTimer();
+  }
+
+  @override
+  void didUpdateWidget(_ClockBatteryText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive != widget.isActive) {
+      // Refresh the clock as soon as the HUD is shown and (re)start or
+      // stop the ticker according to the new visibility.
+      if (widget.isActive && mounted) {
+        setState(() {});
+      }
+      _syncTimer();
+    }
   }
 
   @override
@@ -112,6 +131,32 @@ class _ClockBatteryTextState extends State<_ClockBatteryText> {
     _timer?.cancel();
     _batterySubscription?.cancel();
     super.dispose();
+  }
+
+  /// Schedules a single rebuild at the next minute boundary. The clock
+  /// displays hours and minutes only, so one wake-up per minute (instead
+  /// of a fixed 15-second periodic timer) is enough; nothing is scheduled
+  /// while the HUD is hidden.
+  void _syncTimer() {
+    _timer?.cancel();
+    if (!widget.isActive) {
+      return;
+    }
+    final now = DateTime.now();
+    final nextMinute = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      now.hour,
+      now.minute,
+    ).add(const Duration(minutes: 1));
+    _timer = Timer(nextMinute.difference(now), () {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+      _syncTimer();
+    });
   }
 
   Future<void> _fetchBatteryLevel() async {

@@ -31,6 +31,29 @@ class ReaderScreen extends StatefulWidget {
     required this.chapterId,
   });
 
+  /// Enters the immersive (status-bar hidden) mode *before* the reader route
+  /// transition starts. Callers that show a loading dialog (e.g. opening
+  /// straight from the shelf cover) use this while the dialog still covers
+  /// the screen, so the page below finishes relaying out behind the dialog
+  /// instead of visibly shifting while the reader fades in.
+  static Future<void> prepareImmersiveEntry() async {
+    if (isDesktop) {
+      return;
+    }
+    await SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.immersiveSticky,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+  }
+
+  /// Restores the regular edge-to-edge system UI (status bar visible).
+  static Future<void> restoreSystemUi() async {
+    if (isDesktop) {
+      return;
+    }
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
 }
@@ -41,6 +64,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   int? _lastReadChapterIdForPopResult;
   int? _loadedChapterId;
   ReadPosition _currentPosition = startPosition;
+  ReaderScreenBloc? _bloc;
   final _progressNotifier = ValueNotifier<double>(0.0);
   final _pagerController = ReaderPagerController();
 
@@ -62,6 +86,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   void dispose() {
+    // Flush the latest position synchronously-ish: the bloc's position
+    // events are debounced, and the pending (trailing) write would be
+    // cancelled when the bloc closes right after this dispose.
+    _bloc?.persistLatestPosition(_currentPosition);
     _progressNotifier.dispose();
     if (!isDesktop) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -281,6 +309,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     ReaderScreenLoadedState state,
   ) {
     final bloc = context.read<ReaderScreenBloc>();
+    _bloc ??= bloc;
     final chapterDetail = state.chapterDetail;
     final paymentInfo = chapterDetail.paymentInfo;
     final loadingStatus = state.loadingStatus;
@@ -365,6 +394,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _onPositionChange(ReaderScreenBloc bloc, ReadPosition position) {
+    _bloc ??= bloc;
     _currentPosition = position;
     bloc.add(ReaderScreenPositionChanged(position: position));
   }
@@ -387,7 +417,33 @@ class _ReaderScreenState extends State<ReaderScreen> {
     context.read<ReaderScreenBloc>().add(ReaderScreenHudToggled());
   }
 
-  void _backToPrevScreen(BuildContext context) {
+  bool _isPopPending = false;
+
+  Future<void> _backToPrevScreen(BuildContext context) async {
+    if (_isPopPending) {
+      return;
+    }
+    // The reader is immersive while the menu is closed, so the route below
+    // has already been laid out with zero status-bar insets (its content
+    // sits at the very top). Restoring edgeToEdge only in dispose makes
+    // the page below relayout *during* the pop transition, which looks
+    // like the detail/shelf page dropping down. Restore the status bar
+    // first while the reader still fully covers the screen, let the page
+    // below settle, and only then start the transition.
+    if (!isDesktop) {
+      final state = context.read<ReaderScreenBloc>().state;
+      final hudVisible = state is ReaderScreenLoadedState &&
+          state.isHudVisible;
+      if (!hudVisible) {
+        _isPopPending = true;
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        _isPopPending = false;
+        if (!mounted || !context.mounted) {
+          return;
+        }
+      }
+    }
     // Use the imperative Navigator API (instead of context.pop) so the
     // reader works both as a GoRouter route and as a raw route pushed
     // directly from the bookshelf cover tap.

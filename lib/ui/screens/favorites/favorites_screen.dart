@@ -688,10 +688,18 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     var dialogDismissed = false;
+    var readerPushed = false;
+    BuildContext? dialogContext;
     void dismissDialog() {
       if (!dialogDismissed) {
         dialogDismissed = true;
-        rootNavigator.pop();
+        final ctx = dialogContext;
+        // Pop the dialog route itself (via its own context) rather than
+        // rootNavigator.pop(), because once the reader has been pushed on
+        // top of the dialog, popping the top route would dismiss the reader.
+        if (ctx != null && ctx.mounted) {
+          Navigator.of(ctx).pop();
+        }
       }
     }
 
@@ -700,14 +708,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       barrierDismissible: false,
       useRootNavigator: true,
       builder: (context) {
+        dialogContext = context;
         return const Center(child: CircularProgressIndicator());
       },
     );
+
+    // Start hiding the status bar right away, behind the loading dialog and
+    // in parallel with the network request, so the shelf relayout is never
+    // seen and the ~220ms immersive settle normally costs no extra wait.
+    final immersiveReady = ReaderScreen.prepareImmersiveEntry();
 
     try {
       final detail = await getIt<MasiroRepository>().getNovelDetail(n.id);
       if (!context.mounted) {
         dismissDialog();
+        await immersiveReady;
+        await ReaderScreen.restoreSystemUi();
         return;
       }
 
@@ -718,22 +734,42 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               firstChapter;
       if (chapter == null) {
         dismissDialog();
+        await immersiveReady;
+        await ReaderScreen.restoreSystemUi();
         return;
       }
 
-      // Push the reader while removing the loading dialog in the same
-      // navigation operation. Removed routes play no exit animation, so
-      // only the reader's single push transition is visible instead of
-      // a dialog pop followed by a route push (two animations).
-      final int? lastChapterId = await rootNavigator.pushAndRemoveUntil<int?>(
+      // Make sure the status bar is fully hidden before the transition so
+      // the page below doesn't relayout while the reader fades in.
+      await immersiveReady;
+      if (!context.mounted) {
+        dismissDialog();
+        await ReaderScreen.restoreSystemUi();
+        return;
+      }
+
+      // Keep the loading dialog underneath the reader route during the
+      // transition: its spinner stays continuously at the same position as
+      // the reader's own loading spinner, so there is no spinner blink or
+      // "two animations". Remove the dialog (no exit animation) after the
+      // reader is fully opaque, or immediately if the reader is popped
+      // before that.
+      final popFuture = rootNavigator.push<int?>(
         buildReaderRoute<int?>(
           builder: (_) => ReaderScreen(
             novelId: n.id,
             chapterId: chapter.id,
           ),
         ),
-        (route) => route is! DialogRoute,
       );
+      readerPushed = true;
+      final removeDialogAfterTransition = Future<void>.delayed(
+        readerTransitionDuration + const Duration(milliseconds: 30),
+        dismissDialog,
+      );
+      final int? lastChapterId = await popFuture;
+      dismissDialog();
+      await removeDialogAfterTransition;
       if (!context.mounted) {
         return;
       }
@@ -757,6 +793,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       );
     } catch (e) {
       dismissDialog();
+      // If the reader route never made it on screen, let the immersive
+      // switch settle first, then restore the status bar so the two system
+      // UI mode changes don't race.
+      if (!readerPushed) {
+        await immersiveReady;
+        await ReaderScreen.restoreSystemUi();
+      }
       if (context.mounted) {
         e.toString().toast();
       }
