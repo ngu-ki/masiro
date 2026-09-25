@@ -79,11 +79,8 @@ class _RouterOutletWithNavBarState extends State<RouterOutletWithNavBar> {
                 Expanded(child: Center(child: widget.child)),
               ],
             )
-          : Column(
-              children: [
-                const AdaptiveStatusBarStyle(),
-                Expanded(child: widget.child),
-              ],
+          : AdaptiveStatusBarStyle(
+              child: widget.child,
             ),
     );
 
