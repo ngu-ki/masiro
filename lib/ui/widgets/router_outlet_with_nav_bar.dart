@@ -6,7 +6,6 @@ import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/platform.dart';
 import 'package:masiro/misc/tray_icon.dart';
 import 'package:masiro/ui/widgets/adaptive_status_bar_style.dart';
-import 'package:masiro/ui/widgets/frozen_media_query.dart';
 import 'package:masiro/ui/widgets/nav_bar.dart';
 
 bool _systemTrayInitialized = false;
@@ -59,10 +58,6 @@ class _RouterOutletWithNavBarState extends State<RouterOutletWithNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    // Freeze window insets for tab pages while the reader is entering or
-    // leaving, so the immersive status-bar switch never shifts the shelf
-    // header/grid during the visible part of the transition.
-    final child = FrozenInsets(child: widget.child);
     final scaffold = Scaffold(
       bottomNavigationBar: isMobilePhone
           ? Column(
@@ -81,13 +76,13 @@ class _RouterOutletWithNavBarState extends State<RouterOutletWithNavBar> {
                   thickness: 0.0,
                   width: 1.0,
                 ),
-                Expanded(child: Center(child: child)),
+                Expanded(child: Center(child: widget.child)),
               ],
             )
           : Column(
               children: [
                 const AdaptiveStatusBarStyle(),
-                Expanded(child: child),
+                Expanded(child: widget.child),
               ],
             ),
     );

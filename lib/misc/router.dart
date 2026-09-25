@@ -162,7 +162,14 @@ Route<T> buildReaderRoute<T>({
         builder(context),
     transitionDuration: readerTransitionDuration,
     reverseTransitionDuration: readerTransitionDuration,
-    transitionsBuilder: readerTransitionsBuilder,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        readerTransitionsBuilder(
+      context,
+      animation,
+      secondaryAnimation,
+      child,
+      instantOpaqueCover: isMobilePhone,
+    ),
   );
 }
 

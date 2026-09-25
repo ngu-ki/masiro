@@ -17,7 +17,6 @@ import 'package:masiro/misc/router.dart';
 import 'package:masiro/misc/toast.dart';
 import 'package:masiro/ui/screens/reader/reader_screen.dart';
 import 'package:masiro/ui/widgets/error_message.dart';
-import 'package:masiro/ui/widgets/frozen_media_query.dart';
 import 'package:masiro/ui/widgets/message.dart';
 import 'package:masiro/ui/widgets/novel_card.dart';
 import 'package:masiro/ui/widgets/novel_grid_card.dart';
@@ -689,16 +688,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     var dialogDismissed = false;
-    var readerPushed = false;
     Route<dynamic>? dialogRoute;
-    final transitionFlag = ReaderTransitionInsets.instance;
-    var transitionReleased = false;
-    void releaseTransition() {
-      if (!transitionReleased) {
-        transitionReleased = true;
-        transitionFlag.value = false;
-      }
-    }
     void dismissDialog() {
       if (!dialogDismissed) {
         dialogDismissed = true;
@@ -723,18 +713,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       },
     );
 
-    // Freeze the shelf's insets while still in edge-to-edge mode, then
-    // hide the status bar: the header and grid keep their positions
-    // behind the loading dialog instead of sliding up.
-    transitionFlag.value = true;
-    final immersiveReady = ReaderScreen.prepareImmersiveEntry();
-
+    // Keep the status bar visible while fetching behind the dialog. The
+    // reader hides it from its own initState once pushed, and the reader
+    // route paints an opaque cover from the first transition frame, so the
+    // shelf's relayout is never visible.
     try {
       final detail = await getIt<MasiroRepository>().getNovelDetail(n.id);
       if (!context.mounted) {
-        await immersiveReady;
-        await ReaderScreen.restoreSystemUi();
-        releaseTransition();
         dismissDialog();
         return;
       }
@@ -745,19 +730,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           getChapterFromVolumes(volumes, detail.lastReadChapterId) ??
               firstChapter;
       if (chapter == null) {
-        await immersiveReady;
-        await ReaderScreen.restoreSystemUi();
-        releaseTransition();
-        dismissDialog();
-        return;
-      }
-
-      // Make sure the status bar is fully hidden before the transition so
-      // the page below doesn't relayout while the reader fades in.
-      await immersiveReady;
-      if (!context.mounted) {
-        await ReaderScreen.restoreSystemUi();
-        releaseTransition();
         dismissDialog();
         return;
       }
@@ -776,13 +748,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           ),
         ),
       );
-      readerPushed = true;
       final removeDialogAfterTransition = Future<void>.delayed(
         readerTransitionDuration + const Duration(milliseconds: 30),
-        () {
-          dismissDialog();
-          releaseTransition();
-        },
+        dismissDialog,
       );
       final int? lastChapterId = await popFuture;
       dismissDialog();
@@ -809,14 +777,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         ),
       );
     } catch (e) {
-      // If the reader route never made it on screen, let the immersive
-      // switch settle first, then restore the status bar so the two system
-      // UI mode changes don't race.
-      if (!readerPushed) {
-        await immersiveReady;
-        await ReaderScreen.restoreSystemUi();
-        releaseTransition();
-      }
       dismissDialog();
       if (context.mounted) {
         e.toString().toast();

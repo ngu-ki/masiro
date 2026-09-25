@@ -19,7 +19,6 @@ import 'package:masiro/ui/screens/reader/reading_hud.dart';
 import 'package:masiro/ui/screens/reader/settings_sheet.dart';
 import 'package:masiro/ui/screens/reader/top_bar.dart';
 import 'package:masiro/ui/widgets/error_message.dart';
-import 'package:masiro/ui/widgets/frozen_media_query.dart';
 import 'package:pinyin/pinyin.dart';
 
 class ReaderScreen extends StatefulWidget {
@@ -31,29 +30,6 @@ class ReaderScreen extends StatefulWidget {
     required this.novelId,
     required this.chapterId,
   });
-
-  /// Enters the immersive (status-bar hidden) mode *before* the reader route
-  /// transition starts. Callers that show a loading dialog (e.g. opening
-  /// straight from the shelf cover) use this while the dialog still covers
-  /// the screen, so the page below finishes relaying out behind the dialog
-  /// instead of visibly shifting while the reader fades in.
-  static Future<void> prepareImmersiveEntry() async {
-    if (isDesktop) {
-      return;
-    }
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-    );
-    await Future<void>.delayed(const Duration(milliseconds: 220));
-  }
-
-  /// Restores the regular edge-to-edge system UI (status bar visible).
-  static Future<void> restoreSystemUi() async {
-    if (isDesktop) {
-      return;
-    }
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  }
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
@@ -461,27 +437,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
         // Switch directly (the helper is locked while a pop is pending)
         // and record the mode so the first rebuild after the inset change
         // doesn't re-assert immersive mode and undo this switch.
-        _appliedUiMode = SystemUiMode.edgeToEdge;
-        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-        // Let the pages below relayout to edge-to-edge while the opaque
-        // reader still covers them completely.
+        if (!isDesktop) {
+          _appliedUiMode = SystemUiMode.edgeToEdge;
+          await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+        }
         await Future<void>.delayed(const Duration(milliseconds: 250));
         if (!mounted || !context.mounted) {
           return;
         }
       }
     }
-    // Freeze the pages below at their current (edge-to-edge) insets for
-    // the visible pop transition; release only after the reader is gone.
-    final transitionFlag = ReaderTransitionInsets.instance;
-    transitionFlag.value = true;
     // Use the imperative Navigator API (instead of context.pop) so the
     // reader works both as a GoRouter route and as a raw route pushed
     // directly from the bookshelf cover tap.
     Navigator.of(context).pop(_lastReadChapterIdForPopResult);
-    Future<void>.delayed(
-      readerTransitionDuration + const Duration(milliseconds: 30),
-      () => transitionFlag.value = false,
-    );
   }
 }
