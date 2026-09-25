@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:masiro/data/repository/model/chapter_detail.dart';
 import 'package:masiro/data/repository/model/indent_mode.dart';
@@ -696,7 +697,10 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       // Decode at on-screen pixel size; this is the same ResizeImage key
       // the visible CachedImage will use, so display is a direct cache hit.
       final provider = ResizeImage(
-        CachedNetworkImageProvider(page.image!.src),
+        CachedNetworkImageProvider(
+          page.image!.src,
+          cacheManager: MasiroImageCacheManager(),
+        ),
         width: _prefetchCacheWidth,
         height: _prefetchCacheHeight,
       );

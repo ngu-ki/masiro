@@ -1,5 +1,35 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+
+/// Shared disk cache for every network image (covers, avatars and chapter
+/// illustrations).
+///
+/// The default [DefaultCacheManager] caps the cache at 200 files for 30
+/// days; a shelf with hundreds of novels evicts covers and avatars on a
+/// regular basis, so they get downloaded over and over. Both [CachedImage]
+/// and the reader's image prefetch go through this single manager, which
+/// also coalesces concurrent fetches of the same URL into one download.
+class MasiroImageCacheManager extends CacheManager with ImageCacheManager {
+  static const String _cacheKey = 'masiroImageCache';
+
+  static final MasiroImageCacheManager _instance =
+      MasiroImageCacheManager._();
+
+  factory MasiroImageCacheManager() => _instance;
+
+  MasiroImageCacheManager._()
+      : super(
+          Config(
+            _cacheKey,
+            stalePeriod: const Duration(days: 90),
+            maxNrOfCacheObjects: 2000,
+            repo: JsonCacheInfoRepository(databaseName: _cacheKey),
+            fileSystem: IOFileSystem(_cacheKey),
+            fileService: HttpFileService(),
+          ),
+        );
+}
 
 class CachedImage extends StatelessWidget {
   final String url;
@@ -45,6 +75,7 @@ class CachedImage extends StatelessWidget {
           height: height,
           imageUrl: url,
           fit: fit,
+          cacheManager: MasiroImageCacheManager(),
           memCacheWidth: cacheWidth,
           memCacheHeight: cacheHeight,
           // Show cached images immediately instead of fading them in, which

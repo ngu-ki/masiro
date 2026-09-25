@@ -37,6 +37,7 @@ dependencies:
   injectable: ^2.4.4
   easy_refresh: ^3.4.0
   cached_network_image: ^3.4.1
+  flutter_cache_manager: ^3.4.1
   equatable: ^2.0.5
   dio_cache_interceptor: ^3.5.0
   dio_cache_interceptor_isar_store: ^1.0.1
