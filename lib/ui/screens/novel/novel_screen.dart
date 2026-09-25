@@ -295,10 +295,13 @@ class _NovelScreenState extends State<NovelScreen> {
     int chapterId,
   ) async {
     final bloc = context.read<NovelScreenBloc>();
-    // Capture the router synchronously: hiding the status bar rebuilds the
-    // whole tree during the await below, and resolving GoRouter through the
-    // tap's context after that gap could fail to push.
-    final router = GoRouter.of(context);
+    // Push through the root navigator with the imperative reader route
+    // (exactly like the shelf cover tap) instead of go_router.push: a
+    // declarative GoRouter page-list reconfiguration while the status-bar
+    // inset change is rebuilding the tree recreated this page below the
+    // reader, so the reader got replaced immediately and the detail page
+    // flashed its initial loading bar.
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
     final transitionFlag = ReaderTransitionInsets.instance;
     // Freeze this page's insets (still edge-to-edge) *before* hiding the
     // status bar, so the app bar and body don't slide up during the
@@ -312,12 +315,13 @@ class _NovelScreenState extends State<NovelScreen> {
         transitionFlag.value = false;
         return;
       }
-      final popFuture = router.push<int?>(
-        RoutePath.reader,
-        extra: {
-          'novelId': novelId,
-          'chapterId': chapterId,
-        },
+      final popFuture = rootNavigator.push<int?>(
+        buildReaderRoute<int?>(
+          builder: (_) => ReaderScreen(
+            novelId: novelId,
+            chapterId: chapterId,
+          ),
+        ),
       );
       // The reader is opaque after the forward transition; any inset
       // relayout of this page from here on happens off screen.
