@@ -110,7 +110,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
               },
               child: switch (state) {
                 ReaderScreenInitialState() => const Center(
-                    child: CircularProgressIndicator(),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
                 ReaderScreenErrorState() =>
                   ErrorMessage(message: state.message),

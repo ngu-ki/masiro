@@ -64,16 +64,58 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     return ReadingMode.page;
   }
 
+  /// Resolves a chapter id to open. When [hint] is positive it is used
+  /// directly; otherwise the novel detail is fetched to resume at the server's
+  /// last read chapter, falling back to the first chapter.
+  Future<int> _resolveChapterId(int hint) async {
+    if (hint > 0) {
+      return hint;
+    }
+    final detail = await masiroRepository.getNovelDetail(novelId);
+    var chapterId = detail.lastReadChapterId;
+    if (chapterId <= 0) {
+      chapterId = detail.volumes.firstOrNull?.chapters.firstOrNull?.id ?? 0;
+    }
+    return chapterId;
+  }
+
   Future<void> _onRequestReaderScreenChapterDetail(
     ReaderScreenChapterDetailRequested event,
     Emitter<ReaderScreenState> emit,
   ) async {
     try {
-      final chapterId = event.chapterId;
-      final chapterDetail = await masiroRepository.getChapterDetail(
-        novelId,
-        chapterId,
-      );
+      // A single loading spinner covers chapter resolution + the chapter
+      // fetch. The bookshelf no longer shows its own loading dialog, so the
+      // cover tap -> reader transition is one animation.
+      var chapterId = await _resolveChapterId(event.chapterId);
+      if (chapterId <= 0) {
+        emit(ReaderScreenErrorState(message: 'No chapter available.'));
+        return;
+      }
+
+      ChapterDetail chapterDetail;
+      try {
+        chapterDetail = await masiroRepository.getChapterDetail(
+          novelId,
+          chapterId,
+        );
+      } catch (_) {
+        // The hinted chapter may no longer exist (e.g. deleted on the
+        // server). Resolve a valid chapter from the novel detail and retry
+        // once before giving up.
+        if (event.chapterId <= 0) {
+          rethrow;
+        }
+        chapterId = await _resolveChapterId(0);
+        if (chapterId <= 0) {
+          rethrow;
+        }
+        chapterDetail = await masiroRepository.getChapterDetail(
+          novelId,
+          chapterId,
+        );
+      }
+
       final currentUser = await userRepository.getCurrentUser();
       final pageTurnMode =
           pageTurnModeFromName(preferencesRepository.pageTurnMode);

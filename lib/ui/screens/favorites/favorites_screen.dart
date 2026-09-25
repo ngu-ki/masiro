@@ -9,7 +9,6 @@ import 'package:masiro/data/repository/masiro_repository.dart';
 import 'package:masiro/data/repository/model/bookshelf_stat.dart';
 import 'package:masiro/data/repository/model/novel.dart';
 import 'package:masiro/di/get_it.dart';
-import 'package:masiro/misc/chapter.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/easy_refresh.dart';
 import 'package:masiro/misc/platform.dart';
@@ -683,87 +682,43 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   /// Opens the reader directly at the last read chapter (or the first chapter
   /// when the novel has never been read), skipping the novel detail page.
+  ///
+  /// The reader resolves the target chapter itself (from the bookshelf stat's
+  /// lastReadChapterId, falling back to the novel detail) and shows a single
+  /// loading spinner while fetching. There is no separate loading dialog on
+  /// the bookshelf, so the cover tap -> reader transition is one animation.
   Future<void> _openReader(BuildContext context, Novel n) async {
     final bloc = context.read<FavoritesScreenBloc>();
 
-    final rootNavigator = Navigator.of(context, rootNavigator: true);
-    var dialogDismissed = false;
-    Route<dynamic>? dialogRoute;
-    void dismissDialog() {
-      if (!dialogDismissed) {
-        dialogDismissed = true;
-        final route = dialogRoute;
-        // Remove the dialog route itself rather than calling pop(): after
-        // the reader has been pushed above the dialog, pop() would remove
-        // the reader (the current top route) and leave the spinner dialog
-        // on screen forever.
-        if (route != null && route.isActive) {
-          rootNavigator.removeRoute(route);
-        }
-      }
+    // Resume at the chapter recorded in the local bookshelf stat when
+    // available; otherwise let the reader resolve the first chapter.
+    var lastReadChapterId = 0;
+    final state = bloc.state;
+    if (state is FavoritesScreenLoadedState) {
+      lastReadChapterId = state.stats[n.id]?.lastReadChapterId ?? 0;
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      useRootNavigator: true,
-      builder: (context) {
-        dialogRoute = ModalRoute.of(context);
-        return const Center(child: CircularProgressIndicator());
-      },
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    final int? lastChapterId = await rootNavigator.push<int?>(
+      buildReaderRoute<int?>(
+        builder: (_) => ReaderScreen(
+          novelId: n.id,
+          chapterId: lastReadChapterId,
+        ),
+      ),
     );
+    if (!context.mounted) {
+      return;
+    }
 
-    // Keep the status bar visible while fetching behind the dialog. The
-    // reader hides it from its own initState once pushed, and the reader
-    // route paints an opaque cover from the first transition frame, so the
-    // shelf's relayout is never visible.
+    // Refresh the unread badge from a fresh novel detail. The chapter list is
+    // needed to compute how many chapters remain after the one just read.
     try {
       final detail = await getIt<MasiroRepository>().getNovelDetail(n.id);
-      if (!context.mounted) {
-        dismissDialog();
-        return;
-      }
-
-      final volumes = detail.volumes;
-      final firstChapter = volumes.firstOrNull?.chapters.firstOrNull;
-      final chapter =
-          getChapterFromVolumes(volumes, detail.lastReadChapterId) ??
-              firstChapter;
-      if (chapter == null) {
-        dismissDialog();
-        return;
-      }
-
-      // Keep the loading dialog underneath the reader route during the
-      // transition: its spinner stays continuously at the same position as
-      // the reader's own loading spinner, so there is no spinner blink or
-      // "two animations". Remove the dialog (no exit animation) after the
-      // reader is fully opaque, or immediately if the reader is popped
-      // before that.
-      final popFuture = rootNavigator.push<int?>(
-        buildReaderRoute<int?>(
-          builder: (_) => ReaderScreen(
-            novelId: n.id,
-            chapterId: chapter.id,
-          ),
-        ),
-      );
-      final removeDialogAfterTransition = Future<void>.delayed(
-        readerTransitionDuration + const Duration(milliseconds: 30),
-        dismissDialog,
-      );
-      final int? lastChapterId = await popFuture;
-      dismissDialog();
-      await removeDialogAfterTransition;
-      if (!context.mounted) {
-        return;
-      }
-
-      // Update the unread badge immediately from the reader result.
-      final readChapterId = lastChapterId ?? chapter.id;
       final chapters = [
-        for (final volume in volumes) ...volume.chapters,
+        for (final volume in detail.volumes) ...volume.chapters,
       ];
+      final readChapterId = lastChapterId ?? lastReadChapterId;
       final index = chapters.indexWhere((c) => c.id == readChapterId);
       bloc.add(
         FavoritesScreenNovelStatUpdated(
@@ -777,7 +732,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         ),
       );
     } catch (e) {
-      dismissDialog();
       if (context.mounted) {
         e.toString().toast();
       }
