@@ -297,8 +297,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Widget buildSearchHeader(BuildContext context) {
     final localizations = context.localizations();
+    // Keep the same vertical padding as the regular header so the shelf
+    // list below doesn't shift when entering search mode.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
       child: Row(
         children: [
           IconButton(
@@ -405,10 +407,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final isSelected = state.sortMode == mode;
     Widget? trailing;
     if (isSelected) {
-      // Default order and recently read have no direction toggle, so they
-      // show a check mark; the other modes show the sort direction arrow.
+      // Default order, recently read and last updated have no direction
+      // toggle, so they show a check mark; the word/chapter modes show the
+      // sort direction arrow.
       if (mode == FavoritesSortMode.defaultOrder ||
-          mode == FavoritesSortMode.recentlyRead) {
+          mode == FavoritesSortMode.recentlyRead ||
+          mode == FavoritesSortMode.lastUpdated) {
         trailing = const Icon(Icons.check_rounded, size: 20);
       } else {
         trailing = Icon(
@@ -722,7 +726,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       // only the reader's single push transition is visible instead of
       // a dialog pop followed by a route push (two animations).
       final int? lastChapterId = await rootNavigator.pushAndRemoveUntil<int?>(
-        MaterialPageRoute<int?>(
+        buildReaderRoute<int?>(
           builder: (_) => ReaderScreen(
             novelId: n.id,
             chapterId: chapter.id,

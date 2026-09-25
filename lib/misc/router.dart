@@ -56,6 +56,66 @@ Page<void> _buildTabPage({
   );
 }
 
+/// Duration of the shared reader enter/exit transition.
+const Duration readerTransitionDuration = Duration(milliseconds: 250);
+
+/// Shared transition for the reader: only the reader itself moves (a gentle
+/// fade-and-scale), while the underlying route stays completely still.
+///
+/// The default Material 3 zoom transition slides the underlying page up
+/// while the reader is on top and drops it back down on pop, which looked
+/// like the detail/shelf page falling when leaving the reader.
+Widget readerTransitionsBuilder(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  final curved = CurvedAnimation(
+    parent: animation,
+    curve: Curves.easeOut,
+    reverseCurve: Curves.easeIn,
+  );
+  return FadeTransition(
+    opacity: curved,
+    child: ScaleTransition(
+      scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+      child: child,
+    ),
+  );
+}
+
+/// Builds the reader page for GoRouter routes.
+Page<void> _buildReaderPage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: readerTransitionDuration,
+    reverseTransitionDuration: readerTransitionDuration,
+    transitionsBuilder: readerTransitionsBuilder,
+  );
+}
+
+/// Builds the reader route for imperative navigators (e.g. the shelf cover
+/// tap that pushes while dismissing a loading dialog), keeping the same
+/// transition as [_buildReaderPage].
+Route<T> buildReaderRoute<T>({
+  required WidgetBuilder builder,
+  RouteSettings? settings,
+}) {
+  return PageRouteBuilder<T>(
+    settings: settings,
+    pageBuilder: (context, animation, secondaryAnimation) =>
+        builder(context),
+    transitionDuration: readerTransitionDuration,
+    reverseTransitionDuration: readerTransitionDuration,
+    transitionsBuilder: readerTransitionsBuilder,
+  );
+}
+
 // GoRouter configuration
 final routerConfig = GoRouter(
   navigatorKey: _rootNavigatorKey,
@@ -73,13 +133,16 @@ final routerConfig = GoRouter(
     ),
     GoRoute(
       path: RoutePath.reader,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final params = state.extra as Map;
         final novelId = params['novelId']!;
         final chapterId = params['chapterId']!;
-        return ReaderScreen(
-          novelId: novelId,
-          chapterId: chapterId,
+        return _buildReaderPage(
+          key: state.pageKey,
+          child: ReaderScreen(
+            novelId: novelId,
+            chapterId: chapterId,
+          ),
         );
       },
     ),

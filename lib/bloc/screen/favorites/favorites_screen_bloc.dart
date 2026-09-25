@@ -574,14 +574,12 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
           });
         return indexed.map((e) => e.value).toList();
       case FavoritesSortMode.lastUpdated:
-        final sorted = [...novels]
+        // Fixed order: the most recently updated novel always comes first.
+        return [...novels]
           ..sort(
-            (a, b) => _parseTime(a.lastUpdatedTime)
+            (b, a) => _parseTime(a.lastUpdatedTime)
                 .compareTo(_parseTime(b.lastUpdatedTime)),
           );
-        return direction == FavoritesSortDirection.descending
-            ? sorted.reversed.toList()
-            : sorted;
       case FavoritesSortMode.wordCount:
         // Always descending: novels with more words come first.
         return [...novels]
