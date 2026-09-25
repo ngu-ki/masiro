@@ -689,16 +689,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     var dialogDismissed = false;
     var readerPushed = false;
-    BuildContext? dialogContext;
+    Route<dynamic>? dialogRoute;
     void dismissDialog() {
       if (!dialogDismissed) {
         dialogDismissed = true;
-        final ctx = dialogContext;
-        // Pop the dialog route itself (via its own context) rather than
-        // rootNavigator.pop(), because once the reader has been pushed on
-        // top of the dialog, popping the top route would dismiss the reader.
-        if (ctx != null && ctx.mounted) {
-          Navigator.of(ctx).pop();
+        final route = dialogRoute;
+        // Remove the dialog route itself rather than calling pop(): after
+        // the reader has been pushed above the dialog, pop() would remove
+        // the reader (the current top route) and leave the spinner dialog
+        // on screen forever.
+        if (route != null && route.isActive) {
+          rootNavigator.removeRoute(route);
         }
       }
     }
@@ -708,7 +709,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       barrierDismissible: false,
       useRootNavigator: true,
       builder: (context) {
-        dialogContext = context;
+        dialogRoute = ModalRoute.of(context);
         return const Center(child: CircularProgressIndicator());
       },
     );
