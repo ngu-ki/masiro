@@ -33,6 +33,14 @@ class _FrozenInsetsState extends State<FrozenInsets> {
   EdgeInsets? _frozenPadding;
   EdgeInsets? _frozenViewPadding;
 
+  /// Most recent LIVE insets observed while not frozen. Freezing captures
+  /// from this cache instead of the current frame: the platform's
+  /// zero-inset update after hiding the status bar can land in the very
+  /// same frame in which the flag flips, so a lazy first-frame capture
+  /// would already see zero and fail to prevent the shift.
+  EdgeInsets? _lastPadding;
+  EdgeInsets? _lastViewPadding;
+
   @override
   void initState() {
     super.initState();
@@ -55,12 +63,17 @@ class _FrozenInsetsState extends State<FrozenInsets> {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     if (!ReaderTransitionInsets.instance.value) {
+      _lastPadding = mediaQuery.padding;
+      _lastViewPadding = mediaQuery.viewPadding;
       _frozenPadding = null;
       _frozenViewPadding = null;
       return widget.child;
     }
-    _frozenPadding ??= mediaQuery.padding;
-    _frozenViewPadding ??= mediaQuery.viewPadding;
+    _frozenPadding ??= _lastPadding;
+    _frozenViewPadding ??= _lastViewPadding;
+    if (_frozenPadding == null || _frozenViewPadding == null) {
+      return widget.child;
+    }
     return MediaQuery(
       data: mediaQuery.copyWith(
         padding: _frozenPadding,

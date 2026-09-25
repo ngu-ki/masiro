@@ -295,6 +295,10 @@ class _NovelScreenState extends State<NovelScreen> {
     int chapterId,
   ) async {
     final bloc = context.read<NovelScreenBloc>();
+    // Capture the router synchronously: hiding the status bar rebuilds the
+    // whole tree during the await below, and resolving GoRouter through the
+    // tap's context after that gap could fail to push.
+    final router = GoRouter.of(context);
     final transitionFlag = ReaderTransitionInsets.instance;
     // Freeze this page's insets (still edge-to-edge) *before* hiding the
     // status bar, so the app bar and body don't slide up during the
@@ -308,7 +312,7 @@ class _NovelScreenState extends State<NovelScreen> {
         transitionFlag.value = false;
         return;
       }
-      final popFuture = context.push<int?>(
+      final popFuture = router.push<int?>(
         RoutePath.reader,
         extra: {
           'novelId': novelId,
