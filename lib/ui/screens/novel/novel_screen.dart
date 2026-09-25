@@ -14,7 +14,9 @@ import 'package:masiro/misc/router.dart';
 import 'package:masiro/ui/screens/novel/expandable_brief.dart';
 import 'package:masiro/ui/screens/novel/novel_header.dart';
 import 'package:masiro/ui/screens/novel/volume_list.dart';
+import 'package:masiro/ui/screens/reader/reader_screen.dart';
 import 'package:masiro/ui/widgets/error_message.dart';
+import 'package:masiro/ui/widgets/frozen_media_query.dart';
 
 class NovelScreen extends StatefulWidget {
   final int novelId;
@@ -43,21 +45,23 @@ class _NovelScreenState extends State<NovelScreen> {
   Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).colorScheme.surface,
-      child: SafeArea(
-        child: BlocProvider(
-          create: (context) => NovelScreenBloc(novelId: widget.novelId)
-            ..add(NovelScreenRefreshed()),
-          child: BlocBuilder<NovelScreenBloc, NovelScreenState>(
-            builder: (context, state) {
-              switch (state) {
-                case NovelScreenInitialState():
-                  return const Column(children: [LinearProgressIndicator()]);
-                case NovelScreenErrorState():
-                  return ErrorMessage(message: state.message);
-                case NovelScreenLoadedState():
-                  return buildLoadedScreen(context, state);
-              }
-            },
+      child: FrozenInsets(
+        child: SafeArea(
+          child: BlocProvider(
+            create: (context) => NovelScreenBloc(novelId: widget.novelId)
+              ..add(NovelScreenRefreshed()),
+            child: BlocBuilder<NovelScreenBloc, NovelScreenState>(
+              builder: (context, state) {
+                switch (state) {
+                  case NovelScreenInitialState():
+                    return const Column(children: [LinearProgressIndicator()]);
+                  case NovelScreenErrorState():
+                    return ErrorMessage(message: state.message);
+                  case NovelScreenLoadedState():
+                    return buildLoadedScreen(context, state);
+                }
+              },
+            ),
           ),
         ),
       ),
@@ -291,14 +295,39 @@ class _NovelScreenState extends State<NovelScreen> {
     int chapterId,
   ) async {
     final bloc = context.read<NovelScreenBloc>();
-    final int? lastReadChapterId = await context.push(
-      RoutePath.reader,
-      extra: {
-        'novelId': novelId,
-        'chapterId': chapterId,
-      },
-    );
-    bloc.add(NovelScreenChapterRead(chapterId: lastReadChapterId ?? chapterId));
+    final transitionFlag = ReaderTransitionInsets.instance;
+    // Freeze this page's insets (still edge-to-edge) *before* hiding the
+    // status bar, so the app bar and body don't slide up during the
+    // transition.
+    transitionFlag.value = true;
+    final immersiveReady = ReaderScreen.prepareImmersiveEntry();
+    try {
+      await immersiveReady;
+      if (!context.mounted) {
+        await ReaderScreen.restoreSystemUi();
+        transitionFlag.value = false;
+        return;
+      }
+      final popFuture = context.push<int?>(
+        RoutePath.reader,
+        extra: {
+          'novelId': novelId,
+          'chapterId': chapterId,
+        },
+      );
+      // The reader is opaque after the forward transition; any inset
+      // relayout of this page from here on happens off screen.
+      final releaseFreeze = Future<void>.delayed(
+        readerTransitionDuration + const Duration(milliseconds: 30),
+        () => transitionFlag.value = false,
+      );
+      final int? lastReadChapterId = await popFuture;
+      await releaseFreeze;
+      bloc.add(NovelScreenChapterRead(chapterId: lastReadChapterId ?? chapterId));
+    } catch (_) {
+      await ReaderScreen.restoreSystemUi();
+      transitionFlag.value = false;
+    }
   }
 
   void _backToPrevScreen(BuildContext context) {
