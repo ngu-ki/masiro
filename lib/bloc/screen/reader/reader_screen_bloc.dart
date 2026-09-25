@@ -82,7 +82,9 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
       emit(
         ReaderScreenLoadedState(
           chapterDetail: chapterDetail,
-          position: chapterRecord?.position ?? startPosition,
+          position: event.openAtEnd
+              ? endPosition
+              : (chapterRecord?.position ?? startPosition),
           fontSize: appConfig.fontSize,
           backgroundColor: preferencesRepository.readerBackgroundColor,
           pageTurnMode: pageTurnMode,
@@ -146,7 +148,12 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     }
     final loadedState = state as ReaderScreenLoadedState;
     emit(loadedState.copyWith(loadingStatus: LoadingStatus.loading));
-    add(ReaderScreenChapterDetailRequested(chapterId: event.chapterId));
+    add(
+      ReaderScreenChapterDetailRequested(
+        chapterId: event.chapterId,
+        openAtEnd: event.openAtEnd,
+      ),
+    );
   }
 
   Future<void> _onReaderScreenFontSizeChanged(

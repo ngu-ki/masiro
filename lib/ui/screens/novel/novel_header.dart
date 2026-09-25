@@ -70,8 +70,8 @@ class _NovelHeaderState extends State<NovelHeader> {
               ),
               if (widget.lvLimit > 0)
                 Positioned(
-                  right: 6,
-                  bottom: 6,
+                  right: 2,
+                  bottom: 2,
                   child: ManualTooltip(
                     icon: Icon(
                       Icons.info_outline_rounded,

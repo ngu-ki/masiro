@@ -9,28 +9,40 @@ class BookshelfStat extends Equatable {
   /// Number of chapters after the last read chapter.
   final int unreadCount;
 
-  /// The ID of the last read chapter, used as a proxy for "recently read"
-  /// sorting (a higher chapter ID generally means more recently read).
+  /// The ID of the last read chapter.
   final int lastReadChapterId;
+
+  /// Timestamp of the most recent reading session (milliseconds since
+  /// epoch), recorded locally. Null when the novel has never been read
+  /// locally; used by the "recently read" sort.
+  final int? lastReadAt;
 
   const BookshelfStat({
     required this.totalChapters,
     required this.unreadCount,
     this.lastReadChapterId = 0,
+    this.lastReadAt,
   });
 
   @override
-  List<Object?> get props => [totalChapters, unreadCount, lastReadChapterId];
+  List<Object?> get props => [
+        totalChapters,
+        unreadCount,
+        lastReadChapterId,
+        lastReadAt,
+      ];
 
   BookshelfStat copyWith({
     int? totalChapters,
     int? unreadCount,
     int? lastReadChapterId,
+    int? lastReadAt,
   }) {
     return BookshelfStat(
       totalChapters: totalChapters ?? this.totalChapters,
       unreadCount: unreadCount ?? this.unreadCount,
       lastReadChapterId: lastReadChapterId ?? this.lastReadChapterId,
+      lastReadAt: lastReadAt ?? this.lastReadAt,
     );
   }
 
@@ -38,6 +50,7 @@ class BookshelfStat extends Equatable {
         't': totalChapters,
         'u': unreadCount,
         'l': lastReadChapterId,
+        'r': lastReadAt,
       };
 
   factory BookshelfStat.fromJson(Map<String, dynamic> json) {
@@ -45,6 +58,7 @@ class BookshelfStat extends Equatable {
       totalChapters: (json['t'] as num?)?.toInt() ?? 0,
       unreadCount: (json['u'] as num?)?.toInt() ?? 0,
       lastReadChapterId: (json['l'] as num?)?.toInt() ?? 0,
+      lastReadAt: (json['r'] as num?)?.toInt(),
     );
   }
 }

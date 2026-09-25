@@ -37,7 +37,7 @@ class TopBar extends StatelessWidget {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 20),
             child: GestureDetector(
               onTap: onNavigateToDetail,
               child: Container(

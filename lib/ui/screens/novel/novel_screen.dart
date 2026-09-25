@@ -125,6 +125,9 @@ class _NovelScreenState extends State<NovelScreen> {
     final localizations = context.localizations();
 
     return AppBar(
+      // Match the bottom bar color once the body scrolls under the bar.
+      backgroundColor: _scrolledUnder ? context.navBarColor() : null,
+      scrolledUnderElevation: 0,
       leading: IconButton(
         onPressed: () => _backToPrevScreen(context),
         icon: const Icon(Icons.arrow_back_rounded),
@@ -217,13 +220,10 @@ class _NovelScreenState extends State<NovelScreen> {
     int lastReadChapterId,
   ) {
     final localizations = context.localizations();
-    final isLight = Theme.of(context).brightness == Brightness.light;
 
     return Container(
       height: 60,
-      color: isLight
-          ? const Color(0xFFFAFAFA)
-          : Theme.of(context).colorScheme.surface,
+      color: context.navBarColor(),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [

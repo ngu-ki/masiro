@@ -11,10 +11,17 @@ sealed class ReaderScreenEvent extends Equatable {
 final class ReaderScreenChapterDetailRequested extends ReaderScreenEvent {
   final int chapterId;
 
-  ReaderScreenChapterDetailRequested({required this.chapterId});
+  /// Open the chapter on its last page (used when paging backwards into it
+  /// from the following chapter).
+  final bool openAtEnd;
+
+  ReaderScreenChapterDetailRequested({
+    required this.chapterId,
+    this.openAtEnd = false,
+  });
 
   @override
-  List<Object> get props => [chapterId];
+  List<Object> get props => [chapterId, openAtEnd];
 }
 
 final class ReaderScreenHudToggled extends ReaderScreenEvent {}
@@ -31,10 +38,16 @@ final class ReaderScreenPositionChanged extends ReaderScreenEvent {
 final class ReaderScreenChapterNavigated extends ReaderScreenEvent {
   final int chapterId;
 
-  ReaderScreenChapterNavigated({required this.chapterId});
+  /// Land on the last page of the target chapter (paging backwards).
+  final bool openAtEnd;
+
+  ReaderScreenChapterNavigated({
+    required this.chapterId,
+    this.openAtEnd = false,
+  });
 
   @override
-  List<Object> get props => [chapterId];
+  List<Object> get props => [chapterId, openAtEnd];
 }
 
 final class ReaderScreenFontSizeChanged extends ReaderScreenEvent {

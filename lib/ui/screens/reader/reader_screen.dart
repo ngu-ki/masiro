@@ -163,13 +163,23 @@ class _ReaderScreenState extends State<ReaderScreen> {
       child: Stack(
         children: [
           buildReaderContent(context, state),
-          ReadingHud(
-            chapterTitle: state.forceSimplified
-                ? ChineseHelper.convertToSimplifiedChinese(chapterDetail.title)
-                : chapterDetail.title,
-            progress: _progressNotifier,
-            color: contentColor,
-            isVisible: !isHudVisible,
+          // The HUD uses the same frozen reading-mode padding as the body:
+          // otherwise opening the menu reveals the status bar and the title
+          // and progress texts slide with the live padding while fading out.
+          MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: _readingPadding ?? mqPadding,
+            ),
+            child: ReadingHud(
+              chapterTitle: state.forceSimplified
+                  ? ChineseHelper.convertToSimplifiedChinese(
+                      chapterDetail.title,
+                    )
+                  : chapterDetail.title,
+              progress: _progressNotifier,
+              color: contentColor,
+              isVisible: !isHudVisible,
+            ),
           ),
           TopBar(
             isVisible: isHudVisible,
@@ -329,6 +339,22 @@ class _ReaderScreenState extends State<ReaderScreen> {
         _lastReadChapterIdForPopResult = nextChapter.id;
         bloc.add(ReaderScreenChapterNavigated(chapterId: nextChapter.id));
       },
+      onPreviousChapter: () {
+        final prevChapter = getPreviousChapter(
+          chapterDetail.volumes,
+          chapterDetail.chapterId,
+        );
+        if (prevChapter == null) {
+          return;
+        }
+        _lastReadChapterIdForPopResult = prevChapter.id;
+        bloc.add(
+          ReaderScreenChapterNavigated(
+            chapterId: prevChapter.id,
+            openAtEnd: true,
+          ),
+        );
+      },
       pagerController: _pagerController,
       indentMode: state.indentMode,
       shrinkEmptyLines: state.shrinkEmptyLines,
@@ -362,6 +388,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _backToPrevScreen(BuildContext context) {
-    context.pop(_lastReadChapterIdForPopResult);
+    // Use the imperative Navigator API (instead of context.pop) so the
+    // reader works both as a GoRouter route and as a raw route pushed
+    // directly from the bookshelf cover tap.
+    Navigator.of(context).pop(_lastReadChapterIdForPopResult);
   }
 }

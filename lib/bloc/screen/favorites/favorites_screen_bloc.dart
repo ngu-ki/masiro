@@ -408,7 +408,19 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         // make the old and new states share the same map, so BlocBuilder
         // would not rebuild and the grid card would never show the stats.
         final newStats = Map<int, BookshelfStat>.from(_stats);
-        newStats[novel.id] = _buildStat(detail);
+        final fresh = _buildStat(detail);
+        final old = _stats[novel.id];
+        // Preserve the locally recorded reading timestamp; stamp "now"
+        // when the server reports reading progress on a new chapter.
+        final progressChanged = old != null &&
+            old.lastReadChapterId != fresh.lastReadChapterId &&
+            fresh.lastReadChapterId != 0;
+        final stat = progressChanged
+            ? fresh.copyWith(lastReadAt: DateTime.now().millisecondsSinceEpoch)
+            : (old != null
+                ? fresh.copyWith(lastReadAt: old.lastReadAt)
+                : fresh);
+        newStats[novel.id] = stat;
         _stats = newStats;
         _preferencesRepository.bookshelfStats = _stats;
         final current = state;
@@ -441,16 +453,19 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       case FavoritesSortMode.defaultOrder:
         return _sortByManualOrder(novels);
       case FavoritesSortMode.recentlyRead:
-        // Fixed order: the most recently read novel on top. A higher
-        // last-read chapter ID generally means more recently read; novels
-        // without stats go to the end.
-        return [...novels]..sort((a, b) {
-            final sa = _stats[a.id];
-            final sb = _stats[b.id];
-            final la = sa?.lastReadChapterId ?? -1;
-            final lb = sb?.lastReadChapterId ?? -1;
-            return lb.compareTo(la);
+        // Fixed order: the most recently read novel on top, sorted by the
+        // locally recorded reading timestamp. Novels never read locally
+        // sink to the end and keep their original relative order.
+        final indexed = novels.asMap().entries.toList()
+          ..sort((a, b) {
+            final ta = _stats[a.value.id]?.lastReadAt ?? 0;
+            final tb = _stats[b.value.id]?.lastReadAt ?? 0;
+            if (ta != tb) {
+              return tb.compareTo(ta);
+            }
+            return a.key.compareTo(b.key);
           });
+        return indexed.map((e) => e.value).toList();
       case FavoritesSortMode.lastUpdated:
         final sorted = [...novels]
           ..sort(

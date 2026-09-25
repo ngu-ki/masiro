@@ -15,6 +15,7 @@ import 'package:masiro/misc/easy_refresh.dart';
 import 'package:masiro/misc/platform.dart';
 import 'package:masiro/misc/router.dart';
 import 'package:masiro/misc/toast.dart';
+import 'package:masiro/ui/screens/reader/reader_screen.dart';
 import 'package:masiro/ui/widgets/error_message.dart';
 import 'package:masiro/ui/widgets/message.dart';
 import 'package:masiro/ui/widgets/novel_card.dart';
@@ -167,19 +168,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final isGrid = state.viewMode == FavoritesViewMode.grid;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 4, 4),
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
       child: Row(
         children: [
-          Text(
-            localizations.favorites,
-            style: context.textTheme().titleLarge,
-          ),
-          const Spacer(),
-          IconButton(
-            tooltip: localizations.searchInFavorites,
-            icon: const Icon(Icons.search_rounded),
-            onPressed: _enterSearch,
-          ),
           PopupMenuButton<FavoritesSortMode>(
             tooltip: localizations.sortMode,
             icon: const Icon(Icons.sort_rounded),
@@ -209,6 +200,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               ),
               buildWordChapterSortMenuItem(context, state),
             ],
+          ),
+          const Spacer(),
+          IconButton(
+            tooltip: localizations.searchInFavorites,
+            icon: const Icon(Icons.search_rounded),
+            onPressed: _enterSearch,
           ),
           PopupMenuButton<String>(
             tooltip: localizations.moreActions,
@@ -683,8 +680,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     try {
       final detail = await getIt<MasiroRepository>().getNovelDetail(n.id);
-      dismissDialog();
       if (!context.mounted) {
+        dismissDialog();
         return;
       }
 
@@ -694,15 +691,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           getChapterFromVolumes(volumes, detail.lastReadChapterId) ??
               firstChapter;
       if (chapter == null) {
+        dismissDialog();
         return;
       }
 
-      final int? lastChapterId = await context.push<int?>(
-        RoutePath.reader,
-        extra: {
-          'novelId': n.id,
-          'chapterId': chapter.id,
-        },
+      // Push the reader while removing the loading dialog in the same
+      // navigation operation. Removed routes play no exit animation, so
+      // only the reader's single push transition is visible instead of
+      // a dialog pop followed by a route push (two animations).
+      final int? lastChapterId = await rootNavigator.pushAndRemoveUntil<int?>(
+        MaterialPageRoute<int?>(
+          builder: (_) => ReaderScreen(
+            novelId: n.id,
+            chapterId: chapter.id,
+          ),
+        ),
+        (route) => route is! DialogRoute,
       );
       if (!context.mounted) {
         return;
@@ -720,6 +724,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           stat: BookshelfStat(
             totalChapters: chapters.length,
             unreadCount: index < 0 ? 0 : chapters.length - index - 1,
+            lastReadChapterId: readChapterId,
+            lastReadAt: DateTime.now().millisecondsSinceEpoch,
           ),
         ),
       );

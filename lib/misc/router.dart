@@ -36,44 +36,23 @@ final GlobalKey<NavigatorState> _rootNavigatorKey =
 final GlobalKey<NavigatorState> _shellNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'shell');
 
-/// Tab indices in the bottom navigation bar: 发现(home) -> 收藏 -> 我的.
-const int _tabIndexHome = 0;
-const int _tabIndexFavorites = 1;
-const int _tabIndexSettings = 2;
-
-/// The index of the tab currently displayed. It is updated while the
-/// matching tab page is built and is used to decide the horizontal slide
-/// direction when switching tabs. Starts at favorites (initialLocation).
-int _currentTabIndex = _tabIndexFavorites;
-
-/// Builds a tab page with a horizontal slide transition: switching to a
-/// tab on the right slides it in from the right, and switching to a tab
-/// on the left slides it in from the left. The outgoing page plays the
-/// reverse of its own entrance, so no zoom/fade residual is visible.
+/// Builds a main-tab page. Tab switches have no transition animation,
+/// matching mainstream reading apps (Qidian, Fanqie, WeRead): the new
+/// page is shown instantly.
 Page<void> _buildTabPage({
   required LocalKey key,
-  required int index,
   required Widget child,
 }) {
   if (!isMobilePhone) {
     return MaterialPage<void>(key: key, child: child);
   }
-  final forward = index >= _currentTabIndex;
-  _currentTabIndex = index;
-  final begin = forward ? const Offset(1.0, 0.0) : const Offset(-1.0, 0.0);
   return CustomTransitionPage<void>(
     key: key,
     child: child,
-    transitionDuration: const Duration(milliseconds: 240),
-    reverseTransitionDuration: const Duration(milliseconds: 240),
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return SlideTransition(
-        position: Tween<Offset>(begin: begin, end: Offset.zero)
-            .chain(CurveTween(curve: Curves.easeOut))
-            .animate(animation),
-        child: child,
-      );
-    },
+    transitionDuration: Duration.zero,
+    reverseTransitionDuration: Duration.zero,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        child,
   );
 }
 
@@ -155,7 +134,6 @@ final _applicationShellRoutes = ShellRoute(
       pageBuilder: (context, state) {
         return _buildTabPage(
           key: const ValueKey('tab-home'),
-          index: _tabIndexHome,
           child: SearchScreen(
             initialKeyword: state.uri.queryParameters['keyword'],
           ),
@@ -167,7 +145,6 @@ final _applicationShellRoutes = ShellRoute(
       pageBuilder: (context, state) {
         return _buildTabPage(
           key: const ValueKey('tab-favorites'),
-          index: _tabIndexFavorites,
           child: const FavoritesScreen(),
         );
       },
@@ -185,7 +162,6 @@ final _applicationShellRoutes = ShellRoute(
       pageBuilder: (context, state) {
         return _buildTabPage(
           key: const ValueKey('tab-settings'),
-          index: _tabIndexSettings,
           child: const SettingsScreen(),
         );
       },

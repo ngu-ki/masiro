@@ -42,6 +42,10 @@ class ChapterContentPager extends StatefulWidget {
   final void Function(ReadPosition position)? onPositionChange;
   final void Function() onToggleMenu;
   final void Function() onNextChapter;
+
+  /// Called when the reader pages backwards past the first page of the
+  /// chapter; the previous chapter should open on its last page.
+  final void Function() onPreviousChapter;
   final ReaderPagerController pagerController;
   final IndentMode indentMode;
   final bool shrinkEmptyLines;
@@ -65,6 +69,7 @@ class ChapterContentPager extends StatefulWidget {
     this.onPositionChange,
     required this.onToggleMenu,
     required this.onNextChapter,
+    required this.onPreviousChapter,
     required this.pagerController,
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,
@@ -93,6 +98,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   Offset? _pointerDownPosition;
   DateTime? _pointerDownTime;
   double _chapterEndOverscroll = 0.0;
+  double _chapterStartOverscroll = 0.0;
 
   @override
   void initState() {
@@ -283,8 +289,10 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
           );
           final restore = _pendingRestore ?? widget.initialPosition;
           _pendingRestore = null;
-          _currentPage =
-              pageIndexOfPosition(_pages, restore).clamp(0, _pages.length - 1);
+          _currentPage = restore.isEnd
+              ? _pages.length - 1
+              : pageIndexOfPosition(_pages, restore)
+                    .clamp(0, _pages.length - 1);
           // Notify the HUD and the persistence layer after the current
           // build/layout pass to avoid marking sibling widgets dirty.
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -513,6 +521,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     _pointerDownPosition = event.localPosition;
     _pointerDownTime = DateTime.now();
     _chapterEndOverscroll = 0.0;
+    _chapterStartOverscroll = 0.0;
   }
 
   void _onPointerUp(BuildContext context, PointerUpEvent event) {
@@ -569,6 +578,9 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
   void _goPrevious() {
     if (_currentPage <= 0) {
+      // Already on the first page: turn into the previous chapter and
+      // land on its last page.
+      widget.onPreviousChapter();
       return;
     }
     _turnToPage(_currentPage - 1);
@@ -612,6 +624,16 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   }
 
   bool _onOverscroll(OverscrollNotification notification) {
+    // Dragging backwards on the first page navigates to the previous
+    // chapter, which opens on its last page.
+    if (_currentPage == 0 && notification.overscroll < 0) {
+      _chapterStartOverscroll += -notification.overscroll;
+      if (_chapterStartOverscroll >= _chapterEndOverscrollThreshold) {
+        _chapterStartOverscroll = 0.0;
+        widget.onPreviousChapter();
+      }
+      return false;
+    }
     // Dragging forward on the chapter end page navigates to the next chapter.
     if (_currentPage < _pages.length || notification.overscroll <= 0) {
       return false;
