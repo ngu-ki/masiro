@@ -41,6 +41,10 @@ class SearchTopBarState extends State<SearchTopBar> {
       padding: const EdgeInsets.all(8.0),
       child: SearchAnchor(
         searchController: _searchController,
+        // Flat search view: without this the full-screen panel carries the
+        // default elevation of 6, and its bottom shadow sweeps across the
+        // screen while the panel expands/collapses into the pill.
+        viewElevation: 0,
         viewOnSubmitted: (keyword) {
           bloc.add(SearchScreenSearched(keyword: keyword));
           _searchController.closeView(keyword);
