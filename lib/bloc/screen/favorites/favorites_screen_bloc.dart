@@ -484,15 +484,17 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
   /// Loads the unread count of every favorite novel in the background.
   /// Cached statistics are shown immediately and stats are flushed to the
   /// state as they arrive (throttled so a large shelf doesn't trigger one
-  /// whole-grid rebuild per book). A small bounded pool is used instead of
-  /// a fully serial loop so the radio isn't kept at high power for the
-  /// whole duration; preferences are serialized and written only once.
+  /// whole-grid rebuild per book). Two workers are used instead of a fully
+  /// serial loop so the radio isn't kept at high power for the whole
+  /// duration; the pool stays small on purpose to avoid the request burst
+  /// pattern of a scraping script. Preferences are serialized and written
+  /// only once.
   Future<void> _enrichUnreadCounts({bool forceRefresh = false}) async {
     final token = ++_enrichToken;
     final novels = List<Novel>.from(_novels);
 
-    static const concurrency = 4;
-    static const minEmitInterval = Duration(milliseconds: 400);
+    const concurrency = 2;
+    const minEmitInterval = Duration(milliseconds: 400);
     var nextIndex = 0;
     var lastEmitAt = DateTime.now().subtract(minEmitInterval);
 
@@ -539,7 +541,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
           if (token != _enrichToken || isClosed) {
             return;
           }
-          applyStat(_buildStat(detail, novel.id));
+          applyStat(novel.id, _buildStat(detail));
         } catch (_) {
           // Keep the cached value when the detail cannot be loaded.
         }
