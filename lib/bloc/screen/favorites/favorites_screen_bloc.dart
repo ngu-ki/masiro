@@ -22,6 +22,14 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
   /// Cached reading statistics keyed by novel id.
   Map<int, BookshelfStat> _stats = {};
 
+  /// Locally recorded timestamps of when each novel entered the favorites.
+  Map<int, int> _favoritedAt = {};
+
+  /// The sort mode/direction active before entering the manual adjustment
+  /// mode, restored when the adjustment is canceled.
+  FavoritesSortMode? _modeBeforeManual;
+  FavoritesSortDirection? _directionBeforeManual;
+
   /// Token used to cancel stale unread-count enrichment runs.
   int _enrichToken = 0;
 
@@ -32,7 +40,9 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     on<FavoritesScreenRequested>(_onRequestFavoritesScreen);
     on<FavoritesScreenRefreshed>(_onRefreshFavoritesScreen);
     on<FavoritesScreenSortSelected>(_onSortSelected);
-    on<FavoritesScreenManualModeToggled>(_onManualModeToggled);
+    on<FavoritesScreenManualModeEntered>(_onManualModeEntered);
+    on<FavoritesScreenManualModeConfirmed>(_onManualModeConfirmed);
+    on<FavoritesScreenManualModeExited>(_onManualModeExited);
     on<FavoritesScreenNovelsReordered>(_onNovelsReordered);
     on<FavoritesScreenViewModeChanged>(_onViewModeChanged);
     on<FavoritesScreenNovelStatUpdated>(_onNovelStatUpdated);
@@ -50,14 +60,35 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       return FavoritesScreenInitialState();
     }
     final prefs = PreferencesRepository();
+    final stats = prefs.bookshelfStats;
+    final mode = _parseSortMode(prefs.favoritesSortMode);
     return FavoritesScreenLoadedState(
-      novels: List.from(cached),
+      novels: _applySort(
+        List.from(cached),
+        mode,
+        FavoritesSortDirection.ascending,
+        stats,
+        prefs.bookshelfFavoritedAt,
+      ),
+      sortMode: mode,
       viewMode: prefs.favoritesViewMode == FavoritesViewMode.grid.name
           ? FavoritesViewMode.grid
           : FavoritesViewMode.list,
-      stats: prefs.bookshelfStats,
+      stats: stats,
     );
   }
+
+  static FavoritesSortMode _parseSortMode(String name) {
+    for (final mode in FavoritesSortMode.values) {
+      if (mode.name == name) {
+        return mode;
+      }
+    }
+    return FavoritesSortMode.recentlyRead;
+  }
+
+  FavoritesSortMode get _storedSortMode =>
+      _parseSortMode(_preferencesRepository.favoritesSortMode);
 
   FavoritesViewMode get _storedViewMode {
     return _preferencesRepository.favoritesViewMode ==
@@ -73,6 +104,8 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     try {
       _novels = await _favoritesRepository.getFavorites();
       _stats = _preferencesRepository.bookshelfStats;
+      _favoritedAt = Map.from(_preferencesRepository.bookshelfFavoritedAt);
+      _stampNewFavorites();
       final current = state;
       if (current is FavoritesScreenLoadedState) {
         emit(
@@ -85,7 +118,8 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       } else {
         emit(
           FavoritesScreenLoadedState(
-            novels: _sortNovels(_novels),
+            novels: _sortNovels(_novels, _storedSortMode),
+            sortMode: _storedSortMode,
             viewMode: _storedViewMode,
             stats: _stats,
           ),
@@ -103,6 +137,8 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
   ) async {
     try {
       _novels = await _favoritesRepository.refreshFavorites();
+      _favoritedAt = Map.from(_preferencesRepository.bookshelfFavoritedAt);
+      _stampNewFavorites();
       final current = state;
       if (current is FavoritesScreenLoadedState) {
         emit(
@@ -115,7 +151,8 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         _stats = _preferencesRepository.bookshelfStats;
         emit(
           FavoritesScreenLoadedState(
-            novels: _sortNovels(_novels),
+            novels: _sortNovels(_novels, _storedSortMode),
+            sortMode: _storedSortMode,
             viewMode: _storedViewMode,
             stats: _stats,
           ),
@@ -124,6 +161,29 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
       await _enrichUnreadCountsIfNeeded(forceRefresh: true);
     } catch (e) {
       emit(FavoritesScreenErrorState(message: e.toString()));
+    }
+  }
+
+  /// Stamps novels that are new to the favorites with the current time, so
+  /// the recently read sort shows them at the front until another novel is
+  /// read. Entries of novels no longer favorited are dropped.
+  void _stampNewFavorites() {
+    final ids = _novels.map((n) => n.id).toSet();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    var changed = false;
+    for (final id in ids) {
+      if (!_favoritedAt.containsKey(id)) {
+        _favoritedAt[id] = now;
+        changed = true;
+      }
+    }
+    final stale = _favoritedAt.keys.where((id) => !ids.contains(id)).toList();
+    for (final id in stale) {
+      _favoritedAt.remove(id);
+      changed = true;
+    }
+    if (changed) {
+      _preferencesRepository.bookshelfFavoritedAt = _favoritedAt;
     }
   }
 
@@ -157,6 +217,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
           : FavoritesSortDirection.ascending;
     }
 
+    _preferencesRepository.favoritesSortMode = mode.name;
     emit(
       current.copyWith(
         novels: _sortNovels(_novels, mode, direction),
@@ -166,32 +227,69 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     );
   }
 
-  void _onManualModeToggled(
-    FavoritesScreenManualModeToggled event,
+  void _onManualModeEntered(
+    FavoritesScreenManualModeEntered event,
     Emitter<FavoritesScreenState> emit,
   ) {
     final current = state;
-    if (current is! FavoritesScreenLoadedState) {
+    if (current is! FavoritesScreenLoadedState || current.manualAdjusting) {
       return;
     }
-
-    if (current.manualAdjusting) {
-      emit(current.copyWith(manualAdjusting: false));
-      return;
-    }
-
-    // The manual adjustment only makes sense in the default order.
+    // Remember the active sort so it can be restored on cancel. The novels
+    // keep the currently displayed arrangement as the starting layout.
+    _modeBeforeManual = current.sortMode;
+    _directionBeforeManual = current.sortDirection;
     emit(
       current.copyWith(
-        novels: _sortNovels(
-          _novels,
-          FavoritesSortMode.defaultOrder,
-          current.sortDirection,
-        ),
-        sortMode: FavoritesSortMode.defaultOrder,
         manualAdjusting: true,
         isBatchMode: false,
         selectedNovelIds: const {},
+      ),
+    );
+  }
+
+  void _onManualModeConfirmed(
+    FavoritesScreenManualModeConfirmed event,
+    Emitter<FavoritesScreenState> emit,
+  ) {
+    final current = state;
+    if (current is! FavoritesScreenLoadedState || !current.manualAdjusting) {
+      return;
+    }
+    // Persist the working arrangement as the custom order and switch to it.
+    _preferencesRepository.favoritesOrder =
+        current.novels.map((n) => '${n.id}').toList();
+    _preferencesRepository.favoritesSortMode =
+        FavoritesSortMode.defaultOrder.name;
+    _modeBeforeManual = null;
+    _directionBeforeManual = null;
+    emit(
+      current.copyWith(
+        sortMode: FavoritesSortMode.defaultOrder,
+        manualAdjusting: false,
+      ),
+    );
+  }
+
+  void _onManualModeExited(
+    FavoritesScreenManualModeExited event,
+    Emitter<FavoritesScreenState> emit,
+  ) {
+    final current = state;
+    if (current is! FavoritesScreenLoadedState || !current.manualAdjusting) {
+      return;
+    }
+    // Discard the working arrangement and restore the previous sort mode.
+    final mode = _modeBeforeManual ?? current.sortMode;
+    final direction = _directionBeforeManual ?? current.sortDirection;
+    _modeBeforeManual = null;
+    _directionBeforeManual = null;
+    emit(
+      current.copyWith(
+        novels: _sortNovels(_novels, mode, direction),
+        sortMode: mode,
+        sortDirection: direction,
+        manualAdjusting: false,
       ),
     );
   }
@@ -309,9 +407,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     final novel = novels.removeAt(event.oldIndex);
     novels.insert(event.newIndex, novel);
 
-    _preferencesRepository.favoritesOrder =
-        novels.map((n) => '${n.id}').toList();
-
+    // The arrangement is only persisted when the adjustment is confirmed.
     emit(current.copyWith(novels: novels));
   }
 
@@ -446,20 +542,31 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
 
   List<Novel> _sortNovels(
     List<Novel> novels, [
-    FavoritesSortMode mode = FavoritesSortMode.defaultOrder,
+    FavoritesSortMode mode = FavoritesSortMode.recentlyRead,
     FavoritesSortDirection direction = FavoritesSortDirection.ascending,
   ]) {
+    return _applySort(novels, mode, direction, _stats, _favoritedAt);
+  }
+
+  static List<Novel> _applySort(
+    List<Novel> novels,
+    FavoritesSortMode mode,
+    FavoritesSortDirection direction,
+    Map<int, BookshelfStat> stats,
+    Map<int, int> favoritedAt,
+  ) {
     switch (mode) {
       case FavoritesSortMode.defaultOrder:
-        return _sortByManualOrder(novels);
+        return _applyManualOrder(novels);
       case FavoritesSortMode.recentlyRead:
-        // Fixed order: the most recently read novel on top, sorted by the
-        // locally recorded reading timestamp. Novels never read locally
-        // sink to the end and keep their original relative order.
+        // Fixed order: the most recently read novel on top. The key is the
+        // later of the locally recorded reading timestamp and the timestamp
+        // of entering the favorites, so newly favorited novels start at the
+        // front but are overtaken by whatever is read afterwards.
         final indexed = novels.asMap().entries.toList()
           ..sort((a, b) {
-            final ta = _stats[a.value.id]?.lastReadAt ?? 0;
-            final tb = _stats[b.value.id]?.lastReadAt ?? 0;
+            final ta = _recentKey(a.value.id, stats, favoritedAt);
+            final tb = _recentKey(b.value.id, stats, favoritedAt);
             if (ta != tb) {
               return tb.compareTo(ta);
             }
@@ -483,7 +590,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
         // Always descending: sort by the total chapter count from the
         // enriched stats. Novels whose stats are not loaded yet (count 0)
         // always sink to the bottom.
-        int countOf(Novel n) => _stats[n.id]?.totalChapters ?? 0;
+        int countOf(Novel n) => stats[n.id]?.totalChapters ?? 0;
         return [...novels]..sort((a, b) {
           final ca = countOf(a);
           final cb = countOf(b);
@@ -498,8 +605,18 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     }
   }
 
-  List<Novel> _sortByManualOrder(List<Novel> novels) {
-    final order = _preferencesRepository.favoritesOrder;
+  static int _recentKey(
+    int id,
+    Map<int, BookshelfStat> stats,
+    Map<int, int> favoritedAt,
+  ) {
+    final read = stats[id]?.lastReadAt ?? 0;
+    final favorited = favoritedAt[id] ?? 0;
+    return read > favorited ? read : favorited;
+  }
+
+  static List<Novel> _applyManualOrder(List<Novel> novels) {
+    final order = PreferencesRepository().favoritesOrder;
     if (order.isEmpty) {
       return novels;
     }
@@ -525,7 +642,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     return indexed.map((e) => e.value).toList();
   }
 
-  DateTime _parseTime(String? time) {
+  static DateTime _parseTime(String? time) {
     if (time == null || time.isEmpty) {
       return DateTime.fromMillisecondsSinceEpoch(0);
     }

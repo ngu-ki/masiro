@@ -159,12 +159,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     if (state.isBatchMode) {
       return buildBatchHeader(context, state);
     }
+    if (state.manualAdjusting) {
+      return buildManualHeader(context);
+    }
     if (_isSearching) {
       return buildSearchHeader(context);
     }
 
     final localizations = context.localizations();
-    final colorScheme = context.colorScheme();
     final isGrid = state.viewMode == FavoritesViewMode.grid;
 
     return Padding(
@@ -183,12 +185,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               buildSortMenuItem(
                 context,
                 state,
-                mode: FavoritesSortMode.defaultOrder,
-                label: localizations.sortDefault,
-              ),
-              buildSortMenuItem(
-                context,
-                state,
                 mode: FavoritesSortMode.recentlyRead,
                 label: localizations.recentlyRead,
               ),
@@ -197,6 +193,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 state,
                 mode: FavoritesSortMode.lastUpdated,
                 label: localizations.lastUpdated,
+              ),
+              buildSortMenuItem(
+                context,
+                state,
+                mode: FavoritesSortMode.defaultOrder,
+                label: localizations.sortDefault,
               ),
               buildWordChapterSortMenuItem(context, state),
             ],
@@ -219,7 +221,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   ),
                 );
               } else if (value == 'sort') {
-                bloc.add(FavoritesScreenManualModeToggled());
+                bloc.add(FavoritesScreenManualModeEntered());
               } else if (value == 'batch') {
                 bloc.add(FavoritesScreenBatchModeToggled());
               }
@@ -245,12 +247,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 value: 'sort',
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.swap_vert_rounded,
-                      color: state.manualAdjusting
-                          ? colorScheme.primary
-                          : null,
-                    ),
+                    const Icon(Icons.swap_vert_rounded),
                     const SizedBox(width: 8),
                     Text(localizations.manualSort),
                   ],
@@ -267,6 +264,31 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The header shown while manually adjusting the order: a close button on
+  /// the left cancels without saving, and the 确认移动 button on the right
+  /// (same slot as 全选 in batch mode) saves the arrangement as 自设排序.
+  Widget buildManualHeader(BuildContext context) {
+    final localizations = context.localizations();
+    final bloc = context.read<FavoritesScreenBloc>();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => bloc.add(FavoritesScreenManualModeExited()),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: () => bloc.add(FavoritesScreenManualModeConfirmed()),
+            child: Text(localizations.confirmMove),
           ),
         ],
       ),

@@ -4,10 +4,11 @@ import 'package:masiro/data/repository/model/novel.dart';
 
 /// The sort mode of the favorites list.
 enum FavoritesSortMode {
-  /// The manually adjusted order.
+  /// The custom order saved by the manual adjustment (自设排序).
   defaultOrder,
 
-  /// Sort by the recently read order (server order).
+  /// Sort by the recently read order; newly favorited novels start at the
+  /// front until another novel is read.
   recentlyRead,
 
   /// Sort by the last updated time.
@@ -70,7 +71,7 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
 
   FavoritesScreenLoadedState({
     this.novels = const [],
-    this.sortMode = FavoritesSortMode.defaultOrder,
+    this.sortMode = FavoritesSortMode.recentlyRead,
     this.sortDirection = FavoritesSortDirection.ascending,
     this.manualAdjusting = false,
     this.viewMode = FavoritesViewMode.grid,

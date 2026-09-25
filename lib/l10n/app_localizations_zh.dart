@@ -324,7 +324,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sortMode => '排序方式';
 
   @override
-  String get sortDefault => '默认排序';
+  String get sortDefault => '自设排序';
 
   @override
   String get recentlyRead => '最近阅读';
@@ -343,6 +343,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get manualSort => '调整排序';
+
+  @override
+  String get confirmMove => '确认移动';
 
   @override
   String get wallet => '钱包';
@@ -692,7 +695,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get sortMode => '排序方式';
 
   @override
-  String get sortDefault => '預設排序';
+  String get sortDefault => '自設排序';
 
   @override
   String get recentlyRead => '最近閱讀';
@@ -711,6 +714,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get manualSort => '调整排序';
+
+  @override
+  String get confirmMove => '確認移動';
 
   @override
   String get wallet => '錢包';
@@ -1051,7 +1057,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get sortMode => '排序方式';
 
   @override
-  String get sortDefault => '預設排序';
+  String get sortDefault => '自設排序';
 
   @override
   String get recentlyRead => '最近閱讀';
@@ -1070,6 +1076,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get manualSort => '调整排序';
+
+  @override
+  String get confirmMove => '確認移動';
 
   @override
   String get wallet => '錢包';

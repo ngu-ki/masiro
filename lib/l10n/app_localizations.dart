@@ -596,7 +596,7 @@ abstract class AppLocalizations {
   /// No description provided for @sortDefault.
   ///
   /// In zh, this message translates to:
-  /// **'默认排序'**
+  /// **'自设排序'**
   String get sortDefault;
 
   /// No description provided for @recentlyRead.
@@ -634,6 +634,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'调整排序'**
   String get manualSort;
+
+  /// No description provided for @confirmMove.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认移动'**
+  String get confirmMove;
 
   /// No description provided for @backgroundColor.
   ///

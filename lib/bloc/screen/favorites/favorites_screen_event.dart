@@ -22,8 +22,17 @@ final class FavoritesScreenSortSelected extends FavoritesScreenEvent {
   List<Object> get props => [mode];
 }
 
-/// Turns the manual adjustment mode on or off.
-final class FavoritesScreenManualModeToggled extends FavoritesScreenEvent {}
+/// Enters the manual adjustment mode. The novels keep the arrangement of
+/// the currently active sort mode as the starting layout.
+final class FavoritesScreenManualModeEntered extends FavoritesScreenEvent {}
+
+/// Confirms the manual adjustment: the working arrangement is persisted as
+/// the custom order (自设排序) and the sort mode switches to it.
+final class FavoritesScreenManualModeConfirmed extends FavoritesScreenEvent {}
+
+/// Leaves the manual adjustment mode without saving, restoring the
+/// previously active sort mode and its arrangement.
+final class FavoritesScreenManualModeExited extends FavoritesScreenEvent {}
 
 /// Reorders the novels while the manual adjustment mode is on.
 final class FavoritesScreenNovelsReordered extends FavoritesScreenEvent {

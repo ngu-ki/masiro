@@ -10,7 +10,9 @@ const _versionKey = 'version';
 const _languageKey = 'language';
 const _favoritesOrderKey = 'favoritesOrder';
 const _favoritesViewModeKey = 'favoritesViewMode';
+const _favoritesSortModeKey = 'favoritesSortMode';
 const _bookshelfStatsKey = 'bookshelfStats';
+const _bookshelfFavoritedAtKey = 'bookshelfFavoritedAt';
 const _readerBackgroundColorKey = 'readerBackgroundColor';
 const _pageTurnModeKey = 'pageTurnMode';
 const _indentModeKeyPrefix = 'indentMode_';
@@ -60,6 +62,14 @@ class PreferencesRepository {
   set favoritesViewMode(String value) =>
       _prefs.setString(_favoritesViewModeKey, value);
 
+  /// Sort mode of the favorites screen, stored as the enum name. Defaults
+  /// to 'recentlyRead'; the last selected mode is restored on app launch.
+  String get favoritesSortMode =>
+      _prefs.getString(_favoritesSortModeKey) ?? 'recentlyRead';
+
+  set favoritesSortMode(String value) =>
+      _prefs.setString(_favoritesSortModeKey, value);
+
   /// Cached reading statistics of the favorite novels, keyed by novel id.
   Map<int, BookshelfStat> get bookshelfStats {
     final raw = _prefs.getString(_bookshelfStatsKey);
@@ -85,6 +95,31 @@ class PreferencesRepository {
         '${entry.key}': entry.value.toJson(),
     };
     _prefs.setString(_bookshelfStatsKey, jsonEncode(encoded));
+  }
+
+  /// Locally recorded timestamps (milliseconds since epoch) of when each
+  /// novel entered the favorites, keyed by novel id. Used by the recently
+  /// read sort so newly favorited novels start at the front.
+  Map<int, int> get bookshelfFavoritedAt {
+    final raw = _prefs.getString(_bookshelfFavoritedAtKey);
+    if (raw == null || raw.isEmpty) {
+      return const {};
+    }
+    try {
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      return decoded.map(
+        (key, value) => MapEntry(int.parse(key), (value as num).toInt()),
+      );
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  set bookshelfFavoritedAt(Map<int, int> value) {
+    final encoded = {
+      for (final entry in value.entries) '${entry.key}': entry.value,
+    };
+    _prefs.setString(_bookshelfFavoritedAtKey, jsonEncode(encoded));
   }
 
   /// Background color (as a value) of the reader screen.
