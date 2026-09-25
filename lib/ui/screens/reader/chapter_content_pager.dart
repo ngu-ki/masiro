@@ -96,6 +96,12 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
   PageController? _pageController;
 
+  /// Current page index, used to gate image requests: all text pages are
+  /// built up front (so scrubbing the progress bar lands instantly on any
+  /// page), but an illustration only loads once its page is current,
+  /// adjacent, or already visited.
+  final ValueNotifier<int> _pageIndexNotifier = ValueNotifier<int>(0);
+
   Offset? _pointerDownPosition;
   DateTime? _pointerDownTime;
   double _chapterEndOverscroll = 0.0;
@@ -138,6 +144,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   @override
   void dispose() {
     _pageController?.dispose();
+    _pageIndexNotifier.dispose();
     super.dispose();
   }
 
@@ -316,6 +323,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
           // build/layout pass to avoid marking sibling widgets dirty.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
+              _pageIndexNotifier.value = _currentPage;
               _reportProgress();
               _reportPosition(_currentPage);
               _scheduleImagePrefetch();
@@ -332,59 +340,59 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final showHeaderOnFirstPage = firstPage != null &&
             !firstPage.isImagePage() &&
             firstPage.runs.isNotEmpty;
-        // Pages are built lazily via the PageView.builder item builder:
-        // constructing every page up front made opening a long chapter
-        // build and lay out dozens of Text.rich widgets in one frame.
-        Widget buildItem(int index) {
-          if (index == _pages.length) {
-            return _buildChapterEndPage(context);
-          }
-          return _buildPage(
-            context,
-            _pages[index],
-            style,
-            paragraphGap,
-            blankGap,
-            topInset: topInset,
-            bottomInset: bottomInset,
-            contentWidth: contentWidth,
-            contentHeight: contentHeight,
-            titleBodyGap: titleBodyGap,
-            header: index == 0 && showHeaderOnFirstPage
-                ? Text(
-                    chapterTitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: titleStyle,
-                  )
-                : null,
-          );
-        }
+        // Every page is constructed up front so scrubbing the progress bar
+        // lands on an already-built page; image pages, however, only start
+        // their network request once they are the current/adjacent page or
+        // have been visited, so opening a chapter never fires a burst of
+        // image downloads.
+        final pageWidgets = [
+          for (var i = 0; i < _pages.length; i++)
+            _buildPage(
+              context,
+              _pages[i],
+              style,
+              paragraphGap,
+              blankGap,
+              topInset: topInset,
+              bottomInset: bottomInset,
+              contentWidth: contentWidth,
+              contentHeight: contentHeight,
+              titleBodyGap: titleBodyGap,
+              pageIndex: i,
+              pageIndexNotifier: _pageIndexNotifier,
+              header: i == 0 && showHeaderOnFirstPage
+                  ? Text(
+                      chapterTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle,
+                    )
+                  : null,
+            ),
+        ];
 
         return Listener(
           behavior: HitTestBehavior.translucent,
           onPointerDown: _onPointerDown,
           onPointerUp: (event) => _onPointerUp(context, event),
-          child: _buildPageViewPager(_pages.length + 1, buildItem),
+          child: _buildPageViewPager(
+            [...pageWidgets, _buildChapterEndPage(context)],
+          ),
         );
       },
     );
   }
 
-  Widget _buildPageViewPager(
-    int itemCount,
-    Widget Function(int index) itemBuilder,
-  ) {
+  Widget _buildPageViewPager(List<Widget> pageWidgets) {
     return NotificationListener<OverscrollNotification>(
       onNotification: _onOverscroll,
-      child: PageView.builder(
+      child: PageView(
         controller: _pageController,
         physics: widget.mode == PageTurnMode.none
             ? const NeverScrollableScrollPhysics()
             : const PageScrollPhysics(),
         onPageChanged: _onPageViewChanged,
-        itemCount: itemCount,
-        itemBuilder: (context, index) => itemBuilder(index),
+        children: pageWidgets,
       ),
     );
   }
@@ -400,14 +408,17 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     required double contentWidth,
     required double contentHeight,
     required double titleBodyGap,
+    required int pageIndex,
+    required ValueNotifier<int> pageIndexNotifier,
     Widget? header,
   }) {
     if (page.isImagePage()) {
-      return CachedImage(
+      return _VisibilityAwareImage(
         url: page.image!.src,
         width: contentWidth,
         height: contentHeight,
-        fit: BoxFit.contain,
+        pageIndex: pageIndex,
+        currentPageNotifier: pageIndexNotifier,
       );
     }
 
@@ -641,6 +652,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     final target = (fraction * (_pages.length - 1)).round();
     _pageController?.jumpToPage(target);
     _currentPage = target;
+    _pageIndexNotifier.value = target;
     _reportProgress();
     _reportPosition(target);
     _scheduleImagePrefetch();
@@ -648,6 +660,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
   void _onPageViewChanged(int index) {
     _currentPage = index;
+    _pageIndexNotifier.value = index;
     _reportProgress();
     _reportPosition(index);
     _scheduleImagePrefetch();
@@ -764,6 +777,69 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
           firstRun.start,
         ),
       ),
+    );
+  }
+}
+
+/// A full-page illustration that only starts its network request once its
+/// page is currently shown or directly adjacent (preloaded while the
+/// reader is one page away), and stays loaded afterwards. All text pages
+/// are still constructed eagerly, so this gating only affects image
+/// requests — it prevents opening a chapter from downloading every
+/// illustration in the chapter at once.
+class _VisibilityAwareImage extends StatefulWidget {
+  final String url;
+  final double width;
+  final double height;
+  final int pageIndex;
+  final ValueListenable<int> currentPageNotifier;
+
+  const _VisibilityAwareImage({
+    required this.url,
+    required this.width,
+    required this.height,
+    required this.pageIndex,
+    required this.currentPageNotifier,
+  });
+
+  @override
+  State<_VisibilityAwareImage> createState() => _VisibilityAwareImageState();
+}
+
+class _VisibilityAwareImageState extends State<_VisibilityAwareImage> {
+  /// Latch: once the image has been activated it stays mounted, so paging
+  /// back to a visited illustration never unloads it.
+  bool _activated = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: widget.currentPageNotifier,
+      builder: (context, currentPage, child) {
+        final adjacent = (widget.pageIndex - currentPage).abs() <= 1;
+        final shouldShow = _activated || adjacent;
+        if (adjacent && !_activated) {
+          // Persist the latch after this frame; never call setState
+          // synchronously while building.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() => _activated = true);
+            }
+          });
+        }
+        if (!shouldShow) {
+          // Same neutral placeholder CachedImage uses while loading.
+          return ColoredBox(
+            color: Theme.of(context).colorScheme.surface,
+          );
+        }
+        return CachedImage(
+          url: widget.url,
+          width: widget.width,
+          height: widget.height,
+          fit: BoxFit.contain,
+        );
+      },
     );
   }
 }
