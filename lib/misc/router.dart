@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:go_router/go_router.dart';
+import 'package:masiro/data/repository/preferences_repository.dart';
 import 'package:masiro/misc/cookie.dart';
 import 'package:masiro/misc/platform.dart';
 import 'package:masiro/ui/screens/about/about_screen.dart';
@@ -59,29 +60,69 @@ Page<void> _buildTabPage({
 /// Duration of the shared reader enter/exit transition.
 const Duration readerTransitionDuration = Duration(milliseconds: 250);
 
+/// A curve that is opaque (1) for the whole forward animation, starting at
+/// the very first frame. Used by the reader's opaque cover so the page
+/// below is hidden before it can relayout from the status-bar inset change.
+class _OpaqueFromStartCurve extends Curve {
+  const _OpaqueFromStartCurve();
+
+  @override
+  double transformInternal(double t) => t <= 0 ? 0.0 : 1.0;
+}
+
 /// Shared transition for the reader: only the reader itself moves (a gentle
 /// fade-and-scale), while the underlying route stays completely still.
 ///
 /// The default Material 3 zoom transition slides the underlying page up
 /// while the reader is on top and drops it back down on pop, which looked
 /// like the detail/shelf page falling when leaving the reader.
+///
+/// When [instantOpaqueCover] is true, a solid layer painted in the reader's
+/// default background color is placed below the fading content: it is fully
+/// opaque from the first frame of the forward transition and fades out
+/// linearly on pop. The detail page entering the reader that way is not
+/// wrapped/frozen and keeps its regular navigation, yet its relayout after
+/// the status bar hides is completely hidden behind the cover; by the time
+/// the cover fades out on exit the page below has already settled.
 Widget readerTransitionsBuilder(
   BuildContext context,
   Animation<double> animation,
   Animation<double> secondaryAnimation,
-  Widget child,
-) {
+  Widget child, {
+  bool instantOpaqueCover = false,
+}) {
   final curved = CurvedAnimation(
     parent: animation,
     curve: Curves.easeOut,
     reverseCurve: Curves.easeIn,
   );
-  return FadeTransition(
+  final content = FadeTransition(
     opacity: curved,
     child: ScaleTransition(
       scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
       child: child,
     ),
+  );
+  if (!instantOpaqueCover) {
+    return content;
+  }
+  final cover = CurvedAnimation(
+    parent: animation,
+    curve: const _OpaqueFromStartCurve(),
+    reverseCurve: Curves.linear,
+  );
+  return Stack(
+    fit: StackFit.expand,
+    children: [
+      FadeTransition(
+        opacity: cover,
+        child: const ColoredBox(
+          color: Color(defaultReaderBackgroundColor),
+          child: SizedBox.expand(),
+        ),
+      ),
+      content,
+    ],
   );
 }
 
@@ -95,7 +136,16 @@ Page<void> _buildReaderPage({
     child: child,
     transitionDuration: readerTransitionDuration,
     reverseTransitionDuration: readerTransitionDuration,
-    transitionsBuilder: readerTransitionsBuilder,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        readerTransitionsBuilder(
+      context,
+      animation,
+      secondaryAnimation,
+      child,
+      // Only phones hide the status bar for the reader; desktop keeps the
+      // regular fade.
+      instantOpaqueCover: isMobilePhone,
+    ),
   );
 }
 
