@@ -481,74 +481,58 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     await _enrichUnreadCounts(forceRefresh: forceRefresh);
   }
 
-  /// Loads the unread count of every favorite novel in the background.
-  /// Cached statistics are shown immediately and stats are flushed to the
-  /// state as they arrive (throttled so a large shelf doesn't trigger one
-  /// whole-grid rebuild per book). Two workers are used instead of a fully
-  /// serial loop so the radio isn't kept at high power for the whole
-  /// duration; the pool stays small on purpose to avoid the request burst
-  /// pattern of a scraping script. Preferences are serialized and written
-  /// only once.
+  /// Loads the unread count of every favorite novel one by one, strictly
+  /// serially, in the background. This app is a third-party client, so the
+  /// request pacing must not look like a scraping script: never fire more
+  /// than one detail request at a time. Cached statistics are shown
+  /// immediately and UI updates are throttled locally; preferences are
+  /// serialized and written only once.
   Future<void> _enrichUnreadCounts({bool forceRefresh = false}) async {
     final token = ++_enrichToken;
     final novels = List<Novel>.from(_novels);
 
-    const concurrency = 2;
     const minEmitInterval = Duration(milliseconds: 400);
-    var nextIndex = 0;
     var lastEmitAt = DateTime.now().subtract(minEmitInterval);
 
-    void applyStat(int novelId, BookshelfStat fresh) {
-      final newStats = Map<int, BookshelfStat>.from(_stats);
-      final old = _stats[novelId];
-      // Preserve the locally recorded reading timestamp; stamp "now"
-      // when the server reports reading progress on a new chapter.
-      final progressChanged = old != null &&
-          old.lastReadChapterId != fresh.lastReadChapterId &&
-          fresh.lastReadChapterId != 0;
-      final stat = progressChanged
-          ? fresh.copyWith(lastReadAt: DateTime.now().millisecondsSinceEpoch)
-          : (old != null
-              ? fresh.copyWith(lastReadAt: old.lastReadAt)
-              : fresh);
-      newStats[novelId] = stat;
-      _stats = newStats;
-
-      final now = DateTime.now();
-      if (now.difference(lastEmitAt) >= minEmitInterval) {
-        lastEmitAt = now;
-        _emitStatsState();
+    for (final novel in novels) {
+      if (token != _enrichToken || isClosed) {
+        return;
       }
-      // Intermediate stats that arrive within the throttle window are only
-      // accumulated into _stats; the loop's final emit flushes them all.
-    }
-
-    Future<void> worker() async {
-      while (true) {
+      try {
+        final detail = await _masiroRepository.getNovelDetail(
+          novel.id,
+          forceRefresh: forceRefresh,
+        );
         if (token != _enrichToken || isClosed) {
           return;
         }
-        final index = nextIndex++;
-        if (index >= novels.length) {
-          return;
+        final newStats = Map<int, BookshelfStat>.from(_stats);
+        final fresh = _buildStat(detail);
+        final old = _stats[novel.id];
+        // Preserve the locally recorded reading timestamp; stamp "now"
+        // when the server reports reading progress on a new chapter.
+        final progressChanged = old != null &&
+            old.lastReadChapterId != fresh.lastReadChapterId &&
+            fresh.lastReadChapterId != 0;
+        final stat = progressChanged
+            ? fresh.copyWith(lastReadAt: DateTime.now().millisecondsSinceEpoch)
+            : (old != null
+                ? fresh.copyWith(lastReadAt: old.lastReadAt)
+                : fresh);
+        newStats[novel.id] = stat;
+        _stats = newStats;
+
+        // Local-only throttle: stats that arrive within the window are
+        // accumulated and flushed by the emit after the loop.
+        final now = DateTime.now();
+        if (now.difference(lastEmitAt) >= minEmitInterval) {
+          lastEmitAt = now;
+          _emitStatsState();
         }
-        final novel = novels[index];
-        try {
-          final detail = await _masiroRepository.getNovelDetail(
-            novel.id,
-            forceRefresh: forceRefresh,
-          );
-          if (token != _enrichToken || isClosed) {
-            return;
-          }
-          applyStat(novel.id, _buildStat(detail));
-        } catch (_) {
-          // Keep the cached value when the detail cannot be loaded.
-        }
+      } catch (_) {
+        // Keep the cached value when the detail cannot be loaded.
       }
     }
-
-    await Future.wait(List.generate(concurrency, (_) => worker()));
 
     // Persist the whole map once instead of re-encoding it per book, and
     // make sure the final state reflects everything that was fetched.
