@@ -5,11 +5,17 @@ import 'package:masiro/data/repository/model/chapter_detail.dart';
 import 'package:masiro/data/repository/model/indent_mode.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
+import 'package:masiro/data/repository/model/text_color_mode.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/render.dart';
 import 'package:masiro/ui/screens/reader/pagination.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
 import 'package:pinyin/pinyin.dart';
+
+/// Opaque black as declared by source markup (`black`, `#000`...). In
+/// simplified mode such ranges keep the ordinary body color instead of
+/// being muted.
+const _sourceBlack = 0xFF000000;
 
 /// Controller that allows the menu slider to jump to a position fraction of
 /// the current chapter.
@@ -52,6 +58,7 @@ class ChapterContentPager extends StatefulWidget {
   final IndentMode indentMode;
   final bool shrinkEmptyLines;
   final bool forceSimplified;
+  final TextColorMode textColorMode;
 
   /// Title of the current chapter, shown at the top of the first page.
   final String chapterTitle;
@@ -76,6 +83,7 @@ class ChapterContentPager extends StatefulWidget {
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,
     this.forceSimplified = false,
+    this.textColorMode = TextColorMode.simplified,
     required this.chapterTitle,
   });
 
@@ -182,7 +190,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
   TextContent _transformTextContent(TextContent element, bool adaptive) {
     var text = element.text;
-    var mutedRanges = element.mutedRanges;
+    var coloredRanges = element.coloredRanges;
     if (adaptive) {
       // Normalize any existing leading indentation (no space, one or two
       // cells of `&nbsp;` or full-width spaces...) so every paragraph starts
@@ -198,12 +206,13 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         // render as blank lines.
         if (!isBlankTextLine(stripped)) {
           text = stripped;
-          mutedRanges = [
-            for (final range in mutedRanges)
+          coloredRanges = [
+            for (final range in coloredRanges)
               if (range.end > leading)
                 (
                   start: range.start > leading ? range.start - leading : 0,
                   end: range.end - leading,
+                  color: range.color,
                 ),
           ];
         }
@@ -212,7 +221,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     if (widget.forceSimplified) {
       text = ChineseHelper.convertToSimplifiedChinese(text);
     }
-    return element.copyWith(text: text, mutedRanges: mutedRanges);
+    return element.copyWith(text: text, coloredRanges: coloredRanges);
   }
 
   static bool _isIndentBlank(int codeUnit) {
@@ -461,7 +470,6 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
               fragment: fragment,
               runStart: run.start,
               prefixLength: widget.indentMode.prefix.length,
-              mutedColor: widget.textColor.withValues(alpha: 0.45),
             ),
           ),
           style: style,
@@ -482,7 +490,14 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   }
 
   /// Builds the spans of a page [fragment], splitting the source-colored
-  /// (muted) ranges out so they are rendered in gray.
+  /// ranges out and coloring them according to [ChapterContentPager.textColorMode]:
+  ///
+  /// - [TextColorMode.original]: the declared source color is used verbatim
+  ///   (including alpha), with no adaptation to the reader background.
+  /// - [TextColorMode.simplified]: non-black source colors are rendered in a
+  ///   muted gray; explicit black keeps the body color.
+  /// - [TextColorMode.uniform]: source colors are ignored entirely and the
+  ///   adaptive body color (from [Text.style]) is used everywhere.
   ///
   /// [runStart] is the fragment's start offset within
   /// `indentPrefix + element.text`; [prefixLength] is the indent prefix
@@ -492,26 +507,42 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     required String fragment,
     required int runStart,
     required int prefixLength,
-    required Color mutedColor,
   }) {
-    if (element.mutedRanges.isEmpty || fragment.isEmpty) {
+    if (widget.textColorMode == TextColorMode.uniform ||
+        element.coloredRanges.isEmpty ||
+        fragment.isEmpty) {
       return [TextSpan(text: fragment)];
     }
 
-    // Intersect the element-level muted ranges with the visible fragment.
+    final mutedColor = widget.textColor.withValues(alpha: 0.45);
+
+    // Intersect the element-level colored ranges with the visible fragment.
     final textLength = element.text.length;
     final elementStart = (runStart - prefixLength).clamp(0, textLength);
     final elementEnd =
         (runStart + fragment.length - prefixLength).clamp(0, textLength);
-    final localRanges = <(int, int)>[];
-    for (final range in element.mutedRanges) {
+    final localRanges = <(int, int, Color?)>[];
+    for (final range in element.coloredRanges) {
       final start = range.start > elementStart ? range.start : elementStart;
       final end = range.end < elementEnd ? range.end : elementEnd;
-      if (start < end) {
-        // Map element offset to fragment-local offset.
-        localRanges.add((prefixLength + start - runStart,
-            prefixLength + end - runStart));
+      if (start >= end) {
+        continue;
       }
+      Color? resolved;
+      if (widget.textColorMode == TextColorMode.original) {
+        resolved = Color(range.color);
+      } else if (range.color != _sourceBlack) {
+        // Simplified mode: black declarations are treated as ordinary body
+        // text; every other source color is muted to gray.
+        resolved = mutedColor;
+      }
+      localRanges.add(
+        (
+          prefixLength + start - runStart,
+          prefixLength + end - runStart,
+          resolved,
+        ),
+      );
     }
     if (localRanges.isEmpty) {
       return [TextSpan(text: fragment)];
@@ -520,14 +551,14 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
     final spans = <InlineSpan>[];
     var cursor = 0;
-    for (final (start, end) in localRanges) {
+    for (final (start, end, color) in localRanges) {
       if (start > cursor) {
         spans.add(TextSpan(text: fragment.substring(cursor, start)));
       }
       spans.add(
         TextSpan(
           text: fragment.substring(start, end),
-          style: TextStyle(color: mutedColor),
+          style: color == null ? null : TextStyle(color: color),
         ),
       );
       cursor = end;

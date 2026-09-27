@@ -14,6 +14,7 @@ import 'package:masiro/data/repository/model/loading_status.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
 import 'package:masiro/data/repository/model/reading_mode.dart';
+import 'package:masiro/data/repository/model/text_color_mode.dart';
 import 'package:masiro/data/repository/novel_record_repository.dart';
 import 'package:masiro/data/repository/preferences_repository.dart';
 import 'package:masiro/data/repository/user_repository.dart';
@@ -57,6 +58,9 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     );
     on<ReaderScreenForceSimplifiedChanged>(
       _onReaderScreenForceSimplifiedChanged,
+    );
+    on<ReaderScreenTextColorModeChanged>(
+      _onReaderScreenTextColorModeChanged,
     );
   }
 
@@ -125,6 +129,9 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
       final shrinkEmptyLines =
           preferencesRepository.getShrinkEmptyLines(novelId);
       final forceSimplified = preferencesRepository.getForceSimplified(novelId);
+      final textColorMode = textColorModeFromName(
+        preferencesRepository.getTextColorMode(novelId),
+      );
       final chapterRecord = await novelRecordRepository.findChapterRecord(
         currentUser!.userId,
         chapterId,
@@ -147,6 +154,7 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
           indentMode: indentMode,
           shrinkEmptyLines: shrinkEmptyLines,
           forceSimplified: forceSimplified,
+          textColorMode: textColorMode,
           readingMode: _readingModeOf(pageTurnMode),
         ),
       );
@@ -332,6 +340,21 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     preferencesRepository.setForceSimplified(novelId, event.enabled);
     final loadedState = state as ReaderScreenLoadedState;
     emit(loadedState.copyWith(forceSimplified: event.enabled));
+  }
+
+  Future<void> _onReaderScreenTextColorModeChanged(
+    ReaderScreenTextColorModeChanged event,
+    Emitter<ReaderScreenState> emit,
+  ) async {
+    if (state is! ReaderScreenLoadedState) {
+      return;
+    }
+    preferencesRepository.setTextColorMode(
+      novelId,
+      event.textColorMode.name,
+    );
+    final loadedState = state as ReaderScreenLoadedState;
+    emit(loadedState.copyWith(textColorMode: event.textColorMode));
   }
 
   Future<String> purchasePaidChapter(PaymentInfo paymentInfo) async {

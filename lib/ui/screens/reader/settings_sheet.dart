@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:masiro/data/repository/model/indent_mode.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
+import 'package:masiro/data/repository/model/text_color_mode.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/ui/screens/reader/reader_palette.dart';
 
@@ -13,6 +14,8 @@ class SettingsSheet extends StatefulWidget {
   final void Function(PageTurnMode mode) onPageTurnModeChanged;
   final IndentMode indentMode;
   final void Function(IndentMode mode) onIndentModeChanged;
+  final TextColorMode textColorMode;
+  final void Function(TextColorMode mode) onTextColorModeChanged;
   final bool shrinkEmptyLines;
   final void Function(bool enabled) onShrinkEmptyLinesChanged;
   final bool forceSimplified;
@@ -28,6 +31,8 @@ class SettingsSheet extends StatefulWidget {
     required this.onPageTurnModeChanged,
     required this.indentMode,
     required this.onIndentModeChanged,
+    required this.textColorMode,
+    required this.onTextColorModeChanged,
     required this.shrinkEmptyLines,
     required this.onShrinkEmptyLinesChanged,
     required this.forceSimplified,
@@ -43,6 +48,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   late int backgroundColor;
   late PageTurnMode pageTurnMode;
   late IndentMode indentMode;
+  late TextColorMode textColorMode;
   late bool shrinkEmptyLines;
   late bool forceSimplified;
 
@@ -53,6 +59,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
     backgroundColor = widget.backgroundColor;
     pageTurnMode = widget.pageTurnMode;
     indentMode = widget.indentMode;
+    textColorMode = widget.textColorMode;
     shrinkEmptyLines = widget.shrinkEmptyLines;
     forceSimplified = widget.forceSimplified;
   }
@@ -132,6 +139,26 @@ class _SettingsSheetState extends State<SettingsSheet> {
               _buildIndentChip(
                 localizations.indentAdaptive,
                 IndentMode.adaptive,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(localizations.textColorMode),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              _buildTextColorChip(
+                localizations.textColorOriginal,
+                TextColorMode.original,
+              ),
+              _buildTextColorChip(
+                localizations.textColorSimplified,
+                TextColorMode.simplified,
+              ),
+              _buildTextColorChip(
+                localizations.textColorUniform,
+                TextColorMode.uniform,
               ),
             ],
           ),
@@ -234,6 +261,21 @@ class _SettingsSheetState extends State<SettingsSheet> {
         }
         setState(() => indentMode = mode);
         widget.onIndentModeChanged(mode);
+      },
+    );
+  }
+
+  Widget _buildTextColorChip(String label, TextColorMode mode) {
+    final isSelected = textColorMode == mode;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (!selected) {
+          return;
+        }
+        setState(() => textColorMode = mode);
+        widget.onTextColorModeChanged(mode);
       },
     );
   }

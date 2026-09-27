@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:masiro/data/repository/model/bookshelf_stat.dart';
 import 'package:masiro/data/repository/model/indent_mode.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
+import 'package:masiro/data/repository/model/text_color_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Keys
@@ -18,6 +19,7 @@ const _pageTurnModeKey = 'pageTurnMode';
 const _indentModeKeyPrefix = 'indentMode_';
 const _shrinkEmptyLinesKeyPrefix = 'shrinkEmptyLines_';
 const _forceSimplifiedKeyPrefix = 'forceSimplified_';
+const _textColorModeKeyPrefix = 'textColorMode_';
 
 // Represents the current version of the shared preferences data
 const _currentVersion = 10;
@@ -166,5 +168,17 @@ class PreferencesRepository {
 
   void setForceSimplified(int novelId, bool value) {
     _prefs.setBool('$_forceSimplifiedKeyPrefix$novelId', value);
+  }
+
+  /// Text color display mode for the given novel, stored as the enum name.
+  /// Defaults to [TextColorMode.simplified].
+  ///
+  /// The preference is kept separately for each novel.
+  String getTextColorMode(int novelId) =>
+      _prefs.getString('$_textColorModeKeyPrefix$novelId') ??
+      TextColorMode.simplified.name;
+
+  void setTextColorMode(int novelId, String value) {
+    _prefs.setString('$_textColorModeKeyPrefix$novelId', value);
   }
 }

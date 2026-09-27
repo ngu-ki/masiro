@@ -791,6 +791,30 @@ abstract class AppLocalizations {
   /// **'强制简体'**
   String get forceSimplified;
 
+  /// No description provided for @textColorMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'字色显示模式'**
+  String get textColorMode;
+
+  /// No description provided for @textColorOriginal.
+  ///
+  /// In zh, this message translates to:
+  /// **'原色'**
+  String get textColorOriginal;
+
+  /// No description provided for @textColorSimplified.
+  ///
+  /// In zh, this message translates to:
+  /// **'简化'**
+  String get textColorSimplified;
+
+  /// No description provided for @textColorUniform.
+  ///
+  /// In zh, this message translates to:
+  /// **'统一'**
+  String get textColorUniform;
+
   /// No description provided for @searchInFavorites.
   ///
   /// In zh, this message translates to:

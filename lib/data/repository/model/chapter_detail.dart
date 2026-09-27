@@ -43,27 +43,29 @@ class ChapterContent extends Equatable {
 
 sealed class ChapterContentElement extends Equatable {}
 
-/// A half-open character range `[start, end)` within [TextContent.text].
-typedef MutedRange = ({int start, int end});
+/// A half-open character range `[start, end)` within [TextContent.text]
+/// carrying the color (ARGB value) declared by the source markup.
+typedef ColoredRange = ({int start, int end, int color});
 
 class TextContent extends ChapterContentElement {
   final String text;
 
-  /// Ranges of [text] whose source color is non-black (e.g. inline colored
-  /// spans). They are rendered in a muted gray instead of the body color.
-  final List<MutedRange> mutedRanges;
+  /// Ranges of [text] that carry an explicitly declared source color (e.g.
+  /// inline colored spans or `<font color>` tags), each with its ARGB
+  /// value. How they are rendered depends on the reader's text color mode.
+  final List<ColoredRange> coloredRanges;
 
-  TextContent({required this.text, this.mutedRanges = const []});
+  TextContent({required this.text, this.coloredRanges = const []});
 
-  TextContent copyWith({String? text, List<MutedRange>? mutedRanges}) {
+  TextContent copyWith({String? text, List<ColoredRange>? coloredRanges}) {
     return TextContent(
       text: text ?? this.text,
-      mutedRanges: mutedRanges ?? this.mutedRanges,
+      coloredRanges: coloredRanges ?? this.coloredRanges,
     );
   }
 
   @override
-  List<Object?> get props => [text, mutedRanges];
+  List<Object?> get props => [text, coloredRanges];
 }
 
 class ImageContent extends ChapterContentElement {

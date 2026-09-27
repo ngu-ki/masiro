@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:masiro/data/repository/model/indent_mode.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
+import 'package:masiro/data/repository/model/text_color_mode.dart';
 
 sealed class ReaderScreenEvent extends Equatable {
   @override
@@ -102,4 +103,13 @@ final class ReaderScreenForceSimplifiedChanged extends ReaderScreenEvent {
 
   @override
   List<Object> get props => [enabled];
+}
+
+final class ReaderScreenTextColorModeChanged extends ReaderScreenEvent {
+  final TextColorMode textColorMode;
+
+  ReaderScreenTextColorModeChanged({required this.textColorMode});
+
+  @override
+  List<Object> get props => [textColorMode];
 }

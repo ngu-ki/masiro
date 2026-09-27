@@ -369,6 +369,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get forceSimplified => '强制简体';
 
   @override
+  String get textColorMode => '字色显示模式';
+
+  @override
+  String get textColorOriginal => '原色';
+
+  @override
+  String get textColorSimplified => '简化';
+
+  @override
+  String get textColorUniform => '统一';
+
+  @override
   String get searchInFavorites => '搜索书架';
 
   @override
@@ -736,6 +748,18 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get forceSimplified => '強制簡體';
 
   @override
+  String get textColorMode => '字色顯示模式';
+
+  @override
+  String get textColorOriginal => '原色';
+
+  @override
+  String get textColorSimplified => '簡化';
+
+  @override
+  String get textColorUniform => '統一';
+
+  @override
   String get searchInFavorites => '搜尋書架';
 
   @override
@@ -1101,6 +1125,18 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get forceSimplified => '強制簡體';
+
+  @override
+  String get textColorMode => '字色顯示模式';
+
+  @override
+  String get textColorOriginal => '原色';
+
+  @override
+  String get textColorSimplified => '簡化';
+
+  @override
+  String get textColorUniform => '統一';
 
   @override
   String get searchInFavorites => '搜尋書架';

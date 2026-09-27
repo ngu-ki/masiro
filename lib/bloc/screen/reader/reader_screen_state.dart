@@ -5,6 +5,7 @@ import 'package:masiro/data/repository/model/loading_status.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
 import 'package:masiro/data/repository/model/reading_mode.dart';
+import 'package:masiro/data/repository/model/text_color_mode.dart';
 
 sealed class ReaderScreenState extends Equatable {
   @override
@@ -34,6 +35,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
   final IndentMode indentMode;
   final bool shrinkEmptyLines;
   final bool forceSimplified;
+  final TextColorMode textColorMode;
 
   ReaderScreenLoadedState({
     required this.chapterDetail,
@@ -47,6 +49,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,
     this.forceSimplified = false,
+    this.textColorMode = TextColorMode.simplified,
   });
 
   ReaderScreenLoadedState copyWith({
@@ -61,6 +64,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     IndentMode? indentMode,
     bool? shrinkEmptyLines,
     bool? forceSimplified,
+    TextColorMode? textColorMode,
   }) {
     return ReaderScreenLoadedState(
       chapterDetail: chapterDetail ?? this.chapterDetail,
@@ -74,6 +78,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
       indentMode: indentMode ?? this.indentMode,
       shrinkEmptyLines: shrinkEmptyLines ?? this.shrinkEmptyLines,
       forceSimplified: forceSimplified ?? this.forceSimplified,
+      textColorMode: textColorMode ?? this.textColorMode,
     );
   }
 
@@ -90,5 +95,6 @@ class ReaderScreenLoadedState extends ReaderScreenState {
         indentMode,
         shrinkEmptyLines,
         forceSimplified,
+        textColorMode,
       ];
 }

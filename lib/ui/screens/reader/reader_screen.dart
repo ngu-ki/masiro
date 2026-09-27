@@ -268,6 +268,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     onIndentModeChanged: (mode) {
                       bloc.add(ReaderScreenIndentModeChanged(indentMode: mode));
                     },
+                    textColorMode: state.textColorMode,
+                    onTextColorModeChanged: (mode) {
+                      bloc.add(
+                        ReaderScreenTextColorModeChanged(textColorMode: mode),
+                      );
+                    },
                     shrinkEmptyLines: state.shrinkEmptyLines,
                     onShrinkEmptyLinesChanged: (enabled) {
                       bloc.add(
@@ -382,6 +388,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       indentMode: state.indentMode,
       shrinkEmptyLines: state.shrinkEmptyLines,
       forceSimplified: state.forceSimplified,
+      textColorMode: state.textColorMode,
       chapterTitle: chapterDetail.title,
       ),
     );
