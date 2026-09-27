@@ -243,6 +243,7 @@ class _TagRowState extends State<_TagRow> {
       builder: (context, constraints) {
         return ClipRect(
           child: SizedBox(
+            width: constraints.maxWidth,
             height: 24,
             child: Stack(
               alignment: Alignment.centerRight,
