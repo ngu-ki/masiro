@@ -196,7 +196,10 @@ class _TagRowState extends State<_TagRow> {
         spacing: 6,
         runSpacing: 8,
         crossAxisAlignment: WrapCrossAlignment.center,
-        children: [titleRow, ?levelLimitMessage],
+        children: [
+          titleRow,
+          if (levelLimitMessage != null) levelLimitMessage,
+        ],
       );
     }
 
@@ -225,7 +228,12 @@ class _TagRowState extends State<_TagRow> {
         spacing: 6,
         runSpacing: 8,
         crossAxisAlignment: WrapCrossAlignment.center,
-        children: [titleRow, ?levelLimitMessage, ...chips, chevron],
+        children: [
+          titleRow,
+          if (levelLimitMessage != null) levelLimitMessage,
+          ...chips,
+          chevron,
+        ],
       );
     }
 
