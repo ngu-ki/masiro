@@ -1,3 +1,7 @@
+import 'package:masiro/misc/helper.dart';
+
+String _unescapeHtmlEntities(String text) => unescapeHtmlEntities(text);
+
 class PagedNovelResponse {
   int code;
   String msg;
@@ -62,11 +66,13 @@ class NovelResponse {
         rawWords is int ? rawWords : int.tryParse('$rawWords') ?? 0;
     return NovelResponse(
       id: json['id'],
-      title: json['title'],
-      brief: json['brief'],
+      title: _unescapeHtmlEntities(json['title']),
+      brief: _unescapeHtmlEntities(json['brief']),
       rank: json['rank'],
       coverImg: json['cover_img'],
-      author: json['author'],
+      author: json['author'] != null
+          ? _unescapeHtmlEntities(json['author'])
+          : null,
       newUpTime: json['new_up_time'],
       newUpContent: json['new_up_content'],
       lvLimit: lvLimit,

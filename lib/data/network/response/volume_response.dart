@@ -1,5 +1,11 @@
 import 'dart:convert';
 
+import 'package:masiro/misc/helper.dart';
+
+/// The embedded chapters JSON lives in a <script> tag, whose raw text keeps
+/// HTML entities encoded (e.g. `&amp;`), so decode them after json parsing.
+String _unescapeHtmlEntities(String text) => unescapeHtmlEntities(text);
+
 class VolumeResponse {
   int id;
   String title;
@@ -13,7 +19,7 @@ class VolumeResponse {
 
   factory VolumeResponse.fromJson(Map<String, dynamic> json) => VolumeResponse(
         id: json['id'],
-        title: json['title'],
+        title: _unescapeHtmlEntities(json['title']),
         describe: json['describe'],
       );
 }
@@ -61,7 +67,7 @@ class ChapterResponse {
         id: json['id'],
         novelId: json['novel_id'],
         parentId: json['parent_id'],
-        title: json['title'],
+        title: _unescapeHtmlEntities(json['title']),
         creator: json['creator'],
         describe: json['describe'],
         limitLv: json['limit_lv'],
