@@ -349,7 +349,10 @@ class _TagChip extends StatelessWidget {
       ),
       child: Text(
         tag,
-        style: context.textTheme().bodyLarge?.copyWith(fontSize: 12),
+        style: context.textTheme().bodyLarge?.copyWith(
+              fontSize: 12,
+              color: colorScheme.onSurface.withOpacity(0.45),
+            ),
       ),
     );
   }
