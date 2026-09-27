@@ -196,11 +196,14 @@ class _NovelScreenState extends State<NovelScreen> {
               0,
               (sum, volume) => sum + volume.chapters.length,
             ),
-            lvLimit: widget.lvLimit,
             onAuthorTap: (author) => _searchAuthor(context, author),
           ),
           const SizedBox(height: 20),
-          ExpandableBrief(brief: header.brief),
+          ExpandableBrief(
+            brief: header.brief,
+            tags: header.tags,
+            lvLimit: widget.lvLimit,
+          ),
           const SizedBox(height: 20),
           VolumeList(
             volumes: volumes,

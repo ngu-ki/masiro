@@ -32,9 +32,11 @@ class NovelDetailHeader extends Equatable {
   final String title;
   final String author;
   final List<String> translators;
+  final List<String> tags;
   final String status;
   final String originalBook;
   final String brief;
+  final int words;
   final bool isFavorite;
   final String csrfToken;
   final String coverImg;
@@ -43,9 +45,11 @@ class NovelDetailHeader extends Equatable {
     required this.title,
     required this.author,
     required this.translators,
+    required this.tags,
     required this.status,
     required this.originalBook,
     required this.brief,
+    required this.words,
     required this.isFavorite,
     required this.csrfToken,
     required this.coverImg,
@@ -55,9 +59,11 @@ class NovelDetailHeader extends Equatable {
     String? title,
     String? author,
     List<String>? translators,
+    List<String>? tags,
     String? status,
     String? originalBook,
     String? brief,
+    int? words,
     bool? isFavorite,
     String? csrfToken,
     String? coverImg,
@@ -66,9 +72,11 @@ class NovelDetailHeader extends Equatable {
       title: title ?? this.title,
       author: author ?? this.author,
       translators: translators ?? this.translators,
+      tags: tags ?? this.tags,
       status: status ?? this.status,
       originalBook: originalBook ?? this.originalBook,
       brief: brief ?? this.brief,
+      words: words ?? this.words,
       isFavorite: isFavorite ?? this.isFavorite,
       csrfToken: csrfToken ?? this.csrfToken,
       coverImg: coverImg ?? this.coverImg,
@@ -80,9 +88,11 @@ class NovelDetailHeader extends Equatable {
         title,
         author,
         translators,
+        tags,
         status,
         originalBook,
         brief,
+        words,
         isFavorite,
         csrfToken,
         coverImg,

@@ -116,5 +116,6 @@
   "shrinkEmptyLines": "空行縮小",
   "forceSimplified": "強制簡體",
   "searchInFavorites": "搜尋書架",
-  "noSearchResults": "未找到相關書籍"
+  "noSearchResults": "未找到相關書籍",
+  "wanWords": "{count}萬字"
 }

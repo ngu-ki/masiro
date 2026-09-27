@@ -802,6 +802,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'未找到相关书籍'**
   String get noSearchResults;
+
+  /// No description provided for @wanWords.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count}万字'**
+  String wanWords(String count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

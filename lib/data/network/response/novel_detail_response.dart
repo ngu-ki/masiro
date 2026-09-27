@@ -39,9 +39,11 @@ class NovelDetailHeaderResponse {
   String title;
   String author;
   List<String> translators;
+  List<String> tags;
   String status;
   String originalBook;
   String brief;
+  int words;
   bool isFavorite;
   String csrfToken;
   String coverImg;
@@ -50,9 +52,11 @@ class NovelDetailHeaderResponse {
     required this.title,
     required this.author,
     required this.translators,
+    required this.tags,
     required this.status,
     required this.originalBook,
     required this.brief,
+    required this.words,
     required this.isFavorite,
     required this.csrfToken,
     required this.coverImg,
@@ -65,10 +69,19 @@ class NovelDetailHeaderResponse {
     final author = querySelector('.author a')?.text.trim() ?? '';
     final translators =
         querySelectorAll('.n-translator a').map((e) => e.text.trim()).toList();
+    final tags =
+        querySelectorAll('.tags a').map((e) => e.text.trim()).toList();
     final status = querySelector('.n-status')?.text.split(':')[1].trim() ?? '';
     final originalBook =
         querySelector('.n-ori')?.text.trim().substring(5) ?? '';
     final brief = querySelector('.brief')?.text.trim() ?? '';
+    // `.n-chapters` looks like "字数 : 2811659字共171话".
+    final chapterSummary = querySelector('.n-chapters')?.text.trim() ?? '';
+    final words =
+        int.tryParse(
+          RegExp(r'(\d+)').firstMatch(chapterSummary)?.group(1) ?? '',
+        ) ??
+        0;
     final isFavorite = querySelector('.btn-collect')
             ?.attributes
             .containsValue('display: none;') ??
@@ -80,9 +93,11 @@ class NovelDetailHeaderResponse {
       title: title,
       author: author,
       translators: translators,
+      tags: tags,
       status: status,
       originalBook: originalBook,
       brief: brief,
+      words: words,
       isFavorite: isFavorite,
       csrfToken: csrfToken,
       coverImg: coverImg,

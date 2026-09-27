@@ -130,5 +130,13 @@
   "shrinkEmptyLines": "空行缩小",
   "forceSimplified": "强制简体",
   "searchInFavorites": "搜索书架",
-  "noSearchResults": "未找到相关书籍"
+  "noSearchResults": "未找到相关书籍",
+  "wanWords": "{count}万字",
+  "@wanWords": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  }
 }

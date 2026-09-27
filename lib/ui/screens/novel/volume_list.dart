@@ -79,6 +79,13 @@ class _VolumeListState extends State<VolumeList> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            subtitle: Text(
+              _formatChapterTime(c.updatedTime),
+              style: TextStyle(
+                fontSize: 9,
+                color: context.colorScheme().outline,
+              ),
+            ),
             trailing: buildListTileTrailing(context, c.limitLv, c.cost),
             selected: c.id == widget.lastReadChapterId,
             onTap: () => widget.onTap(c, panel.volume),
@@ -119,4 +126,10 @@ class _VolumePanel {
     required this.volume,
     this.isExpanded = false,
   });
+}
+
+/// "2025年10月27日 02:20"
+String _formatChapterTime(DateTime time) {
+  return '${time.year}年${time.month}月${time.day}日 '
+      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 }

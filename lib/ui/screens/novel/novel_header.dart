@@ -6,16 +6,12 @@ import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/platform.dart';
 import 'package:masiro/misc/url.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
-import 'package:masiro/ui/widgets/manual_tooltip.dart';
 
 class NovelHeader extends StatefulWidget {
   final NovelDetailHeader header;
 
   /// Total number of chapters across all volumes.
   final int chapterCount;
-
-  /// Minimum user level required to read this novel. Zero means no limit.
-  final int lvLimit;
 
   /// Called when the author name is tapped.
   final void Function(String author)? onAuthorTap;
@@ -24,7 +20,6 @@ class NovelHeader extends StatefulWidget {
     super.key,
     required this.header,
     required this.chapterCount,
-    this.lvLimit = 0,
     this.onAuthorTap,
   });
 
@@ -55,6 +50,12 @@ class _NovelHeaderState extends State<NovelHeader> {
         ..onTap = () => onAuthorTap(header.author);
     }
 
+    // Chapter line: "共171话 · 281.2万字"; the word count is appended only
+    // when the site actually reported one.
+    final chaptersText = header.words > 0
+        ? '${localizations.totalChapters(widget.chapterCount)} · ${localizations.wanWords(formatWordCount(header.words))}'
+        : localizations.totalChapters(widget.chapterCount);
+
     return Row(
       children: [
         SizedBox(
@@ -68,19 +69,6 @@ class _NovelHeaderState extends State<NovelHeader> {
                 height: coverWidth / coverRatio,
                 fit: BoxFit.cover,
               ),
-              if (widget.lvLimit > 0)
-                Positioned(
-                  right: 2,
-                  bottom: 2,
-                  child: ManualTooltip(
-                    icon: Icon(
-                      Icons.info_outline_rounded,
-                      size: 20,
-                      color: Colors.white.withValues(alpha: 0.95),
-                    ),
-                    tooltip: localizations.levelLimitMessage(widget.lvLimit),
-                  ),
-                ),
             ],
           ),
         ),
@@ -94,7 +82,7 @@ class _NovelHeaderState extends State<NovelHeader> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     header.title,
-                    style: textTheme.titleLarge,
+                    style: const TextStyle(fontSize: 20),
                   ),
                 ),
                 Text.rich(
@@ -121,7 +109,7 @@ class _NovelHeaderState extends State<NovelHeader> {
                   style: textTheme.bodyLarge,
                 ),
                 Text(
-                  localizations.totalChapters(widget.chapterCount),
+                  chaptersText,
                   style: textTheme.bodyLarge,
                 ),
                 if (isDesktop)
@@ -136,4 +124,10 @@ class _NovelHeaderState extends State<NovelHeader> {
       ],
     );
   }
+}
+
+/// Formats a raw word count in 万 units: 2811659 -> "281.2", 100000 -> "10".
+String formatWordCount(int words) {
+  final wan = words / 10000;
+  return wan.toStringAsFixed(1).replaceFirst(RegExp(r'\.0$'), '');
 }

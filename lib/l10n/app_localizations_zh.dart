@@ -373,6 +373,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noSearchResults => '未找到相关书籍';
+
+  @override
+  String wanWords(String count) {
+    return '${count}万字';
+  }
 }
 
 /// The translations for Chinese, as used in Hong Kong, using the Han script (`zh_Hant_HK`).
@@ -735,6 +740,11 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get noSearchResults => '未找到相關書籍';
+
+  @override
+  String wanWords(String count) {
+    return '${count}萬字';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -1097,4 +1107,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get noSearchResults => '未找到相關書籍';
+
+  @override
+  String wanWords(String count) {
+    return '${count}萬字';
+  }
 }
