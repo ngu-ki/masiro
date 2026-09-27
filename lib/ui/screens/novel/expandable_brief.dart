@@ -5,6 +5,9 @@ import 'package:masiro/ui/widgets/after_layout.dart';
 const _maskHeight = 40.0;
 const _defaultMaxHeight = 200.0;
 
+/// Width of the fade-out gradient to the left of the overflow chevron.
+const double _kChevronFadeWidth = 12;
+
 class ExpandableBrief extends StatefulWidget {
   final String brief;
 
@@ -29,6 +32,10 @@ class _ExpandableBriefState extends State<ExpandableBrief> {
   bool isExpanded = false;
   bool isExpandable = false;
   bool isLevelLimitVisible = false;
+
+  /// Whether the tag row is expanded to show all tags on multiple lines.
+  bool areTagsExpanded = false;
+
   late double intrinsicHeight;
 
   @override
@@ -55,46 +62,15 @@ class _ExpandableBriefState extends State<ExpandableBrief> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  localizations.brief,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (widget.lvLimit > 0) ...[
-                  const SizedBox(width: 2),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => setState(
-                      () => isLevelLimitVisible = !isLevelLimitVisible,
-                    ),
-                    child: const Icon(
-                      Icons.info_outline_rounded,
-                      size: 18,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            if (widget.lvLimit > 0 && isLevelLimitVisible)
-              Text(
-                localizations.levelLimitMessage(widget.lvLimit),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: context.colorScheme().outline,
-                ),
-              ),
-            for (final tag in widget.tags) _buildTagChip(context, tag),
-          ],
+        _TagRow(
+          tags: widget.tags,
+          lvLimit: widget.lvLimit,
+          isLevelLimitVisible: isLevelLimitVisible,
+          onToggleLevelLimit: () => setState(
+            () => isLevelLimitVisible = !isLevelLimitVisible,
+          ),
+          areTagsExpanded: areTagsExpanded,
+          onToggleTags: () => setState(() => areTagsExpanded = !areTagsExpanded),
         ),
         const SizedBox(height: 8),
         Stack(
@@ -151,22 +127,229 @@ class _ExpandableBriefState extends State<ExpandableBrief> {
       ],
     );
   }
+}
 
-  /// A gray rounded-rectangle chip matching the brief content's text style.
-  Widget _buildTagChip(BuildContext context, String tag) {
+/// The "简介" title row with tag chips.
+///
+/// Collapsed: title + as many chips as fit on one line, with the clipped
+/// portion hidden behind a left-to-opaque surface gradient and a ">" chevron
+/// pinned to the right content edge. Expanded: all chips wrap freely and a
+/// "<" chevron follows the last chip.
+class _TagRow extends StatefulWidget {
+  final List<String> tags;
+  final int lvLimit;
+  final bool isLevelLimitVisible;
+  final VoidCallback onToggleLevelLimit;
+  final bool areTagsExpanded;
+  final VoidCallback onToggleTags;
+
+  const _TagRow({
+    required this.tags,
+    required this.lvLimit,
+    required this.isLevelLimitVisible,
+    required this.onToggleLevelLimit,
+    required this.areTagsExpanded,
+    required this.onToggleTags,
+  });
+
+  @override
+  State<_TagRow> createState() => _TagRowState();
+}
+
+class _TagRowState extends State<_TagRow> {
+  /// Whether the collapsed tag row's content exceeds one line's width.
+  bool _overflows = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme();
+    final localizations = context.localizations();
+    final chevronColor = colorScheme.onSurface.withOpacity(0.45);
+
+    final titleRow = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          localizations.brief,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+        ),
+        if (widget.lvLimit > 0) ...[
+          const SizedBox(width: 2),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onToggleLevelLimit,
+            child: const Icon(Icons.info_outline_rounded, size: 18),
+          ),
+        ],
+      ],
+    );
+
+    final levelLimitMessage = widget.lvLimit > 0 && widget.isLevelLimitVisible
+        ? Text(
+            localizations.levelLimitMessage(widget.lvLimit),
+            style: TextStyle(fontSize: 12, color: colorScheme.outline),
+          )
+        : null;
+
+    if (widget.tags.isEmpty) {
+      return Wrap(
+        spacing: 6,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [titleRow, ?levelLimitMessage],
+      );
+    }
+
+    final chevron = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onToggleTags,
+      child: Icon(
+        widget.areTagsExpanded
+            ? Icons.keyboard_arrow_left_rounded
+            : Icons.keyboard_arrow_right_rounded,
+        size: 20,
+        color: chevronColor,
+      ),
+    );
+
+    final chips = [
+      for (final tag in widget.tags)
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: _TagChip(tag: tag),
+        ),
+    ];
+
+    if (widget.areTagsExpanded) {
+      return Wrap(
+        spacing: 6,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [titleRow, ?levelLimitMessage, ...chips, chevron],
+      );
+    }
+
+    // Collapsed: clip to one line; chevron + gradient overlay on the right,
+    // only when the content actually overflows.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return ClipRect(
+          child: SizedBox(
+            height: 24,
+            child: Stack(
+              alignment: Alignment.centerRight,
+              children: [
+                // Hidden measurement pass: lay the full row out without width
+                // limit and compare its intrinsic width against the available
+                // width, reserving room for the chevron when it is shown.
+                Offstage(
+                  child: OverflowBox(
+                    minWidth: 0,
+                    maxWidth: double.infinity,
+                    alignment: Alignment.centerLeft,
+                    child: AfterLayout(
+                      callback: (renderObject) {
+                        final contentWidth = renderObject.size.width;
+                        // Reserve chevron (20) + fade (12) when overflow would
+                        // force the chevron to appear.
+                        final available = constraints.maxWidth -
+                            (_overflows ? 32 : 0);
+                        final overflows = contentWidth > available;
+                        if (overflows != _overflows) {
+                          setState(() => _overflows = overflows);
+                        }
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          titleRow,
+                          if (levelLimitMessage != null) ...[
+                            const SizedBox(width: 6),
+                            levelLimitMessage,
+                          ],
+                          const SizedBox(width: 6),
+                          ...chips,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Visible row, clipped at one line.
+                Positioned.fill(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          titleRow,
+                          if (levelLimitMessage != null) ...[
+                            const SizedBox(width: 6),
+                            levelLimitMessage,
+                          ],
+                          const SizedBox(width: 6),
+                          ...chips,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (_overflows)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      alignment: Alignment.centerRight,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            colorScheme.surface.withOpacity(0),
+                            colorScheme.surface,
+                          ],
+                        ),
+                      ),
+                      padding: const EdgeInsets.only(left: _kChevronFadeWidth),
+                      child: chevron,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A compact gray rounded-rectangle chip. Its height matches the 17sp
+/// "简介" title so the chip edges align with the title glyphs.
+class _TagChip extends StatelessWidget {
+  final String tag;
+
+  const _TagChip({required this.tag});
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = context.colorScheme();
     final isDark = colorScheme.brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      height: 17,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 2.5),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withOpacity(0.08)
             : Colors.black.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         tag,
-        style: context.textTheme().bodyLarge,
+        style: context.textTheme().bodyLarge?.copyWith(fontSize: 12),
       ),
     );
   }
