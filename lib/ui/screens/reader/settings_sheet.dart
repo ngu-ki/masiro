@@ -107,35 +107,34 @@ class _SettingsSheetState extends State<SettingsSheet> {
           ),
           const SizedBox(height: 16),
           // The page-turn chips keep the left side; the two text toggles
-          // ("force simplified" and "shrink empty lines") sit on the right
-          // of the page-turn title, with the label on top and the switch
-          // directly below it, the two columns aligned with each other.
+          // ("force simplified" and "shrink empty lines") sit on the right,
+          // with the label on top and the switch directly below it. Two
+          // equal spacers put the "force simplified" switch exactly midway
+          // between the page-turn chips and the "shrink empty lines" switch.
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(localizations.pageTurnMode),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        _buildModeChip(
-                          localizations.pageTurnSlide,
-                          PageTurnMode.slide,
-                        ),
-                        _buildModeChip(
-                          localizations.pageTurnNone,
-                          PageTurnMode.none,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(localizations.pageTurnMode),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      _buildModeChip(
+                        localizations.pageTurnSlide,
+                        PageTurnMode.slide,
+                      ),
+                      _buildModeChip(
+                        localizations.pageTurnNone,
+                        PageTurnMode.none,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
+              const Spacer(),
               _buildSwitchColumn(
                 label: localizations.forceSimplified,
                 value: forceSimplified,
@@ -144,7 +143,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                   widget.onForceSimplifiedChanged(enabled);
                 },
               ),
-              const SizedBox(width: 8),
+              const Spacer(),
               _buildSwitchColumn(
                 label: localizations.shrinkEmptyLines,
                 value: shrinkEmptyLines,
@@ -238,7 +237,9 @@ class _SettingsSheetState extends State<SettingsSheet> {
 
   /// A compact column with the setting [label] on top and its switch
   /// directly below. Two such columns placed next to each other keep their
-  /// labels and switches horizontally aligned.
+  /// labels and switches horizontally aligned. The switch is centered in a
+  /// fixed-height box matching the ChoiceChip height (32), so its
+  /// horizontal centerline aligns with the page-turn chips on the left.
   Widget _buildSwitchColumn({
     required String label,
     required bool value,
@@ -248,9 +249,15 @@ class _SettingsSheetState extends State<SettingsSheet> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(label),
-        Switch(
-          value: value,
-          onChanged: onChanged,
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 32,
+          child: Center(
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+            ),
+          ),
         ),
       ],
     );

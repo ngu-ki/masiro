@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// Background colors of the reader, inspired by the tomato-novel style:
-/// white, light gray, paper yellow, eye-care green, sky blue, peach pink,
-/// lavender and dark night.
+/// white, light gray, paper yellow, eye-care green, sky blue, peach pink
+/// and dark night.
 const readerBackgroundColors = <Color>[
   Color(0xFFFFFFFF),
   Color(0xFFEFEFEF),
@@ -10,7 +10,6 @@ const readerBackgroundColors = <Color>[
   Color(0xFFC7EDCC),
   Color(0xFFD6E8FA),
   Color(0xFFF8E2E4),
-  Color(0xFFE5DDF2),
   Color(0xFF1A1A1A),
 ];
 
