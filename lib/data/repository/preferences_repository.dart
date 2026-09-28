@@ -176,7 +176,7 @@ class PreferencesRepository {
   /// The preference is kept separately for each novel.
   String getTextColorMode(int novelId) =>
       _prefs.getString('$_textColorModeKeyPrefix$novelId') ??
-      TextColorMode.simplified.name;
+      TextColorMode.original.name;
 
   void setTextColorMode(int novelId, String value) {
     _prefs.setString('$_textColorModeKeyPrefix$novelId', value);

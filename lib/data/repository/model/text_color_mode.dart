@@ -23,5 +23,5 @@ TextColorMode textColorModeFromName(String name) {
       return mode;
     }
   }
-  return TextColorMode.simplified;
+  return TextColorMode.original;
 }

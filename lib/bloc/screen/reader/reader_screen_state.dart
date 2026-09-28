@@ -49,7 +49,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,
     this.forceSimplified = false,
-    this.textColorMode = TextColorMode.simplified,
+    this.textColorMode = TextColorMode.original,
   });
 
   ReaderScreenLoadedState copyWith({

@@ -88,7 +88,7 @@ class ChapterContentPager extends StatefulWidget {
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,
     this.forceSimplified = false,
-    this.textColorMode = TextColorMode.simplified,
+    this.textColorMode = TextColorMode.original,
     required this.chapterTitle,
   });
 
