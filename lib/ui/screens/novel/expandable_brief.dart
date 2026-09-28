@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/ui/widgets/after_layout.dart';
 
-const _maskHeight = 40.0;
+const _maskHeight = 60.0;
 const _defaultMaxHeight = 200.0;
 
 /// Width of the fade-out gradient to the left of the overflow chevron.
@@ -59,7 +59,7 @@ class _ExpandableBriefState extends State<ExpandableBrief> {
           surfaceColor.withOpacity(1.0),
           surfaceColor.withOpacity(1.0),
         ],
-        stops: const [0.0, 0.5, 0.6, 1.0],
+        stops: const [0.0, 0.5, 0.625, 1.0],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ),
