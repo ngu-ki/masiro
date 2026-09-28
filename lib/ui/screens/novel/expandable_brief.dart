@@ -216,11 +216,15 @@ class _TagRowState extends State<_TagRow> {
     );
 
     final chips = [
-      for (final tag in widget.tags)
-        Padding(
-          padding: const EdgeInsets.only(right: 6),
-          child: _TagChip(tag: tag),
-        ),
+      for (final tag in widget.tags) _TagChip(tag: tag),
+    ];
+
+    // Chips separated by a fixed 6px gap for the single-line Rows below.
+    final spacedChips = <Widget>[
+      for (var i = 0; i < chips.length; i++) ...[
+        chips[i],
+        if (i != chips.length - 1) const SizedBox(width: 6),
+      ],
     ];
 
     if (widget.areTagsExpanded) {
@@ -240,8 +244,8 @@ class _TagRowState extends State<_TagRow> {
             ],
           ),
           const SizedBox(height: 8),
-          // All tags re-flow onto as many lines as needed; chip size is
-          // identical to the collapsed state.
+          // All tags re-flow onto as many lines as needed; chips are exactly
+          // the same size as in the collapsed state.
           Wrap(
             spacing: 6,
             runSpacing: 8,
@@ -291,7 +295,7 @@ class _TagRowState extends State<_TagRow> {
                             levelLimitMessage,
                           ],
                           const SizedBox(width: 6),
-                          ...chips,
+                          ...spacedChips,
                         ],
                       ),
                     ),
@@ -313,7 +317,7 @@ class _TagRowState extends State<_TagRow> {
                             levelLimitMessage,
                           ],
                           const SizedBox(width: 6),
-                          ...chips,
+                          ...spacedChips,
                         ],
                       ),
                     ),
@@ -362,7 +366,6 @@ class _TagChip extends StatelessWidget {
     final isDark = colorScheme.brightness == Brightness.dark;
     return Container(
       height: 17,
-      alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 2.5),
       decoration: BoxDecoration(
         color: isDark
@@ -372,6 +375,14 @@ class _TagChip extends StatelessWidget {
       ),
       child: Text(
         tag,
+        // Force the line box to 17px so the glyph is vertically centered in
+        // the chip without an alignment (which would stretch the chip to fill
+        // bounded width, e.g. inside a Wrap).
+        strutStyle: const StrutStyle(
+          fontSize: 12,
+          height: 17 / 12,
+          forceStrutHeight: true,
+        ),
         style: context.textTheme().bodyLarge?.copyWith(
               fontSize: 12,
               color: colorScheme.onSurface.withOpacity(0.45),
