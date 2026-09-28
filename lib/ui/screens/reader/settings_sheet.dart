@@ -119,18 +119,22 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 children: [
                   Text(localizations.pageTurnMode),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      _buildModeChip(
-                        localizations.pageTurnSlide,
-                        PageTurnMode.slide,
-                      ),
-                      _buildModeChip(
-                        localizations.pageTurnNone,
-                        PageTurnMode.none,
-                      ),
-                    ],
+                  // Fixed width: this column sits in a Row with spacers, so
+                  // its width is unbounded and the segmented control would
+                  // otherwise not know how wide to be.
+                  SizedBox(
+                    width: 168,
+                    child: _buildSegmentedControl<PageTurnMode>(
+                      options: [
+                        (localizations.pageTurnSlide, PageTurnMode.slide),
+                        (localizations.pageTurnNone, PageTurnMode.none),
+                      ],
+                      selected: pageTurnMode,
+                      onSelected: (mode) {
+                        setState(() => pageTurnMode = mode);
+                        widget.onPageTurnModeChanged(mode);
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -157,46 +161,33 @@ class _SettingsSheetState extends State<SettingsSheet> {
           const SizedBox(height: 16),
           Text(localizations.indentMode),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              _buildIndentChip(
-                localizations.indentNone,
-                IndentMode.none,
-              ),
-              _buildIndentChip(
-                localizations.indentOne,
-                IndentMode.one,
-              ),
-              _buildIndentChip(
-                localizations.indentTwo,
-                IndentMode.two,
-              ),
-              _buildIndentChip(
-                localizations.indentAdaptive,
-                IndentMode.adaptive,
-              ),
+          _buildSegmentedControl<IndentMode>(
+            options: [
+              (localizations.indentNone, IndentMode.none),
+              (localizations.indentOne, IndentMode.one),
+              (localizations.indentTwo, IndentMode.two),
+              (localizations.indentAdaptive, IndentMode.adaptive),
             ],
+            selected: indentMode,
+            onSelected: (mode) {
+              setState(() => indentMode = mode);
+              widget.onIndentModeChanged(mode);
+            },
           ),
           const SizedBox(height: 16),
           Text(localizations.textColorMode),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              _buildTextColorChip(
-                localizations.textColorOriginal,
-                TextColorMode.original,
-              ),
-              _buildTextColorChip(
-                localizations.textColorSimplified,
-                TextColorMode.simplified,
-              ),
-              _buildTextColorChip(
-                localizations.textColorUniform,
-                TextColorMode.uniform,
-              ),
+          _buildSegmentedControl<TextColorMode>(
+            options: [
+              (localizations.textColorOriginal, TextColorMode.original),
+              (localizations.textColorSimplified, TextColorMode.simplified),
+              (localizations.textColorUniform, TextColorMode.uniform),
             ],
+            selected: textColorMode,
+            onSelected: (mode) {
+              setState(() => textColorMode = mode);
+              widget.onTextColorModeChanged(mode);
+            },
           ),
         ],
       ),
@@ -238,8 +229,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
   /// A compact column with the setting [label] on top and its switch
   /// directly below. Two such columns placed next to each other keep their
   /// labels and switches horizontally aligned. The switch is centered in a
-  /// fixed-height box matching the ChoiceChip height (32), so its
-  /// horizontal centerline aligns with the page-turn chips on the left.
+  /// fixed-height box matching the segmented control height (40), so its
+  /// horizontal centerline aligns with the page-turn control on the left.
   Widget _buildSwitchColumn({
     required String label,
     required bool value,
@@ -251,7 +242,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
         Text(label),
         const SizedBox(height: 8),
         SizedBox(
-          height: 32,
+          height: 40,
           child: Center(
             child: Switch(
               value: value,
@@ -263,48 +254,51 @@ class _SettingsSheetState extends State<SettingsSheet> {
     );
   }
 
-  Widget _buildModeChip(String label, PageTurnMode mode) {
-    final isSelected = pageTurnMode == mode;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (!selected) {
-          return;
-        }
-        setState(() => pageTurnMode = mode);
-        widget.onPageTurnModeChanged(mode);
-      },
-    );
-  }
-
-  Widget _buildIndentChip(String label, IndentMode mode) {
-    final isSelected = indentMode == mode;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (!selected) {
-          return;
-        }
-        setState(() => indentMode = mode);
-        widget.onIndentModeChanged(mode);
-      },
-    );
-  }
-
-  Widget _buildTextColorChip(String label, TextColorMode mode) {
-    final isSelected = textColorMode == mode;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (!selected) {
-          return;
-        }
-        setState(() => textColorMode = mode);
-        widget.onTextColorModeChanged(mode);
-      },
+  /// A segmented control styled after the tomato-novel reader settings: a
+  /// gray rounded bar holding all [options], with the selected option
+  /// rendered as a white pill with bold text.
+  Widget _buildSegmentedControl<T>({
+    required List<(String, T)> options,
+    required T selected,
+    required ValueChanged<T> onSelected,
+  }) {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F2F2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          for (final (label, value) in options)
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onSelected(value),
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: value == selected
+                      ? BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        )
+                      : null,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: value == selected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
