@@ -115,10 +115,10 @@ class _ExpandableBriefState extends State<ExpandableBrief> {
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  height: _maskHeight,
-                  decoration: boxDecoration,
-                  alignment: Alignment.center,
-                  child: TextButton(
+                    height: _maskHeight,
+                    decoration: boxDecoration,
+                    alignment: const Alignment(0, 0.33),
+                    child: TextButton(
                     onPressed: () => setState(() => isExpanded = !isExpanded),
                     child: Text(
                       isExpanded
