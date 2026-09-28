@@ -190,8 +190,11 @@ final _hexColorRegExp = RegExp(r'^#([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]
 ///
 /// Supported syntaxes: `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`,
 /// `rgb()/rgba()` (comma or space separated, with number or percentage
-/// channels), `hsl()/hsla()`, and the CSS named colors. `transparent` and
-/// empty values resolve to `null` (no explicit color).
+/// channels), `hsl()/hsla()`, and the CSS named colors. Empty values
+/// resolve to `null` (no explicit color). `transparent` resolves to the
+/// fully transparent color `0x00000000` so it is still tracked as a
+/// declared color (the simplified mode mutes it like any other non-black
+/// color, and the original mode renders it invisible, as on the website).
 ///
 /// If the value is an unrecognized named keyword, the closest CSS named
 /// color (by spelling distance) is used so something is still shown.
@@ -201,8 +204,11 @@ int? _parseCssColor(String input) {
       .toLowerCase()
       .replaceAll('!important', '')
       .trim();
-  if (raw.isEmpty || raw == 'transparent') {
+  if (raw.isEmpty) {
     return null;
+  }
+  if (raw == 'transparent') {
+    return 0x00000000;
   }
 
   final hex = _hexColorRegExp.firstMatch(raw)?.group(1);
