@@ -493,44 +493,17 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       if (fragment.endsWith('\n')) {
         fragment = fragment.substring(0, fragment.length - 1);
       }
-      // A run that ends before the end of its paragraph continues on the
-      // next page. Its last visual line is therefore a regular wrapped
-      // line and must be justified too: append a hard line break so the
-      // engine does not treat it as the final (never-justified) line. The
-      // trailing newline renders no extra line box.
-      final continuesOnNextPage = run.end < displayText.length;
-      // The indent prefix (full-width spaces) sits at the start of the
-      // paragraph's first run. Justified text collapses leading whitespace,
-      // which would make the indent vanish, so render the prefix as a
-      // fixed-width inline box instead. Pagination measured an equally wide
-      // space prefix, so line breaks stay identical.
-      final prefixLength = widget.indentMode.prefix.length;
-      final indentCells = run.start < prefixLength
-          ? prefixLength - run.start
-          : 0;
-      final textFragment = fragment.substring(indentCells);
       children.add(
         Text.rich(
           TextSpan(
-            children: [
-              if (indentCells > 0)
-                WidgetSpan(
-                  alignment: PlaceholderAlignment.bottom,
-                  child: SizedBox(
-                    width: widget.fontSize * indentCells.toDouble(),
-                  ),
-                ),
-              ..._buildFragmentSpans(
-                element: element,
-                fragment: textFragment,
-                elementStart:
-                    run.start + indentCells - prefixLength,
-              ),
-              if (continuesOnNextPage) const TextSpan(text: '\n'),
-            ],
+            children: _buildFragmentSpans(
+              element: element,
+              fragment: fragment,
+              runStart: run.start,
+              prefixLength: widget.indentMode.prefix.length,
+            ),
           ),
           style: style,
-          textAlign: TextAlign.justify,
         ),
       );
       lastElementIndex = run.elementIndex;
@@ -557,14 +530,14 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   /// - [TextColorMode.uniform]: source colors are ignored entirely and the
   ///   adaptive body color (from [Text.style]) is used everywhere.
   ///
-  /// [fragment] is a substring of [element.text] (the indent prefix is
-  /// rendered separately as an inline box); [elementStart] is the
-  /// fragment's start offset within [element.text], used to map
-  /// element-level colored ranges to fragment offsets.
+  /// [runStart] is the fragment's start offset within
+  /// `indentPrefix + element.text`; [prefixLength] is the indent prefix
+  /// length, used to map element-level ranges to fragment offsets.
   List<InlineSpan> _buildFragmentSpans({
     required TextContent element,
     required String fragment,
-    required int elementStart,
+    required int runStart,
+    required int prefixLength,
   }) {
     if (widget.textColorMode == TextColorMode.uniform ||
         element.coloredRanges.isEmpty ||
@@ -576,12 +549,13 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
     // Intersect the element-level colored ranges with the visible fragment.
     final textLength = element.text.length;
-    final rangeStart = elementStart.clamp(0, textLength);
-    final rangeEnd = (elementStart + fragment.length).clamp(0, textLength);
+    final elementStart = (runStart - prefixLength).clamp(0, textLength);
+    final elementEnd =
+        (runStart + fragment.length - prefixLength).clamp(0, textLength);
     final localRanges = <(int, int, Color?)>[];
     for (final range in element.coloredRanges) {
-      final start = range.start > rangeStart ? range.start : rangeStart;
-      final end = range.end < rangeEnd ? range.end : rangeEnd;
+      final start = range.start > elementStart ? range.start : elementStart;
+      final end = range.end < elementEnd ? range.end : elementEnd;
       if (start >= end) {
         continue;
       }
@@ -601,8 +575,8 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       }
       localRanges.add(
         (
-          start - rangeStart,
-          end - rangeStart,
+          prefixLength + start - runStart,
+          prefixLength + end - runStart,
           resolved,
         ),
       );
