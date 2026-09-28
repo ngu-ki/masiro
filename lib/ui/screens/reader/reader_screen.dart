@@ -48,9 +48,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
   final _progressNotifier = ValueNotifier<double>(0.0);
   final _pagerController = ReaderPagerController();
 
-  /// Hardware volume-key page turning. Interception lives for the whole
-  /// reader screen; key repeats from long-pressing a volume key are
-  /// throttled per direction.
+  /// Hardware volume-key page turning. Interception is active only while the
+  /// reading menu (HUD) is hidden; when the menu is shown the subscription is
+  /// cancelled so the volume keys control the system volume again. Key
+  /// repeats from long-pressing a volume key are throttled per direction.
   StreamSubscription<VolumeKey>? _volumeKeySub;
   DateTime? _lastVolumeUpTime;
   DateTime? _lastVolumeDownTime;
@@ -82,12 +83,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void initState() {
     super.initState();
     _applySystemUiMode(SystemUiMode.immersiveSticky);
-    _volumeKeySub = VolumeKeyEvents.stream.listen(_handleVolumeKey);
+    _setVolumeInterception(enabled: true);
   }
 
   @override
   void dispose() {
-    _volumeKeySub?.cancel();
+    _setVolumeInterception(enabled: false);
     // Flush the latest position synchronously-ish: the bloc's position
     // events are debounced, and the pending (trailing) write would be
     // cancelled when the bloc closes right after this dispose.
@@ -99,14 +100,21 @@ class _ReaderScreenState extends State<ReaderScreen> {
     super.dispose();
   }
 
-  /// Volume up turns to the previous page, volume down to the next page,
-  /// matching the up/back convention. Key events are ignored while the
-  /// reading menu (HUD) is visible, and long-press repeats are throttled.
-  void _handleVolumeKey(VolumeKey key) {
-    final state = _bloc?.state;
-    if (state == null || state.isHudVisible) {
-      return;
+  /// Starts or stops intercepting the hardware volume keys. While disabled
+  /// the keys fall through natively and adjust the system volume.
+  void _setVolumeInterception({required bool enabled}) {
+    if (enabled && _volumeKeySub == null) {
+      _volumeKeySub = VolumeKeyEvents.stream.listen(_handleVolumeKey);
+    } else if (!enabled && _volumeKeySub != null) {
+      final sub = _volumeKeySub;
+      _volumeKeySub = null;
+      sub?.cancel();
     }
+  }
+
+  /// Volume up turns to the previous page, volume down to the next page,
+  /// matching the up/back convention. Long-press repeats are throttled.
+  void _handleVolumeKey(VolumeKey key) {
     final now = DateTime.now();
     switch (key) {
       case VolumeKey.up:
@@ -133,36 +141,44 @@ class _ReaderScreenState extends State<ReaderScreen> {
         ..add(
           ReaderScreenChapterDetailRequested(chapterId: widget.chapterId),
         ),
-      child: BlocBuilder<ReaderScreenBloc, ReaderScreenState>(
-        builder: (context, state) {
-          final bgColor = state is ReaderScreenLoadedState
-              ? Color(state.backgroundColor)
-              : const Color(defaultReaderBackgroundColor);
-          return Scaffold(
-            backgroundColor: bgColor,
-            body: PopScope(
-              canPop: false,
-              onPopInvokedWithResult: (didPop, result) {
-                if (didPop) {
-                  return;
-                }
-                _backToPrevScreen(context);
-              },
-              child: switch (state) {
-                ReaderScreenInitialState() => const Center(
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                ReaderScreenErrorState() =>
-                  ErrorMessage(message: state.message),
-                ReaderScreenLoadedState() => buildLoadedScreen(context, state),
-              },
-            ),
-          );
+      child: BlocListener<ReaderScreenBloc, ReaderScreenState>(
+        listener: (context, state) {
+          // While the menu is open the volume keys adjust the system volume
+          // instead of turning pages.
+          _setVolumeInterception(enabled: !state.isHudVisible);
         },
+        child: BlocBuilder<ReaderScreenBloc, ReaderScreenState>(
+          builder: (context, state) {
+            final bgColor = state is ReaderScreenLoadedState
+                ? Color(state.backgroundColor)
+                : const Color(defaultReaderBackgroundColor);
+            return Scaffold(
+              backgroundColor: bgColor,
+              body: PopScope(
+                canPop: false,
+                onPopInvokedWithResult: (didPop, result) {
+                  if (didPop) {
+                    return;
+                  }
+                  _backToPrevScreen(context);
+                },
+                child: switch (state) {
+                  ReaderScreenInitialState() => const Center(
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  ReaderScreenErrorState() =>
+                    ErrorMessage(message: state.message),
+                  ReaderScreenLoadedState() =>
+                    buildLoadedScreen(context, state),
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

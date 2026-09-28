@@ -20,15 +20,15 @@ enum VolumeKey {
 class VolumeKeyEvents {
   static const EventChannel _channel = EventChannel('masiro/volume_keys');
 
-  static Stream<VolumeKey>? _stream;
-
+  /// A fresh event stream for each access: the native interception starts on
+  /// listen and stops (restoring system volume) on cancel, so it must be
+  /// possible to subscribe again after a previous subscription was cancelled.
   static Stream<VolumeKey> get stream {
     if (!Platform.isAndroid) {
       return const Stream<VolumeKey>.empty();
     }
-    return _stream ??= _channel.receiveBroadcastStream().map(
-          (event) =>
-              event == 'up' ? VolumeKey.up : VolumeKey.down,
+    return _channel.receiveBroadcastStream().map(
+          (event) => event == 'up' ? VolumeKey.up : VolumeKey.down,
         );
   }
 }
