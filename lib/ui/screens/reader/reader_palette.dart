@@ -16,6 +16,6 @@ const readerBackgroundColors = <Color>[
 /// Returns the readable content color for the given reader background color.
 Color readerContentColor(Color background) {
   return background.computeLuminance() > 0.5
-      ? const Color(0xFF363636)
+      ? const Color(0xFF262626)
       : const Color(0xFFBFBFBF);
 }
