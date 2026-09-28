@@ -53,7 +53,13 @@ class _ExpandableBriefState extends State<ExpandableBrief> {
 
     final boxDecoration = BoxDecoration(
       gradient: LinearGradient(
-        colors: [surfaceColor.withOpacity(0), surfaceColor.withOpacity(1.0)],
+        colors: [
+          surfaceColor.withOpacity(0),
+          surfaceColor.withOpacity(0.8),
+          surfaceColor.withOpacity(1.0),
+          surfaceColor.withOpacity(1.0),
+        ],
+        stops: const [0.0, 0.5, 0.6, 1.0],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ),
