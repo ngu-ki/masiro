@@ -10,6 +10,7 @@ class SearchScreenBloc extends Bloc<SearchScreenEvent, SearchScreenState> {
   SearchScreenBloc() : super(SearchScreenLoadedState()) {
     on<SearchScreenSearched>(_onSearchScreenSearched);
     on<SearchScreenBottomReached>(_onSearchScreenBottomReached);
+    on<SearchScreenReset>(_onSearchScreenReset);
   }
 
   Future<void> _onSearchScreenSearched(
@@ -75,5 +76,12 @@ class SearchScreenBloc extends Bloc<SearchScreenEvent, SearchScreenState> {
         loadedState.copyWith(infiniteListStatus: InfiniteListStatus.failure),
       );
     }
+  }
+
+  void _onSearchScreenReset(
+    SearchScreenReset event,
+    Emitter<SearchScreenState> emit,
+  ) {
+    emit(SearchScreenLoadedState());
   }
 }

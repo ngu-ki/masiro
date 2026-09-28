@@ -15,3 +15,7 @@ final class SearchScreenSearched extends SearchScreenEvent {
 }
 
 final class SearchScreenBottomReached extends SearchScreenEvent {}
+
+/// Resets the search state to its initial empty state. Used when the
+/// discovery tab becomes inactive so the next visit starts fresh.
+final class SearchScreenReset extends SearchScreenEvent {}

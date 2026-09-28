@@ -2,39 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/platform.dart';
-import 'package:masiro/misc/router.dart';
 
-class NavBar extends StatefulWidget {
-  const NavBar({super.key});
+class NavBar extends StatelessWidget {
+  const NavBar({required this.navigationShell, super.key});
 
-  @override
-  State<NavBar> createState() => _NavBarState();
-}
+  final StatefulNavigationShell navigationShell;
 
-class _NavBarState extends State<NavBar> {
-  void _onDestinationSelected(index) {
-    switch (index) {
-      case 0:
-        context.go(RoutePath.home);
-      case 1:
-        context.go(RoutePath.favorites);
-      case 2:
-        context.go(RoutePath.settings);
-    }
-  }
-
-  int? _calculateSelectedIndex(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.path;
-    if (location.startsWith(RoutePath.home)) {
-      return 0;
-    }
-    if (location.startsWith(RoutePath.favorites)) {
-      return 1;
-    }
-    if (location.startsWith(RoutePath.settings)) {
-      return 2;
-    }
-    return null;
+  void _onDestinationSelected(int index) {
+    // When tapping the already-active tab, reset to its initial location
+    // (pops any pushed routes within that branch); otherwise switch to the
+    // target branch, preserving its navigation stack.
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
   }
 
   @override
@@ -65,7 +46,7 @@ class _NavBarState extends State<NavBar> {
         ),
       ],
       labelType: NavigationRailLabelType.all,
-      selectedIndex: _calculateSelectedIndex(context),
+      selectedIndex: navigationShell.currentIndex,
       onDestinationSelected: _onDestinationSelected,
     );
   }
@@ -76,7 +57,7 @@ class _NavBarState extends State<NavBar> {
       height: 60,
       backgroundColor: context.navBarColor(),
       onDestinationSelected: _onDestinationSelected,
-      selectedIndex: _calculateSelectedIndex(context) ?? 0,
+      selectedIndex: navigationShell.currentIndex,
       destinations: [
         NavigationDestination(
           icon: const Icon(Icons.explore_outlined),

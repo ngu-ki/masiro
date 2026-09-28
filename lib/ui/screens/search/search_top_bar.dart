@@ -37,6 +37,12 @@ class SearchTopBarState extends State<SearchTopBar> {
     super.dispose();
   }
 
+  /// Clears the search bar text and unfocus it.
+  void clear() {
+    _searchController.text = '';
+    _searchBarFocusNode.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<SearchScreenBloc>();

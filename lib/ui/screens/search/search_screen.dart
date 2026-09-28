@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:masiro/bloc/screen/search/search_screen_bloc.dart';
 import 'package:masiro/bloc/screen/search/search_screen_event.dart';
 import 'package:masiro/bloc/screen/search/search_screen_state.dart';
 import 'package:masiro/ui/screens/search/novel_list.dart';
 import 'package:masiro/ui/screens/search/search_top_bar.dart';
 import 'package:masiro/ui/widgets/error_message.dart';
+import 'package:masiro/ui/widgets/router_outlet_with_nav_bar.dart';
 
 class SearchScreen extends StatefulWidget {
   /// The keyword to search automatically when the screen is opened.
@@ -20,6 +22,33 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final GlobalKey<SearchTopBarState> _searchBarKey =
       GlobalKey<SearchTopBarState>();
+
+  StatefulNavigationShell? _shell;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Acquire the navigation shell once and listen to tab switches so the
+    // discovery tab's search content is cleared when it becomes inactive.
+    _shell ??= NavigationShellData.of(context)?..addListener(_onShellChanged);
+  }
+
+  @override
+  void dispose() {
+    _shell?.removeListener(_onShellChanged);
+    super.dispose();
+  }
+
+  /// Resets the search state when the user switches away from the discovery
+  /// tab (branch index 0), so the next visit starts with a fresh empty page.
+  void _onShellChanged() {
+    final shell = _shell;
+    if (shell == null || shell.currentIndex == 0) {
+      return;
+    }
+    _searchBarKey.currentState?.clear();
+    context.read<SearchScreenBloc>().add(SearchScreenReset());
+  }
 
   @override
   Widget build(BuildContext context) {

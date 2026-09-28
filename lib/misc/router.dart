@@ -34,8 +34,6 @@ class RoutePath {
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
-final GlobalKey<NavigatorState> _shellNavigatorKey =
-    GlobalKey<NavigatorState>(debugLabel: 'shell');
 
 /// Builds a main-tab page. Tab switches have no transition animation,
 /// matching mainstream reading apps (Qidian, Fanqie, WeRead): the new
@@ -236,60 +234,69 @@ final routerConfig = GoRouter(
         return CommentsScreen(novelId: novelId, chapterId: chapterId);
       },
     ),
-    if (isMobilePhone) ...[
-      _novelScreenRoute,
-      _searchScreenRoute,
-    ],
+    _novelScreenRoute,
+    _searchScreenRoute,
   ],
 );
 
-final _applicationShellRoutes = ShellRoute(
-  navigatorKey: _shellNavigatorKey,
-  builder: (BuildContext context, GoRouterState state, Widget child) {
-    return RouterOutletWithNavBar(child: child);
+final _applicationShellRoutes = StatefulShellRoute.indexedStack(
+  builder: (
+    BuildContext context,
+    GoRouterState state,
+    StatefulNavigationShell navigationShell,
+  ) {
+    return RouterOutletWithNavBar(navigationShell: navigationShell);
   },
-  routes: <RouteBase>[
-    GoRoute(
-      path: RoutePath.home,
-      pageBuilder: (context, state) {
-        return _buildTabPage(
-          key: const ValueKey('tab-home'),
-          child: SearchScreen(
-            initialKeyword: state.uri.queryParameters['keyword'],
-          ),
-        );
-      },
+  branches: [
+    StatefulShellBranch(
+      routes: [
+        GoRoute(
+          path: RoutePath.home,
+          pageBuilder: (context, state) {
+            return _buildTabPage(
+              key: const ValueKey('tab-home'),
+              child: SearchScreen(
+                initialKeyword: state.uri.queryParameters['keyword'],
+              ),
+            );
+          },
+        ),
+      ],
     ),
-    GoRoute(
-      path: RoutePath.favorites,
-      pageBuilder: (context, state) {
-        return _buildTabPage(
-          key: const ValueKey('tab-favorites'),
-          child: const FavoritesScreen(),
-        );
-      },
-      redirect: (context, state) async {
-        final cookies = await getCookies();
-        if (cookies.isEmpty) {
-          return RoutePath.login;
-        } else {
-          return RoutePath.favorites;
-        }
-      },
+    StatefulShellBranch(
+      routes: [
+        GoRoute(
+          path: RoutePath.favorites,
+          pageBuilder: (context, state) {
+            return _buildTabPage(
+              key: const ValueKey('tab-favorites'),
+              child: const FavoritesScreen(),
+            );
+          },
+          redirect: (context, state) async {
+            final cookies = await getCookies();
+            if (cookies.isEmpty) {
+              return RoutePath.login;
+            } else {
+              return RoutePath.favorites;
+            }
+          },
+        ),
+      ],
     ),
-    GoRoute(
-      path: RoutePath.settings,
-      pageBuilder: (context, state) {
-        return _buildTabPage(
-          key: const ValueKey('tab-settings'),
-          child: const SettingsScreen(),
-        );
-      },
+    StatefulShellBranch(
+      routes: [
+        GoRoute(
+          path: RoutePath.settings,
+          pageBuilder: (context, state) {
+            return _buildTabPage(
+              key: const ValueKey('tab-settings'),
+              child: const SettingsScreen(),
+            );
+          },
+        ),
+      ],
     ),
-    if (isDesktop) ...[
-      _novelScreenRoute,
-      _searchScreenRoute,
-    ],
   ],
 );
 

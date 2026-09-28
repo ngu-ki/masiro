@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/platform.dart';
 import 'package:masiro/misc/tray_icon.dart';
@@ -10,11 +11,32 @@ import 'package:masiro/ui/widgets/nav_bar.dart';
 
 bool _systemTrayInitialized = false;
 
-class RouterOutletWithNavBar extends StatefulWidget {
-  const RouterOutletWithNavBar({required this.child, super.key});
+/// Exposes the [StatefulNavigationShell] to descendants so they can listen
+/// to tab switches (e.g. the discovery tab resets its search when inactive).
+class NavigationShellData extends InheritedWidget {
+  final StatefulNavigationShell navigationShell;
 
-  /// The widget to display in the body of the Scaffold.
-  final Widget child;
+  const NavigationShellData({
+    required this.navigationShell,
+    required super.child,
+  });
+
+  static StatefulNavigationShell? of(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<NavigationShellData>()
+        ?.navigationShell;
+  }
+
+  @override
+  bool updateShouldNotify(covariant NavigationShellData oldWidget) => false;
+}
+
+class RouterOutletWithNavBar extends StatefulWidget {
+  const RouterOutletWithNavBar({required this.navigationShell, super.key});
+
+  /// The stateful navigation shell that drives tab switching and keeps
+  /// each branch's widget tree (and its blocs) alive across tab switches.
+  final StatefulNavigationShell navigationShell;
 
   @override
   State<RouterOutletWithNavBar> createState() => _RouterOutletWithNavBarState();
@@ -58,45 +80,52 @@ class _RouterOutletWithNavBarState extends State<RouterOutletWithNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    final navigationShell = widget.navigationShell;
     final scaffold = Scaffold(
       bottomNavigationBar: isMobilePhone
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildExitHint(context),
-                const NavBar(),
+                NavBar(navigationShell: navigationShell),
               ],
             )
           : null,
       body: isDesktop
           ? Row(
               children: [
-                const NavBar(),
+                NavBar(navigationShell: navigationShell),
                 const VerticalDivider(
                   thickness: 0.0,
                   width: 1.0,
                 ),
-                Expanded(child: Center(child: widget.child)),
+                Expanded(child: Center(child: navigationShell)),
               ],
             )
           : AdaptiveStatusBarStyle(
-              child: widget.child,
+              child: navigationShell,
             ),
     );
 
     if (!isMobilePhone) {
-      return scaffold;
+      return NavigationShellData(
+        navigationShell: navigationShell,
+        child: scaffold,
+      );
     }
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          return;
-        }
-        _handleBackGesture();
-      },
-      child: scaffold,
+    return NavigationShellData(
+      navigationShell: navigationShell,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) {
+            return;
+          }
+          _handleBackGesture();
+        },
+        child: scaffold,
+      ),
     );
   }
 
@@ -124,7 +153,6 @@ class _RouterOutletWithNavBarState extends State<RouterOutletWithNavBar> {
     if (!isDesktop) {
       return;
     }
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_systemTrayInitialized) {
         return;
