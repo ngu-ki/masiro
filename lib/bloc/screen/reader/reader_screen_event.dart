@@ -113,3 +113,12 @@ final class ReaderScreenTextColorModeChanged extends ReaderScreenEvent {
   @override
   List<Object> get props => [textColorMode];
 }
+
+final class ReaderScreenOneHandedModeChanged extends ReaderScreenEvent {
+  final bool enabled;
+
+  ReaderScreenOneHandedModeChanged({required this.enabled});
+
+  @override
+  List<Object> get props => [enabled];
+}

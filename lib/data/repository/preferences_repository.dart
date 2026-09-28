@@ -20,6 +20,7 @@ const _indentModeKeyPrefix = 'indentMode_';
 const _shrinkEmptyLinesKeyPrefix = 'shrinkEmptyLines_';
 const _forceSimplifiedKeyPrefix = 'forceSimplified_';
 const _textColorModeKeyPrefix = 'textColorMode_';
+const _oneHandedModeKey = 'oneHandedMode';
 
 // Represents the current version of the shared preferences data
 const _currentVersion = 10;
@@ -181,4 +182,12 @@ class PreferencesRepository {
   void setTextColorMode(int novelId, String value) {
     _prefs.setString('$_textColorModeKeyPrefix$novelId', value);
   }
+
+  /// Whether the reader's one-handed mode is on. It is a global setting
+  /// shared by every novel: tapping anywhere except the center zone turns
+  /// to the next page.
+  bool get oneHandedMode => _prefs.getBool(_oneHandedModeKey) ?? false;
+
+  set oneHandedMode(bool value) =>
+      _prefs.setBool(_oneHandedModeKey, value);
 }

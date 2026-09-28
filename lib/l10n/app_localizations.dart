@@ -542,7 +542,7 @@ abstract class AppLocalizations {
   /// No description provided for @fontSize.
   ///
   /// In zh, this message translates to:
-  /// **'字体大小'**
+  /// **'字号'**
   String get fontSize;
 
   /// No description provided for @switchAccounts.
@@ -644,7 +644,7 @@ abstract class AppLocalizations {
   /// No description provided for @backgroundColor.
   ///
   /// In zh, this message translates to:
-  /// **'背景颜色'**
+  /// **'背景'**
   String get backgroundColor;
 
   /// No description provided for @pageTurnMode.
@@ -814,6 +814,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'统一'**
   String get textColorUniform;
+
+  /// No description provided for @oneHandedMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'单手'**
+  String get oneHandedMode;
 
   /// No description provided for @searchInFavorites.
   ///

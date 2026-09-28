@@ -288,6 +288,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         ReaderScreenForceSimplifiedChanged(enabled: enabled),
                       );
                     },
+                    oneHandedMode: state.oneHandedMode,
+                    onOneHandedModeChanged: (enabled) {
+                      bloc.add(
+                        ReaderScreenOneHandedModeChanged(enabled: enabled),
+                      );
+                    },
                   );
                 },
               );
@@ -389,6 +395,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       shrinkEmptyLines: state.shrinkEmptyLines,
       forceSimplified: state.forceSimplified,
       textColorMode: state.textColorMode,
+      oneHandedMode: state.oneHandedMode,
       chapterTitle: chapterDetail.title,
       ),
     );

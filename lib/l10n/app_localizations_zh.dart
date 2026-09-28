@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get backgroundColor => '背景颜色';
+  String get backgroundColor => '背景';
 
   @override
   String get pageTurnMode => '翻页模式';
@@ -295,7 +295,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copied => '已复制';
 
   @override
-  String get fontSize => '字体大小';
+  String get fontSize => '字号';
 
   @override
   String get switchAccounts => '切换账号';
@@ -381,6 +381,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textColorUniform => '统一';
 
   @override
+  String get oneHandedMode => '单手';
+
+  @override
   String get searchInFavorites => '搜索书架';
 
   @override
@@ -397,7 +400,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   AppLocalizationsZhHantHk(): super('zh_Hant_HK');
 
   @override
-  String get backgroundColor => '背景顏色';
+  String get backgroundColor => '背景';
 
   @override
   String get pageTurnMode => '翻頁模式';
@@ -683,7 +686,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get copied => '已复制';
 
   @override
-  String get fontSize => '字体大小';
+  String get fontSize => '字號';
 
   @override
   String get switchAccounts => '切换账号';
@@ -758,6 +761,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
 
   @override
   String get textColorUniform => '統一';
+
+  @override
+  String get oneHandedMode => '單手';
 
   @override
   String get searchInFavorites => '搜尋書架';
@@ -776,7 +782,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   AppLocalizationsZhHantTw(): super('zh_Hant_TW');
 
   @override
-  String get backgroundColor => '背景顏色';
+  String get backgroundColor => '背景';
 
   @override
   String get pageTurnMode => '翻頁模式';
@@ -1062,7 +1068,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get copied => '已复制';
 
   @override
-  String get fontSize => '字体大小';
+  String get fontSize => '字號';
 
   @override
   String get switchAccounts => '切换账号';
@@ -1137,6 +1143,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get textColorUniform => '統一';
+
+  @override
+  String get oneHandedMode => '單手';
 
   @override
   String get searchInFavorites => '搜尋書架';

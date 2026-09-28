@@ -62,6 +62,9 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     on<ReaderScreenTextColorModeChanged>(
       _onReaderScreenTextColorModeChanged,
     );
+    on<ReaderScreenOneHandedModeChanged>(
+      _onReaderScreenOneHandedModeChanged,
+    );
   }
 
   ReadingMode _readingModeOf(PageTurnMode pageTurnMode) {
@@ -155,6 +158,7 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
           shrinkEmptyLines: shrinkEmptyLines,
           forceSimplified: forceSimplified,
           textColorMode: textColorMode,
+          oneHandedMode: preferencesRepository.oneHandedMode,
           readingMode: _readingModeOf(pageTurnMode),
         ),
       );
@@ -355,6 +359,19 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
     );
     final loadedState = state as ReaderScreenLoadedState;
     emit(loadedState.copyWith(textColorMode: event.textColorMode));
+  }
+
+  void _onReaderScreenOneHandedModeChanged(
+    ReaderScreenOneHandedModeChanged event,
+    Emitter<ReaderScreenState> emit,
+  ) {
+    if (state is! ReaderScreenLoadedState) {
+      return;
+    }
+    // Global preference: shared across every novel.
+    preferencesRepository.oneHandedMode = event.enabled;
+    final loadedState = state as ReaderScreenLoadedState;
+    emit(loadedState.copyWith(oneHandedMode: event.enabled));
   }
 
   Future<String> purchasePaidChapter(PaymentInfo paymentInfo) async {

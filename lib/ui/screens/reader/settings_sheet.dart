@@ -20,6 +20,8 @@ class SettingsSheet extends StatefulWidget {
   final void Function(bool enabled) onShrinkEmptyLinesChanged;
   final bool forceSimplified;
   final void Function(bool enabled) onForceSimplifiedChanged;
+  final bool oneHandedMode;
+  final void Function(bool enabled) onOneHandedModeChanged;
 
   const SettingsSheet({
     super.key,
@@ -37,6 +39,8 @@ class SettingsSheet extends StatefulWidget {
     required this.onShrinkEmptyLinesChanged,
     required this.forceSimplified,
     required this.onForceSimplifiedChanged,
+    required this.oneHandedMode,
+    required this.onOneHandedModeChanged,
   });
 
   @override
@@ -51,6 +55,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   late TextColorMode textColorMode;
   late bool shrinkEmptyLines;
   late bool forceSimplified;
+  late bool oneHandedMode;
 
   @override
   void initState() {
@@ -62,6 +67,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
     textColorMode = widget.textColorMode;
     shrinkEmptyLines = widget.shrinkEmptyLines;
     forceSimplified = widget.forceSimplified;
+    oneHandedMode = widget.oneHandedMode;
   }
 
   @override
@@ -78,18 +84,19 @@ class _SettingsSheetState extends State<SettingsSheet> {
           Row(
             children: [
               Text(localizations.fontSize),
-              Expanded(
-                child: Slider(
-                  value: fontSize.toDouble(),
-                  min: 12,
-                  max: 32,
-                  divisions: 20,
-                  label: fontSize.toString(),
-                  onChanged: (value) {
-                    setState(() => fontSize = value.toInt());
-                    widget.onFontSizeChanged(value.toInt());
-                  },
-                ),
+              const SizedBox(width: 12),
+              Expanded(child: _buildFontSizeControl()),
+              const SizedBox(width: 12),
+              Text(localizations.oneHandedMode),
+              // Right edge aligns with the "shrink empty lines" switch in
+              // the row below, as both are the rightmost element of a
+              // full-width Row.
+              Switch(
+                value: oneHandedMode,
+                onChanged: (enabled) {
+                  setState(() => oneHandedMode = enabled);
+                  widget.onOneHandedModeChanged(enabled);
+                },
               ),
             ],
           ),
@@ -190,6 +197,83 @@ class _SettingsSheetState extends State<SettingsSheet> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  static const _minFontSize = 12;
+  static const _maxFontSize = 32;
+
+  /// Font size selector styled like the segmented controls: a gray rounded
+  /// bar with a white minus pill, the current size in the middle and a
+  /// white plus pill.
+  Widget _buildFontSizeControl() {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F2F2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildFontSizeButton(
+              icon: Icons.remove,
+              enabled: fontSize > _minFontSize,
+              onTap: () => _changeFontSize(-1),
+            ),
+          ),
+          SizedBox(
+            width: 40,
+            child: Text(
+              '$fontSize',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                color: Color(0xFF595959),
+              ),
+            ),
+          ),
+          Expanded(
+            child: _buildFontSizeButton(
+              icon: Icons.add,
+              enabled: fontSize < _maxFontSize,
+              onTap: () => _changeFontSize(1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _changeFontSize(int delta) {
+    final next = (fontSize + delta).clamp(_minFontSize, _maxFontSize);
+    if (next == fontSize) {
+      return;
+    }
+    setState(() => fontSize = next);
+    widget.onFontSizeChanged(next);
+  }
+
+  Widget _buildFontSizeButton({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.4,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enabled ? onTap : null,
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(icon, size: 20, color: const Color(0xFF595959)),
+        ),
       ),
     );
   }

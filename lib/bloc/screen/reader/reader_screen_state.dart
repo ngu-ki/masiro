@@ -36,6 +36,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
   final bool shrinkEmptyLines;
   final bool forceSimplified;
   final TextColorMode textColorMode;
+  final bool oneHandedMode;
 
   ReaderScreenLoadedState({
     required this.chapterDetail,
@@ -50,6 +51,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     this.shrinkEmptyLines = false,
     this.forceSimplified = false,
     this.textColorMode = TextColorMode.original,
+    this.oneHandedMode = false,
   });
 
   ReaderScreenLoadedState copyWith({
@@ -65,6 +67,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     bool? shrinkEmptyLines,
     bool? forceSimplified,
     TextColorMode? textColorMode,
+    bool? oneHandedMode,
   }) {
     return ReaderScreenLoadedState(
       chapterDetail: chapterDetail ?? this.chapterDetail,
@@ -79,6 +82,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
       shrinkEmptyLines: shrinkEmptyLines ?? this.shrinkEmptyLines,
       forceSimplified: forceSimplified ?? this.forceSimplified,
       textColorMode: textColorMode ?? this.textColorMode,
+      oneHandedMode: oneHandedMode ?? this.oneHandedMode,
     );
   }
 
@@ -96,5 +100,6 @@ class ReaderScreenLoadedState extends ReaderScreenState {
         shrinkEmptyLines,
         forceSimplified,
         textColorMode,
+        oneHandedMode,
       ];
 }

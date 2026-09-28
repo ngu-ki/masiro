@@ -65,6 +65,10 @@ class ChapterContentPager extends StatefulWidget {
   final bool forceSimplified;
   final TextColorMode textColorMode;
 
+  /// One-handed mode: every tap outside the center zone turns to the next
+  /// page instead of using the left/right zone split.
+  final bool oneHandedMode;
+
   /// Title of the current chapter, shown at the top of the first page.
   final String chapterTitle;
 
@@ -89,6 +93,7 @@ class ChapterContentPager extends StatefulWidget {
     this.shrinkEmptyLines = false,
     this.forceSimplified = false,
     this.textColorMode = TextColorMode.original,
+    this.oneHandedMode = false,
     required this.chapterTitle,
   });
 
@@ -653,6 +658,16 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   void _handleTap(BuildContext context, double dx) {
     final width = context.size?.width ?? 0;
     if (width <= 0) {
+      return;
+    }
+    // One-handed mode: only the center toggles the menu, both side zones
+    // turn to the next page.
+    if (widget.oneHandedMode) {
+      if (dx >= width * 0.3 && dx <= width * 0.7) {
+        widget.onToggleMenu();
+      } else {
+        _goNext();
+      }
       return;
     }
     if (dx < width * 0.3) {
