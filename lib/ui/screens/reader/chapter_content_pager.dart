@@ -8,6 +8,7 @@ import 'package:masiro/data/repository/model/read_position.dart';
 import 'package:masiro/data/repository/model/text_color_mode.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/render.dart';
+import 'package:masiro/ui/screens/reader/cjk_typography.dart';
 import 'package:masiro/ui/screens/reader/pagination.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
 import 'package:pinyin/pinyin.dart';
@@ -319,8 +320,19 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final mediaQuery = MediaQuery.of(context);
         final topInset = mediaQuery.padding.top + 44;
         final bottomInset = mediaQuery.padding.bottom + 44;
-        final contentWidth =
+        // Grid typesetting: the text column width is snapped down to an
+        // integer number of em squares so a line holds exactly N full-width
+        // characters with no fractional slack that would force uneven
+        // justification gaps. The leftover space is shared equally by both
+        // side margins, keeping the text block centered.
+        final rawContentWidth =
             constraints.maxWidth - widget.padding.horizontal;
+        final cellsPerLine = (rawContentWidth / widget.fontSize).floor();
+        final contentWidth = cellsPerLine >= 1
+            ? cellsPerLine * widget.fontSize.toDouble()
+            : rawContentWidth;
+        final sidePadding =
+            (constraints.maxWidth - contentWidth) / 2;
         final contentHeight = constraints.maxHeight - topInset - bottomInset;
         _prefetchCacheWidth =
             (contentWidth * mediaQuery.devicePixelRatio).round();
@@ -398,6 +410,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
               bottomInset: bottomInset,
               contentWidth: contentWidth,
               contentHeight: contentHeight,
+              sidePadding: sidePadding,
               titleBodyGap: titleBodyGap,
               pageIndex: i,
               pageIndexNotifier: _pageIndexNotifier,
@@ -448,18 +461,22 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     required double bottomInset,
     required double contentWidth,
     required double contentHeight,
+    required double sidePadding,
     required double titleBodyGap,
     required int pageIndex,
     required ValueNotifier<int> pageIndexNotifier,
     Widget? header,
   }) {
     if (page.isImagePage()) {
-      return _VisibilityAwareImage(
-        url: page.image!.src,
-        width: contentWidth,
-        height: contentHeight,
-        pageIndex: pageIndex,
-        currentPageNotifier: pageIndexNotifier,
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: sidePadding),
+        child: _VisibilityAwareImage(
+          url: page.image!.src,
+          width: contentWidth,
+          height: contentHeight,
+          pageIndex: pageIndex,
+          currentPageNotifier: pageIndexNotifier,
+        ),
       );
     }
 
@@ -497,31 +514,42 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       // next page. Its last visual line is therefore a regular wrapped
       // line and must be justified too: append a hard line break so the
       // engine does not treat it as the final (never-justified) line. The
-      // trailing newline renders no extra line box.
+      // newline creates an extra empty trailing line; cap the widget at
+      // the measured run height (identical to pagination) and clip it, so
+      // the extra line stays in the page's bottom slack and is invisible.
       final continuesOnNextPage = run.end < displayText.length;
       children.add(
-        Text.rich(
-          TextSpan(
-            children: [
-              ..._buildFragmentSpans(
-                element: element,
-                fragment: fragment,
-                runStart: run.start,
-                prefixLength: widget.indentMode.prefix.length,
+        SizedBox(
+          height: run.height,
+          child: ClipRect(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  ..._buildFragmentSpans(
+                    element: element,
+                    fragment: fragment,
+                    runStart: run.start,
+                    prefixLength: widget.indentMode.prefix.length,
+                  ),
+                  if (continuesOnNextPage) const TextSpan(text: '\n'),
+                ],
               ),
-              if (continuesOnNextPage) const TextSpan(text: '\n'),
-            ],
+              style: style,
+              textAlign: TextAlign.justify,
+            ),
           ),
-          style: style,
-          textAlign: TextAlign.justify,
         ),
       );
       lastElementIndex = run.elementIndex;
     }
 
     return Padding(
-      padding: widget.padding +
-          EdgeInsets.only(top: topInset, bottom: bottomInset),
+      padding: EdgeInsets.only(
+        left: sidePadding,
+        right: sidePadding,
+        top: widget.padding.top + topInset,
+        bottom: widget.padding.bottom + bottomInset,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -552,7 +580,14 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     if (widget.textColorMode == TextColorMode.uniform ||
         element.coloredRanges.isEmpty ||
         fragment.isEmpty) {
-      return [TextSpan(text: fragment)];
+      return [
+        TextSpan(
+          children: buildCompressedPunctuationSpans(
+            fragment,
+            fontSize: widget.fontSize.toDouble(),
+          ),
+        ),
+      ];
     }
 
     final mutedColor = widget.textColor.withValues(alpha: 0.45);
@@ -592,26 +627,38 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       );
     }
     if (localRanges.isEmpty) {
-      return [TextSpan(text: fragment)];
+      return [
+        TextSpan(
+          children: buildCompressedPunctuationSpans(
+            fragment,
+            fontSize: widget.fontSize.toDouble(),
+          ),
+        ),
+      ];
     }
     localRanges.sort((a, b) => a.$1.compareTo(b.$1));
+
+    TextSpan buildSegment(String text, Color? color) {
+      return TextSpan(
+        style: color == null ? null : TextStyle(color: color),
+        children: buildCompressedPunctuationSpans(
+          text,
+          fontSize: widget.fontSize.toDouble(),
+        ),
+      );
+    }
 
     final spans = <InlineSpan>[];
     var cursor = 0;
     for (final (start, end, color) in localRanges) {
       if (start > cursor) {
-        spans.add(TextSpan(text: fragment.substring(cursor, start)));
+        spans.add(buildSegment(fragment.substring(cursor, start), null));
       }
-      spans.add(
-        TextSpan(
-          text: fragment.substring(start, end),
-          style: color == null ? null : TextStyle(color: color),
-        ),
-      );
+      spans.add(buildSegment(fragment.substring(start, end), color));
       cursor = end;
     }
     if (cursor < fragment.length) {
-      spans.add(TextSpan(text: fragment.substring(cursor)));
+      spans.add(buildSegment(fragment.substring(cursor), null));
     }
     return spans;
   }

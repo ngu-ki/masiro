@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:masiro/data/repository/model/chapter_detail.dart';
 import 'package:masiro/data/repository/model/read_position.dart';
+import 'package:masiro/ui/screens/reader/cjk_typography.dart';
 
 /// A contiguous run of lines from a single text element that is rendered as
 /// one [Text] widget on a page.
@@ -148,8 +149,17 @@ List<ReaderPageContent> paginateChapterContent({
     // line is offset by the requested number of character cells.
     final displayText = '$indentPrefix$text';
 
+    // Measure with the same punctuation-compression spans used for
+    // rendering, otherwise the computed line breaks would diverge from
+    // the laid-out text.
     final painter = TextPainter(
-      text: TextSpan(text: displayText, style: style),
+      text: TextSpan(
+        style: style,
+        children: buildCompressedPunctuationSpans(
+          displayText,
+          fontSize: style.fontSize ?? 14.0,
+        ),
+      ),
       textDirection: TextDirection.ltr,
     );
     painter.layout(minWidth: 0, maxWidth: maxWidth);
