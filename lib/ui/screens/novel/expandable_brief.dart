@@ -224,15 +224,29 @@ class _TagRowState extends State<_TagRow> {
     ];
 
     if (widget.areTagsExpanded) {
-      return Wrap(
-        spacing: 6,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          titleRow,
-          if (levelLimitMessage != null) levelLimitMessage,
-          ...chips,
-          chevron,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              titleRow,
+              if (levelLimitMessage != null) ...[
+                const SizedBox(width: 6),
+                levelLimitMessage,
+              ],
+              const Spacer(),
+              chevron,
+            ],
+          ),
+          const SizedBox(height: 8),
+          // All tags re-flow onto as many lines as needed; chip size is
+          // identical to the collapsed state.
+          Wrap(
+            spacing: 6,
+            runSpacing: 8,
+            children: chips,
+          ),
         ],
       );
     }
