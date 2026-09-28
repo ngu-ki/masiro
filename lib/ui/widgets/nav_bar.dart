@@ -4,11 +4,20 @@ import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/platform.dart';
 
 class NavBar extends StatelessWidget {
-  const NavBar({required this.navigationShell, super.key});
+  const NavBar({
+    required this.navigationShell,
+    required this.activeBranchNotifier,
+    super.key,
+  });
 
   final StatefulNavigationShell navigationShell;
 
+  /// Updated on every tab switch so descendants listening via
+  /// [ActiveBranchNotifier] can react (e.g. discovery tab clears its search).
+  final ValueNotifier<int> activeBranchNotifier;
+
   void _onDestinationSelected(int index) {
+    activeBranchNotifier.value = index;
     // When tapping the already-active tab, reset to its initial location
     // (pops any pushed routes within that branch); otherwise switch to the
     // target branch, preserving its navigation stack.

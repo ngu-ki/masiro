@@ -11,24 +11,25 @@ import 'package:masiro/ui/widgets/nav_bar.dart';
 
 bool _systemTrayInitialized = false;
 
-/// Exposes the [StatefulNavigationShell] to descendants so they can listen
-/// to tab switches (e.g. the discovery tab resets its search when inactive).
-class NavigationShellData extends InheritedWidget {
-  final StatefulNavigationShell navigationShell;
+/// Exposes a [ValueNotifier] tracking the active branch index so descendants
+/// can listen to tab switches (e.g. the discovery tab resets its search when
+/// it becomes inactive).
+class ActiveBranchNotifier extends InheritedWidget {
+  final ValueNotifier<int> notifier;
 
-  const NavigationShellData({
-    required this.navigationShell,
+  const ActiveBranchNotifier({
+    required this.notifier,
     required super.child,
   });
 
-  static StatefulNavigationShell? of(BuildContext context) {
+  static ValueNotifier<int>? of(BuildContext context) {
     return context
-        .dependOnInheritedWidgetOfExactType<NavigationShellData>()
-        ?.navigationShell;
+        .dependOnInheritedWidgetOfExactType<ActiveBranchNotifier>()
+        ?.notifier;
   }
 
   @override
-  bool updateShouldNotify(covariant NavigationShellData oldWidget) => false;
+  bool updateShouldNotify(covariant ActiveBranchNotifier oldWidget) => false;
 }
 
 class RouterOutletWithNavBar extends StatefulWidget {
@@ -48,14 +49,22 @@ class _RouterOutletWithNavBarState extends State<RouterOutletWithNavBar> {
 
   Timer? _exitHintTimer;
 
+  /// Tracks the active branch index; updated by the NavBar on every tab
+  /// switch so descendants can listen without StatefulNavigationShell being
+  /// a Listenable.
+  late final ValueNotifier<int> _activeBranchNotifier;
+
   @override
   void initState() {
     super.initState();
+    _activeBranchNotifier =
+        ValueNotifier<int>(widget.navigationShell.currentIndex);
     _initSystemTray();
   }
 
   @override
   void dispose() {
+    _activeBranchNotifier.dispose();
     _exitHintTimer?.cancel();
     super.dispose();
   }
@@ -87,14 +96,20 @@ class _RouterOutletWithNavBarState extends State<RouterOutletWithNavBar> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildExitHint(context),
-                NavBar(navigationShell: navigationShell),
+                NavBar(
+                  navigationShell: navigationShell,
+                  activeBranchNotifier: _activeBranchNotifier,
+                ),
               ],
             )
           : null,
       body: isDesktop
           ? Row(
               children: [
-                NavBar(navigationShell: navigationShell),
+                NavBar(
+                  navigationShell: navigationShell,
+                  activeBranchNotifier: _activeBranchNotifier,
+                ),
                 const VerticalDivider(
                   thickness: 0.0,
                   width: 1.0,
@@ -107,25 +122,22 @@ class _RouterOutletWithNavBarState extends State<RouterOutletWithNavBar> {
             ),
     );
 
-    if (!isMobilePhone) {
-      return NavigationShellData(
-        navigationShell: navigationShell,
-        child: scaffold,
-      );
-    }
+    final child = isMobilePhone
+        ? PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop) {
+                return;
+              }
+              _handleBackGesture();
+            },
+            child: scaffold,
+          )
+        : scaffold;
 
-    return NavigationShellData(
-      navigationShell: navigationShell,
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) {
-            return;
-          }
-          _handleBackGesture();
-        },
-        child: scaffold,
-      ),
+    return ActiveBranchNotifier(
+      notifier: _activeBranchNotifier,
+      child: child,
     );
   }
 

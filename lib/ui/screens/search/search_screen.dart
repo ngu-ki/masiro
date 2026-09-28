@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:masiro/bloc/screen/search/search_screen_bloc.dart';
 import 'package:masiro/bloc/screen/search/search_screen_event.dart';
 import 'package:masiro/bloc/screen/search/search_screen_state.dart';
@@ -23,27 +22,28 @@ class _SearchScreenState extends State<SearchScreen> {
   final GlobalKey<SearchTopBarState> _searchBarKey =
       GlobalKey<SearchTopBarState>();
 
-  StatefulNavigationShell? _shell;
+  ValueNotifier<int>? _branchNotifier;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Acquire the navigation shell once and listen to tab switches so the
-    // discovery tab's search content is cleared when it becomes inactive.
-    _shell ??= NavigationShellData.of(context)?..addListener(_onShellChanged);
+    // Acquire the active-branch notifier once and listen to tab switches so
+    // the discovery tab's search content is cleared when it becomes inactive.
+    _branchNotifier ??= ActiveBranchNotifier.of(context)
+      ?..addListener(_onBranchChanged);
   }
 
   @override
   void dispose() {
-    _shell?.removeListener(_onShellChanged);
+    _branchNotifier?.removeListener(_onBranchChanged);
     super.dispose();
   }
 
   /// Resets the search state when the user switches away from the discovery
   /// tab (branch index 0), so the next visit starts with a fresh empty page.
-  void _onShellChanged() {
-    final shell = _shell;
-    if (shell == null || shell.currentIndex == 0) {
+  void _onBranchChanged() {
+    final notifier = _branchNotifier;
+    if (notifier == null || notifier.value == 0) {
       return;
     }
     _searchBarKey.currentState?.clear();
