@@ -493,17 +493,27 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       if (fragment.endsWith('\n')) {
         fragment = fragment.substring(0, fragment.length - 1);
       }
+      // A run that ends before the end of its paragraph continues on the
+      // next page. Its last visual line is therefore a regular wrapped
+      // line and must be justified too: append a hard line break so the
+      // engine does not treat it as the final (never-justified) line. The
+      // trailing newline renders no extra line box.
+      final continuesOnNextPage = run.end < displayText.length;
       children.add(
         Text.rich(
           TextSpan(
-            children: _buildFragmentSpans(
-              element: element,
-              fragment: fragment,
-              runStart: run.start,
-              prefixLength: widget.indentMode.prefix.length,
-            ),
+            children: [
+              ..._buildFragmentSpans(
+                element: element,
+                fragment: fragment,
+                runStart: run.start,
+                prefixLength: widget.indentMode.prefix.length,
+              ),
+              if (continuesOnNextPage) const TextSpan(text: '\n'),
+            ],
           ),
           style: style,
+          textAlign: TextAlign.justify,
         ),
       );
       lastElementIndex = run.elementIndex;
