@@ -144,8 +144,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
       child: BlocListener<ReaderScreenBloc, ReaderScreenState>(
         listener: (context, state) {
           // While the menu is open the volume keys adjust the system volume
-          // instead of turning pages.
-          _setVolumeInterception(enabled: !state.isHudVisible);
+          // instead of turning pages. isHudVisible only exists on the loaded
+          // state; before content loads the HUD is treated as hidden.
+          final isHudVisible =
+              state is ReaderScreenLoadedState && state.isHudVisible;
+          _setVolumeInterception(enabled: !isHudVisible);
         },
         child: BlocBuilder<ReaderScreenBloc, ReaderScreenState>(
           builder: (context, state) {
