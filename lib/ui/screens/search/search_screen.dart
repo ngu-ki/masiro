@@ -24,6 +24,21 @@ class _SearchScreenState extends State<SearchScreen> {
 
   ValueNotifier<int>? _branchNotifier;
 
+  /// Owned by this State so [_onBranchChanged] can dispatch events without
+  /// relying on [context.read] — the State's context sits above the
+  /// [BlocProvider], so a lookup from here would never find the bloc.
+  late final SearchScreenBloc _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = SearchScreenBloc();
+    final initialKeyword = widget.initialKeyword;
+    if (initialKeyword != null && initialKeyword.isNotEmpty) {
+      _bloc.add(SearchScreenSearched(keyword: initialKeyword));
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -36,6 +51,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     _branchNotifier?.removeListener(_onBranchChanged);
+    _bloc.close();
     super.dispose();
   }
 
@@ -47,23 +63,16 @@ class _SearchScreenState extends State<SearchScreen> {
       return;
     }
     _searchBarKey.currentState?.clear();
-    context.read<SearchScreenBloc>().add(SearchScreenReset());
+    _bloc.add(SearchScreenReset());
   }
 
   @override
   Widget build(BuildContext context) {
-    final initialKeyword = widget.initialKeyword;
     return Material(
       color: Theme.of(context).colorScheme.surface,
       child: SafeArea(
-        child: BlocProvider(
-          create: (_) {
-            final bloc = SearchScreenBloc();
-            if (initialKeyword != null && initialKeyword.isNotEmpty) {
-              bloc.add(SearchScreenSearched(keyword: initialKeyword));
-            }
-            return bloc;
-          },
+        child: BlocProvider.value(
+          value: _bloc,
           child: Stack(
             children: [
               Positioned.fill(child: buildBody(context)),
