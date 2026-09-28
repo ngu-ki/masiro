@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +12,7 @@ import 'package:masiro/data/repository/preferences_repository.dart';
 import 'package:masiro/misc/chapter.dart';
 import 'package:masiro/misc/platform.dart';
 import 'package:masiro/misc/router.dart';
+import 'package:masiro/misc/volume_keys.dart';
 import 'package:masiro/ui/screens/reader/bottom_bar.dart';
 import 'package:masiro/ui/screens/reader/chapter_content_pager.dart';
 import 'package:masiro/ui/screens/reader/contents_sheet.dart';
@@ -45,6 +48,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
   final _progressNotifier = ValueNotifier<double>(0.0);
   final _pagerController = ReaderPagerController();
 
+  /// Hardware volume-key page turning. Interception lives for the whole
+  /// reader screen; key repeats from long-pressing a volume key are
+  /// throttled per direction.
+  StreamSubscription<VolumeKey>? _volumeKeySub;
+  DateTime? _lastVolumeUpTime;
+  DateTime? _lastVolumeDownTime;
+  static const _volumeKeyRepeatCooldown = Duration(milliseconds: 250);
+
   /// System bar padding captured in reading mode (menu closed). The reader
   /// content always lays out against this value: opening the menu reveals
   /// the status bar and changes the live padding, but the paginated text
@@ -71,10 +82,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void initState() {
     super.initState();
     _applySystemUiMode(SystemUiMode.immersiveSticky);
+    _volumeKeySub = VolumeKeyEvents.stream.listen(_handleVolumeKey);
   }
 
   @override
   void dispose() {
+    _volumeKeySub?.cancel();
     // Flush the latest position synchronously-ish: the bloc's position
     // events are debounced, and the pending (trailing) write would be
     // cancelled when the bloc closes right after this dispose.
@@ -84,6 +97,33 @@ class _ReaderScreenState extends State<ReaderScreen> {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
     super.dispose();
+  }
+
+  /// Volume up turns to the previous page, volume down to the next page,
+  /// matching the up/back convention. Key events are ignored while the
+  /// reading menu (HUD) is visible, and long-press repeats are throttled.
+  void _handleVolumeKey(VolumeKey key) {
+    final state = _bloc?.state;
+    if (state == null || state.isHudVisible) {
+      return;
+    }
+    final now = DateTime.now();
+    switch (key) {
+      case VolumeKey.up:
+        final last = _lastVolumeUpTime;
+        if (last != null && now.difference(last) < _volumeKeyRepeatCooldown) {
+          return;
+        }
+        _lastVolumeUpTime = now;
+        _pagerController.previousPage();
+      case VolumeKey.down:
+        final last = _lastVolumeDownTime;
+        if (last != null && now.difference(last) < _volumeKeyRepeatCooldown) {
+          return;
+        }
+        _lastVolumeDownTime = now;
+        _pagerController.nextPage();
+    }
   }
 
   @override

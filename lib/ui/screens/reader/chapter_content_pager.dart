@@ -23,15 +23,25 @@ const _sourceBlack = 0xFF000000;
 const _transparentColor = 0x00000000;
 
 /// Controller that allows the menu slider to jump to a position fraction of
-/// the current chapter.
+/// the current chapter, and external inputs (volume keys) to turn pages.
 class ReaderPagerController {
   void Function(double fraction)? _seekTo;
+  VoidCallback? _nextPage;
+  VoidCallback? _previousPage;
 
   bool get isEnabled => _seekTo != null;
 
   void seekToFraction(double fraction) {
     _seekTo?.call(fraction.clamp(0.0, 1.0));
   }
+
+  /// Turns to the next page; on the last page of a chapter navigates to the
+  /// next chapter. No-op until the pager is mounted.
+  void nextPage() => _nextPage?.call();
+
+  /// Turns to the previous page; past the first page navigates to the
+  /// previous chapter. No-op until the pager is mounted.
+  void previousPage() => _previousPage?.call();
 }
 
 /// Displays the chapter content with page turn modes:
@@ -151,6 +161,8 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     _configSignature = _buildConfigSignature();
     _pendingRestore = widget.initialPosition;
     widget.pagerController._seekTo = _seekToFraction;
+    widget.pagerController._nextPage = _goNext;
+    widget.pagerController._previousPage = _goPrevious;
   }
 
   @override
@@ -167,6 +179,9 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
   @override
   void dispose() {
+    widget.pagerController._seekTo = null;
+    widget.pagerController._nextPage = null;
+    widget.pagerController._previousPage = null;
     _pageController?.dispose();
     _pageIndexNotifier.dispose();
     super.dispose();
