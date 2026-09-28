@@ -17,6 +17,11 @@ import 'package:pinyin/pinyin.dart';
 /// being muted.
 const _sourceBlack = 0xFF000000;
 
+/// Fully transparent color (`color: transparent`), tracked as a declared
+/// color. In original mode it renders invisible by default; long-pressing
+/// the page reveals all transparent ranges in muted gray.
+const _transparentColor = 0x00000000;
+
 /// Controller that allows the menu slider to jump to a position fraction of
 /// the current chapter.
 class ReaderPagerController {
@@ -115,6 +120,11 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   DateTime? _pointerDownTime;
   double _chapterEndOverscroll = 0.0;
   double _chapterStartOverscroll = 0.0;
+
+  /// In original mode, transparent-colored text is invisible by default.
+  /// Long-pressing the page toggles this flag to reveal all transparent
+  /// ranges in muted gray.
+  bool _revealTransparent = false;
 
   /// Page index whose image is currently (or has just been) prefetched.
   int? _prefetchedImagePage;
@@ -344,6 +354,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
           _paginationGeneration++;
           _prefetchedImagePage = null;
           _prefetchInFlight = false;
+          _revealTransparent = false;
         }
 
         final firstPage = _pages.isNotEmpty ? _pages.first : null;
@@ -530,7 +541,13 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       }
       Color? resolved;
       if (widget.textColorMode == TextColorMode.original) {
-        resolved = Color(range.color);
+        if (range.color == _transparentColor && _revealTransparent) {
+          // Long-press revealed transparent text: show it in muted gray
+          // so it becomes readable against any background.
+          resolved = mutedColor;
+        } else {
+          resolved = Color(range.color);
+        }
       } else if (range.color != _sourceBlack) {
         // Simplified mode: black declarations are treated as ordinary body
         // text; every other source color is muted to gray.
@@ -609,6 +626,15 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
     if (offset.distance < _tapSlop && duration < _tapDurationBudget) {
       _handleTap(context, downPosition.dx);
+      return;
+    }
+
+    // Long-press with minimal movement: in original mode, toggle the
+    // visibility of transparent-colored text.
+    if (offset.distance < _tapSlop &&
+        duration >= _tapDurationBudget &&
+        widget.textColorMode == TextColorMode.original) {
+      setState(() => _revealTransparent = !_revealTransparent);
       return;
     }
 
