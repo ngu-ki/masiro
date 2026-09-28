@@ -794,7 +794,7 @@ abstract class AppLocalizations {
   /// No description provided for @textColorMode.
   ///
   /// In zh, this message translates to:
-  /// **'字色显示模式'**
+  /// **'字色显示'**
   String get textColorMode;
 
   /// No description provided for @textColorOriginal.

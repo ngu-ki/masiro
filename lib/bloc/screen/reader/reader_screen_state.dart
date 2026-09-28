@@ -44,7 +44,7 @@ class ReaderScreenLoadedState extends ReaderScreenState {
     required this.position,
     this.loadingStatus = LoadingStatus.success,
     required this.fontSize,
-    this.backgroundColor = 0xFFFFFFFF,
+    this.backgroundColor = 0xFFEFEFEF,
     this.pageTurnMode = PageTurnMode.slide,
     this.indentMode = IndentMode.none,
     this.shrinkEmptyLines = false,

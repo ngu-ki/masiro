@@ -24,8 +24,8 @@ const _textColorModeKeyPrefix = 'textColorMode_';
 // Represents the current version of the shared preferences data
 const _currentVersion = 10;
 
-// Default reader background color (white)
-const defaultReaderBackgroundColor = 0xFFFFFFFF;
+// Default reader background color (light gray)
+const defaultReaderBackgroundColor = 0xFFEFEFEF;
 
 /// Manages all the shared preferences data used by the application
 class PreferencesRepository {

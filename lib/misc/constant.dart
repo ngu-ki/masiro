@@ -4,6 +4,6 @@ const defaultThemeColor = 0xFFFAFAFA;
 
 const projectHomepage = 'https://github.com/qixiaoo/masiro';
 
-const defaultFontSize = 14;
+const defaultFontSize = 18;
 
 const defaultUserId = -1;

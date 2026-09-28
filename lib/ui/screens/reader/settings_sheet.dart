@@ -96,25 +96,62 @@ class _SettingsSheetState extends State<SettingsSheet> {
           const SizedBox(height: 8),
           Text(localizations.backgroundColor),
           const SizedBox(height: 8),
-          Row(
+          // Wrap instead of a fixed Row: with eight color dots the row can
+          // exceed the available width on narrow phones.
+          Wrap(
+            runSpacing: 8,
             children: [
               for (final color in readerBackgroundColors)
                 _buildColorDot(color),
             ],
           ),
           const SizedBox(height: 16),
-          Text(localizations.pageTurnMode),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
+          // The page-turn chips keep the left side; the two text toggles
+          // ("force simplified" and "shrink empty lines") sit on the right
+          // of the page-turn title, with the label on top and the switch
+          // directly below it, the two columns aligned with each other.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildModeChip(
-                localizations.pageTurnSlide,
-                PageTurnMode.slide,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(localizations.pageTurnMode),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        _buildModeChip(
+                          localizations.pageTurnSlide,
+                          PageTurnMode.slide,
+                        ),
+                        _buildModeChip(
+                          localizations.pageTurnNone,
+                          PageTurnMode.none,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              _buildModeChip(
-                localizations.pageTurnNone,
-                PageTurnMode.none,
+              const SizedBox(width: 8),
+              _buildSwitchColumn(
+                label: localizations.forceSimplified,
+                value: forceSimplified,
+                onChanged: (enabled) {
+                  setState(() => forceSimplified = enabled);
+                  widget.onForceSimplifiedChanged(enabled);
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildSwitchColumn(
+                label: localizations.shrinkEmptyLines,
+                value: shrinkEmptyLines,
+                onChanged: (enabled) {
+                  setState(() => shrinkEmptyLines = enabled);
+                  widget.onShrinkEmptyLinesChanged(enabled);
+                },
               ),
             ],
           ),
@@ -162,42 +199,6 @@ class _SettingsSheetState extends State<SettingsSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // Two toggles on one row: the left half holds "shrink empty
-          // lines" and the right half (starting at the middle) holds
-          // "force simplified", each with the switch next to its label.
-          Row(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Text(localizations.shrinkEmptyLines),
-                    Switch(
-                      value: shrinkEmptyLines,
-                      onChanged: (enabled) {
-                        setState(() => shrinkEmptyLines = enabled);
-                        widget.onShrinkEmptyLinesChanged(enabled);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Row(
-                  children: [
-                    Text(localizations.forceSimplified),
-                    Switch(
-                      value: forceSimplified,
-                      onChanged: (enabled) {
-                        setState(() => forceSimplified = enabled);
-                        widget.onForceSimplifiedChanged(enabled);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -232,6 +233,26 @@ class _SettingsSheetState extends State<SettingsSheet> {
               )
             : null,
       ),
+    );
+  }
+
+  /// A compact column with the setting [label] on top and its switch
+  /// directly below. Two such columns placed next to each other keep their
+  /// labels and switches horizontally aligned.
+  Widget _buildSwitchColumn({
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 

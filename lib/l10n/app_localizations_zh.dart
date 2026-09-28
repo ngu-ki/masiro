@@ -369,7 +369,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get forceSimplified => '强制简体';
 
   @override
-  String get textColorMode => '字色显示模式';
+  String get textColorMode => '字色显示';
 
   @override
   String get textColorOriginal => '原色';
@@ -748,7 +748,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get forceSimplified => '強制簡體';
 
   @override
-  String get textColorMode => '字色顯示模式';
+  String get textColorMode => '字色顯示';
 
   @override
   String get textColorOriginal => '原色';
@@ -1127,7 +1127,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get forceSimplified => '強制簡體';
 
   @override
-  String get textColorMode => '字色顯示模式';
+  String get textColorMode => '字色顯示';
 
   @override
   String get textColorOriginal => '原色';
