@@ -82,7 +82,7 @@ class _NovelHeaderState extends State<NovelHeader> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     header.title,
-                    style: const TextStyle(fontSize: 20),
+                    style: const TextStyle(fontSize: 19),
                   ),
                 ),
                 Text.rich(
