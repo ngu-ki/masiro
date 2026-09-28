@@ -517,7 +517,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
                 WidgetSpan(
                   alignment: PlaceholderAlignment.bottom,
                   child: SizedBox(
-                    width: widget.fontSize * indentCells,
+                    width: widget.fontSize * indentCells.toDouble(),
                   ),
                 ),
               ..._buildFragmentSpans(
