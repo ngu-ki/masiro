@@ -134,6 +134,10 @@ class TypesetLine extends TypesetBlock {
   /// it is added to every inter-glyph gap except after the final unit.
   final bool justifyViaSpaces;
 
+  /// Whether legado's `exceed()` redistribution shifted the columns
+  /// leftwards to keep a CPS-tolerated line inside the visible width.
+  final bool isExceeded;
+
   const TypesetLine({
     required this.elementIndex,
     required this.glyphs,
@@ -144,6 +148,7 @@ class TypesetLine extends TypesetBlock {
     this.naturalWidth = 0.0,
     this.justifyGap = 0.0,
     this.justifyViaSpaces = false,
+    this.isExceeded = false,
   });
 
   int get startChar => glyphs.first.charStart;
@@ -158,8 +163,10 @@ class TypesetLine extends TypesetBlock {
   bool get isCompressed => glyphs.any((g) => g.compressed);
 
   /// Whether the line needs the per-glyph paint path instead of one
-  /// uniform TextPainter: compressed glyphs or a hung punctuation.
-  bool get hasIrregularGlyphs => isCompressed || hasHanging;
+  /// uniform TextPainter: compressed glyphs, a hung punctuation, or
+  /// non-uniform shifts from exceed() redistribution.
+  bool get hasIrregularGlyphs =>
+      isCompressed || hasHanging || isExceeded;
 }
 
 /// A blank paragraph collapsed to a small gap.

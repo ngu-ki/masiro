@@ -34,6 +34,95 @@ void main() {
     });
   });
 
+  group('exceed() overflow redistribution', () {
+    test('shifts columns left so the last column ends at visibleWidth',
+        () {
+      final natural = LineColumnLayout.natural(
+        widths: [100, 100, 100],
+      );
+      final r = LineColumnLayout.exceed(
+        natural.columns,
+        words: ['字', '字', '字'],
+        visibleWidth: 250,
+      );
+      expect(r.exceeded, isTrue);
+      // overflow 50 / size 3: shifts are 50, 33.33, 16.67.
+      expect(r.columns[2].xEnd, closeTo(250, epsilon));
+      expect(r.columns[2].xStart, closeTo(150, epsilon));
+      expect(r.columns[1].xStart, closeTo(66.6667, 1e-3));
+      expect(r.columns[0].xStart, closeTo(-16.6667, 1e-3));
+      // Every column keeps its width.
+      for (var i = 0; i < 3; i++) {
+        expect(
+          r.columns[i].xEnd - r.columns[i].xStart,
+          closeTo(100, epsilon),
+        );
+      }
+    });
+
+    test('no-op when the line fits', () {
+      final natural = LineColumnLayout.natural(
+        widths: [100, 100],
+      );
+      final r = LineColumnLayout.exceed(
+        natural.columns,
+        words: ['字', '字'],
+        visibleWidth: 300,
+      );
+      expect(r.exceeded, isFalse);
+      expect(identical(r.columns, natural.columns), isTrue);
+    });
+
+    test('single column is never redistributed', () {
+      final natural = LineColumnLayout.natural(widths: [400]);
+      final r = LineColumnLayout.exceed(
+        natural.columns,
+        words: ['宽'],
+        visibleWidth: 300,
+      );
+      expect(r.exceeded, isFalse);
+    });
+
+    test('a trailing ASCII space is excluded and left in place', () {
+      final natural = LineColumnLayout.natural(
+        widths: [100, 100, 50],
+      );
+      final r = LineColumnLayout.exceed(
+        natural.columns,
+        words: ['字', '字', ' '],
+        visibleWidth: 180,
+      );
+      expect(r.exceeded, isTrue);
+      // overflow 20 distributed over 2 body columns; the end column is
+      // the second one and lands exactly on visibleWidth.
+      expect(r.columns[1].xEnd, closeTo(180, epsilon));
+      // The trailing space column itself is untouched.
+      expect(r.columns[2].xStart, closeTo(200, epsilon));
+      expect(r.columns[2].xEnd, closeTo(250, epsilon));
+    });
+
+    test('skipLeading excludes indent and hanging columns', () {
+      final columns = [
+        ColumnBox(0, 0, 100, GlyphColumnKind.indent),
+        ColumnBox(1, 0, 100, GlyphColumnKind.hanging),
+        ColumnBox(2, 100, 200, GlyphColumnKind.text),
+        ColumnBox(3, 200, 350, GlyphColumnKind.text),
+      ];
+      final r = LineColumnLayout.exceed(
+        columns,
+        words: ['　', '“', '字', '。'],
+        visibleWidth: 300,
+        skipLeading: 2,
+      );
+      expect(r.exceeded, isTrue);
+      // Fixed columns untouched; overflow 50 spread over 2 body columns.
+      expect(r.columns[0].xStart, closeTo(0, epsilon));
+      expect(r.columns[1].xStart, closeTo(0, epsilon));
+      expect(r.columns[3].xEnd, closeTo(300, epsilon));
+      expect(r.columns[2].xStart, closeTo(75, epsilon));
+    });
+  });
+
   group('TR-4.2 justify via ASCII spaces', () {
     test('residual goes to non-trailing spaces only', () {
       final r = LineColumnLayout.justified(

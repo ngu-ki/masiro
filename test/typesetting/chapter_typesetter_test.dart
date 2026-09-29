@@ -354,6 +354,72 @@ void main() {
       expect(blocks[2], isA<TypesetLine>());
     });
 
+    test('CPS-tolerated single-line paragraph is pulled back inside '
+        'the visible width (exceed)', () {
+      // Same input as the zh_layout CPS_3 case: natural width 350 vs
+      // capacity 300. compressLineEnd never trims a paragraph-last line,
+      // so exceed() must absorb the overflow.
+      final engine = _FixedEngine(
+        emWidth: 100,
+        widths: const {'a': 50},
+      );
+      final pages = makeTypesetter(engine,
+              indentCells: 0, maxWidth: 300, maxHeight: 10000)
+          .layout([text('a“字。')]);
+      expect(pages, hasLength(1));
+      final line = linesOf(pages[0]).single;
+      expect(line.isExceeded, isTrue);
+      expect(line.hasIrregularGlyphs, isTrue);
+      expect(line.glyphs.last.xEnd, closeTo(300, epsilon));
+      for (final unit in line.glyphs) {
+        expect(unit.xEnd, lessThanOrEqualTo(300 + epsilon));
+      }
+    });
+
+    test('every painted line stays inside the visible width '
+        '(exhaustive short sequences)', () {
+      const alphabet = ['字', 'a', '“', '。'];
+      final engine = _FixedEngine(
+        emWidth: 100,
+        widths: const {'a': 50},
+      );
+      Iterable<List<int>> sequences(int length) sync* {
+        if (length == 0) {
+          yield <int>[];
+          return;
+        }
+        for (final rest in sequences(length - 1)) {
+          for (var i = 0; i < alphabet.length; i++) {
+            yield [...rest, i];
+          }
+        }
+      }
+
+      for (var length = 1; length <= 6; length++) {
+        for (final picks in sequences(length)) {
+          final content = picks.map((i) => alphabet[i]).join();
+          final pages = makeTypesetter(engine,
+                  maxWidth: 300, maxHeight: 100000)
+              .layout([text(content)]);
+          for (final page in pages) {
+            for (final block in page.blocks) {
+              if (block is! TypesetLine) continue;
+              for (final unit in block.glyphs) {
+                expect(
+                  unit.xEnd,
+                  lessThanOrEqualTo(300 + epsilon),
+                  reason: 'right edge clipped for "$content": '
+                      'unit ${unit.text} xEnd=${unit.xEnd}',
+                );
+                expect(unit.xStart, greaterThanOrEqualTo(-100 - epsilon),
+                    reason: 'unexpected left overshoot for "$content"');
+              }
+            }
+          }
+        }
+      }
+    });
+
     test('opening quote hangs into the indent area', () {
       final engine = _FixedEngine(emWidth: 100);
       final pages = makeTypesetter(engine,

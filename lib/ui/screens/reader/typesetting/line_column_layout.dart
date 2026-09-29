@@ -257,5 +257,60 @@ abstract final class LineColumnLayout {
     );
   }
 
+  /// Port of legado's `exceed()`: a CPS-tolerated break can leave a line
+  /// whose last column extends past [visibleWidth] (only possible for
+  /// natural/last lines — justified middle lines already distribute the
+  /// residual). The overflow is spread uniformly leftwards across the
+  /// line so the trailing glyph is not clipped.
+  ///
+  /// [columns] and [words] cover the whole line; [skipLeading] excludes
+  /// the fixed indent (and hung punctuation) columns of a justified first
+  /// line, matching legado passing `words.subList(wordStart, ...)`.
+  /// Returns the replacement columns and `exceeded` true when columns
+  /// were shifted (the line then needs the per-glyph paint path).
+  static ({List<ColumnBox> columns, bool exceeded}) exceed(
+    List<ColumnBox> columns, {
+    required List<String> words,
+    required double visibleWidth,
+    int skipLeading = 0,
+  }) {
+    final affected = columns.length - skipLeading;
+    if (affected < 2) {
+      return (columns: columns, exceeded: false);
+    }
+    // A trailing ASCII space carries no ink: it is excluded from the
+    // distribution and left unshifted, exactly like legado's endColumn.
+    var offset = 0;
+    var size = affected;
+    if (words[columns.last.index] == ' ') {
+      size--;
+      offset = 1;
+    }
+    if (size < 1) {
+      return (columns: columns, exceeded: false);
+    }
+    final endColumn = columns[columns.length - 1 - offset];
+    final overflow = endColumn.xEnd - visibleWidth;
+    if (overflow <= 0) {
+      return (columns: columns, exceeded: false);
+    }
+    final shifted = List<ColumnBox>.of(columns);
+    final cc = overflow / size;
+    for (var i = 0; i < size; i++) {
+      // Reverse access: i == 0 is the last distributed column, which
+      // moves left by the full overflow.
+      final globalIndex = columns.length - 1 - offset - i;
+      final col = shifted[globalIndex];
+      final py = cc * (size - i);
+      shifted[globalIndex] = ColumnBox(
+        col.index,
+        col.xStart - py,
+        col.xEnd - py,
+        col.kind,
+      );
+    }
+    return (columns: shifted, exceeded: true);
+  }
+
   static double _min(double a, double b) => a < b ? a : b;
 }

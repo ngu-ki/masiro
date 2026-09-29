@@ -265,6 +265,12 @@ class ChapterTypesetter {
 
     for (var lineIndex = 0; lineIndex < breaks.length; lineIndex++) {
       final br = breaks[lineIndex];
+      // A break can cover zero units only when a single glyph is wider
+      // than the whole line; such a line paints nothing and must not be
+      // packed (its empty glyph list would also break position getters).
+      if (br.end <= br.start) {
+        continue;
+      }
       final lineUnits = units.sublist(br.start, br.end);
       final isFirstLine = lineIndex == 0;
       final isLastLine = lineIndex == breaks.length - 1;
@@ -280,6 +286,7 @@ class ChapterTypesetter {
       final lineWidths = [for (final u in lineUnits) u.width];
 
       final LineColumnResult columns;
+      var exceedSkipLeading = 0;
       if (isFirstLine && breaks.length > 1) {
         // Multi-line paragraph first line: fixed indent, optional hung
         // quote, justified body.
@@ -292,6 +299,10 @@ class ChapterTypesetter {
           indentCharWidth: engine.indentCharWidth,
           hangingWidth: hanging,
         );
+        // exceed() redistributes body columns only; the fixed indent
+        // (and a hung quote) live inside the indent area.
+        exceedSkipLeading =
+            segmentIndentCells + (hanging > 0.0 ? 1 : 0);
       } else if (isLastLine) {
         // Last line (and single-line paragraphs) stay natural. Only the
         // first line of the element carries indent/hanging.
@@ -310,7 +321,17 @@ class ChapterTypesetter {
         );
       }
 
-      for (final c in columns.columns) {
+      // legado's exceed(): a CPS-tolerated break can leave the final
+      // column past the visible right edge; pull the line leftwards so
+      // no glyph is clipped. Regular justified lines never overflow.
+      final exceedResult = LineColumnLayout.exceed(
+        columns.columns,
+        words: lineWords,
+        visibleWidth: maxWidth,
+        skipLeading: exceedSkipLeading,
+      );
+
+      for (final c in exceedResult.columns) {
         final unit = lineUnits[c.index];
         unit
           ..kind = c.kind
@@ -350,6 +371,7 @@ class ChapterTypesetter {
         naturalWidth: desiredWidth,
         justifyGap: columns.justifyGap,
         justifyViaSpaces: columns.justifyViaSpaces,
+        isExceeded: exceedResult.exceeded,
       ));
       state.usedHeight += lineHeight;
     }
