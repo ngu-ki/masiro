@@ -69,25 +69,32 @@ TypesetPaintPlan planOf(
 
 void main() {
   group('TR-6.1 draw commands use stored geometry', () {
-    test('regular justified line is one fast-path group', () {
+    test('uniform justified line is painted per glyph at stored columns',
+        () {
+      // Regression for an em-wide hole in justified CJK lines: a uniform
+      // line must be drawn glyph-by-glyph at the measured columns. A single
+      // TextPainter + letterSpacing lets font shaping (e.g. the ellipsis
+      // '……') drift from the stored columns, so the extra justify space
+      // must never be handed to the painter as letterSpacing.
       final glyphs = [
-        unit('字', xStart: 0, xEnd: 115),
-        unit('字', xStart: 115, xEnd: 230),
-        unit('字', xStart: 230, xEnd: 345),
+        unit('能', xStart: 0, xEnd: 60),
+        unit('…', xStart: 60, xEnd: 120),
+        unit('…', xStart: 120, xEnd: 180),
+        unit('有', xStart: 180, xEnd: 240),
       ];
       final page = TypesetPage(blocks: [
-        line(glyphs, justifyGap: 15),
+        line(glyphs, justifyGap: 12),
       ]);
       final plan = planOf(page);
-      expect(plan.commands, hasLength(1));
-      expect(plan.perGlyphPaints, 0);
-      expect(plan.groupPaints, 1);
-      expect(plan.fastPathRatio, closeTo(1.0, epsilon));
-      final c = plan.commands.single;
-      expect(c.text, '字字字');
-      expect(c.x, closeTo(0, epsilon));
-      expect(c.y, 0);
-      expect(c.letterSpacing, closeTo(15, epsilon));
+      expect(plan.commands, hasLength(4));
+      expect(plan.perGlyphPaints, 4);
+      expect(plan.groupPaints, 0);
+      expect(plan.fastPathRatio, closeTo(0.0, epsilon));
+      for (var i = 0; i < 4; i++) {
+        expect(plan.commands[i].text, glyphs[i].text);
+        expect(plan.commands[i].x, closeTo(i * 60.0, epsilon));
+        expect(plan.commands[i].letterSpacing, 0);
+      }
     });
 
     test('compressed/hung line is painted per glyph with draw offset', () {
@@ -104,10 +111,11 @@ void main() {
         ], topGap: 7),
       ]);
       final plan = planOf(page);
-      // Two per-glyph commands for the irregular line, one fast group
-      // for the regular line after the blank gap.
-      expect(plan.perGlyphPaints, 2);
-      expect(plan.groupPaints, 1);
+      // Two per-glyph commands for the irregular line and one for the
+      // uniform line after the blank gap (uniform lines are also drawn
+      // per glyph now).
+      expect(plan.perGlyphPaints, 3);
+      expect(plan.groupPaints, 0);
       expect(plan.commands[0].x, closeTo(0, epsilon));
       expect(plan.commands[1].x, closeTo(80, epsilon)); // 100 - 20
       expect(plan.commands[1].text, '。');
@@ -134,7 +142,7 @@ void main() {
       expect(plan.commands.every((c) => c.letterSpacing == 0), isTrue);
     });
 
-    test('color boundaries split fast-path groups', () {
+    test('color is resolved per glyph on a uniform line', () {
       final glyphs = [
         unit('字', charStart: 0, xStart: 0, xEnd: 100),
         unit('字', charStart: 1, xStart: 100, xEnd: 200),

@@ -187,13 +187,30 @@ TypesetPaintPlan buildTypesetPaintPlanWithResolver(
         ));
         perGlyphPaints++;
       }
+    } else if (!block.justifyViaSpaces) {
+      // Uniform line (typical CJK prose, no ASCII-space justification).
+      // The measured columns are the only layout truth: shaping the whole
+      // run in one TextPainter with a uniform letterSpacing lets the font
+      // reposition certain runs (notably the ellipsis '……'), so painted
+      // glyphs drift from the stored columns by up to one em and an
+      // em-wide hole opens in the middle of a justified line. Draw every
+      // grapheme at its own stored column, exactly like the irregular path
+      // and legado's per-glyph drawing.
+      for (final unit in glyphs) {
+        commands.add(TypesetDrawCommand(
+          text: unit.text,
+          x: unit.xStart + unit.drawOffset,
+          y: lineY,
+          color: resolver.resolve(unit),
+        ));
+        perGlyphPaints++;
+      }
     } else {
-      // Regular line: merge consecutive glyphs laid out at a constant
-      // inter-glyph advance into one painter. justifyViaSpaces splits
-      // groups at ASCII spaces (the inflated space advance already
-      // shows up in the next glyph's xStart); otherwise the line's
-      // justifyGap is the constant extra advance.
-      final gap = block.justifyViaSpaces ? 0.0 : block.justifyGap;
+      // ASCII-space justified line (typically Latin prose): keep each word
+      // as one painter so intra-word kerning/ligatures survive. The
+      // inflated space advance is already baked into the next glyph's
+      // xStart, so groups carry no extra letter spacing and only split at
+      // spaces, color changes and non-uniform steps.
       var groupStart = 0;
 
       void flushGroup(int end) {
@@ -209,7 +226,7 @@ TypesetPaintPlan buildTypesetPaintPlanWithResolver(
           buffer.toString(),
           first.xStart,
           resolver.resolve(first),
-          gap,
+          0.0,
         );
         groupStart = end;
       }
@@ -219,9 +236,8 @@ TypesetPaintPlan buildTypesetPaintPlanWithResolver(
         final color = resolver.resolve(unit);
         final startNewGroup = i == 0 ||
             !_colorSame(color, resolver.resolve(glyphs[i - 1])) ||
-            (block.justifyViaSpaces && glyphs[i - 1].text == ' ') ||
-            unit.xStart - glyphs[i - 1].xStart !=
-                glyphs[i - 1].width + gap;
+            glyphs[i - 1].text == ' ' ||
+            unit.xStart - glyphs[i - 1].xStart != glyphs[i - 1].width;
         if (startNewGroup && i > groupStart) {
           flushGroup(i);
         }
@@ -338,8 +354,8 @@ class TypesetPagePainter extends CustomPainter {
       if (pool == null) {
         localPainters.add(painter);
       }
-      // The uniform-gap fast path applies the gap via letterSpacing; the
-      // trailing blank after the final glyph must not overdraw the edge.
+      // Clip to the content below this command's baseline band so a glyph's
+      // bearing or trailing advance never overdraws the right edge.
       canvas.save();
       canvas.clipRect(Rect.fromLTWH(0, command.y, size.width,
           size.height - command.y));
