@@ -713,6 +713,12 @@ abstract class AppLocalizations {
   /// **'2格'**
   String get indentTwo;
 
+  /// No description provided for @indentForced.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制'**
+  String get indentForced;
+
   /// No description provided for @indentAdaptive.
   ///
   /// In zh, this message translates to:

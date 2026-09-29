@@ -199,7 +199,8 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
 
   List<ChapterContentElement> _effectiveElements() {
     final source = widget.content.elements;
-    final adaptive = widget.indentMode == IndentMode.adaptive;
+    final adaptive = widget.indentMode == IndentMode.adaptive ||
+        widget.indentMode == IndentMode.forced;
     if (!widget.forceSimplified && !adaptive) {
       return source;
     }
@@ -292,6 +293,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         IndentMode.none => 0,
         IndentMode.one => 1,
         IndentMode.two => 2,
+        IndentMode.forced => 2,
         IndentMode.adaptive => 2,
       };
 
@@ -364,6 +366,8 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
               paragraphGap: paragraphGap,
               blankGap: blankGap,
               shrinkEmptyLines: widget.shrinkEmptyLines,
+              hangOpeningPunctuation:
+                  widget.indentMode != IndentMode.forced,
               firstPageHeaderHeight: headerHeight,
             );
             _pages = typesetter.layout(elements);

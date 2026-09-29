@@ -173,6 +173,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
               (localizations.indentNone, IndentMode.none),
               (localizations.indentOne, IndentMode.one),
               (localizations.indentTwo, IndentMode.two),
+              (localizations.indentForced, IndentMode.forced),
               (localizations.indentAdaptive, IndentMode.adaptive),
             ],
             selected: indentMode,

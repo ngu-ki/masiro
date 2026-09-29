@@ -13,6 +13,11 @@ enum IndentMode {
   two,
 
   /// Always indent by two full-width characters, normalizing any
+  /// indentation already present in the source content; opening quotes at
+  /// paragraph starts are kept after the indent cells (no hanging).
+  forced,
+
+  /// Always indent by two full-width characters, normalizing any
   /// indentation already present in the source content.
   adaptive,
 }
@@ -38,6 +43,7 @@ extension IndentModeExtension on IndentMode {
       case IndentMode.one:
         return '　';
       case IndentMode.two:
+      case IndentMode.forced:
       case IndentMode.adaptive:
         return '　　';
     }

@@ -123,6 +123,7 @@ class ChapterTypesetter {
     required this.paragraphGap,
     required this.blankGap,
     required this.shrinkEmptyLines,
+    this.hangOpeningPunctuation = true,
     this.firstPageHeaderHeight = 0.0,
   });
 
@@ -137,6 +138,12 @@ class ChapterTypesetter {
   final double paragraphGap;
   final double blankGap;
   final bool shrinkEmptyLines;
+
+  /// Whether an opening quote at the start of a paragraph may hang into
+  /// the indentation area. Disabled by the forced indent mode so every
+  /// paragraph's first glyph starts exactly after the indent cells.
+  final bool hangOpeningPunctuation;
+
   final double firstPageHeaderHeight;
 
   List<TypesetPage> layout(List<ChapterContentElement> elements) {
@@ -245,14 +252,14 @@ class ChapterTypesetter {
     final words = [for (final u in units) u.text];
     final widths = [for (final u in units) u.width];
 
-    final hanging =
-        HangingPunctuationRule.shouldHang(words, segmentIndentCells)
-            ? LineColumnLayout.hangingWidth(
-                widths: widths,
-                indentLength: segmentIndentCells,
-                indentCharWidth: engine.indentCharWidth,
-              )
-            : 0.0;
+    final hanging = hangOpeningPunctuation &&
+            HangingPunctuationRule.shouldHang(words, segmentIndentCells)
+        ? LineColumnLayout.hangingWidth(
+            widths: widths,
+            indentLength: segmentIndentCells,
+            indentCharWidth: engine.indentCharWidth,
+          )
+        : 0.0;
 
     final breaks = ZhLineBreaker.breakLines(
       words: words,

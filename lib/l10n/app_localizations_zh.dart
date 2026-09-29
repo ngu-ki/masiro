@@ -47,6 +47,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get indentTwo => '2格';
 
   @override
+  String get indentForced => '强制';
+
+  @override
   String get indentAdaptive => '自适应';
 
   @override
@@ -438,6 +441,9 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get indentTwo => '2格';
 
   @override
+  String get indentForced => '強制';
+
+  @override
   String get indentAdaptive => '自適應';
 
   @override
@@ -818,6 +824,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get indentTwo => '2格';
+
+  @override
+  String get indentForced => '強制';
 
   @override
   String get indentAdaptive => '自適應';

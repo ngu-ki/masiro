@@ -102,6 +102,7 @@
   "indentNone": "無",
   "indentOne": "1格",
   "indentTwo": "2格",
+  "indentForced": "強制",
   "indentAdaptive": "自適應",
   "addToBookshelf": "加入書架",
   "inBookshelf": "已在書架",

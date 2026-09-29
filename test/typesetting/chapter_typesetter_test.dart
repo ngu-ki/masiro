@@ -85,6 +85,7 @@ ChapterTypesetter makeTypesetter(
   double paragraphGap = 5,
   double blankGap = 4,
   bool shrinkEmptyLines = false,
+  bool hangOpeningPunctuation = true,
   double header = 0,
 }) {
   return ChapterTypesetter(
@@ -96,6 +97,7 @@ ChapterTypesetter makeTypesetter(
     paragraphGap: paragraphGap,
     blankGap: blankGap,
     shrinkEmptyLines: shrinkEmptyLines,
+    hangOpeningPunctuation: hangOpeningPunctuation,
     firstPageHeaderHeight: header,
   );
 }
@@ -434,6 +436,32 @@ void main() {
       expect(hang.xStart, closeTo(100, epsilon));
       expect(hang.xEnd, closeTo(200, epsilon));
       expect(line.glyphs.last.xStart, closeTo(200, epsilon));
+    });
+
+    test('forced indent keeps the opening quote after the indent cells',
+        () {
+      // The forced indent mode disables hanging: every paragraph's first
+      // glyph (opening quote included) starts after both indent cells.
+      final engine = _FixedEngine(emWidth: 100);
+      final pages = makeTypesetter(
+        engine,
+        indentCells: 2,
+        maxWidth: 400,
+        maxHeight: 10000,
+        hangOpeningPunctuation: false,
+      ).layout([text('“字字')]);
+      final firstLine = linesOf(pages[0]).first;
+      expect(firstLine.hasHanging, isFalse);
+      expect(
+        firstLine.glyphs.any((g) => g.kind == GlyphColumnKind.hanging),
+        isFalse,
+      );
+      // First body unit is the quote itself, placed right after the two
+      // indent cells rather than hung into them.
+      final quote = firstLine.glyphs[2];
+      expect(quote.text, '“');
+      expect(quote.kind, GlyphColumnKind.text);
+      expect(quote.xStart, closeTo(200, epsilon));
     });
   });
 }
