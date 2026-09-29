@@ -8,19 +8,12 @@ import 'package:masiro/data/repository/model/read_position.dart';
 import 'package:masiro/data/repository/model/text_color_mode.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/render.dart';
-import 'package:masiro/ui/screens/reader/pagination.dart';
+import 'package:masiro/ui/screens/reader/typesetting/chapter_typesetter.dart';
+import 'package:masiro/ui/screens/reader/typesetting/text_measure.dart';
+import 'package:masiro/ui/screens/reader/typesetting/typeset_models.dart';
+import 'package:masiro/ui/screens/reader/typesetting/typeset_page_painter.dart';
 import 'package:masiro/ui/widgets/cached_image.dart';
 import 'package:pinyin/pinyin.dart';
-
-/// Opaque black as declared by source markup (`black`, `#000`...). In
-/// simplified mode such ranges keep the ordinary body color instead of
-/// being muted.
-const _sourceBlack = 0xFF000000;
-
-/// Fully transparent color (`color: transparent`), tracked as a declared
-/// color. In original mode it renders invisible by default; long-pressing
-/// the page reveals all transparent ranges in muted gray.
-const _transparentColor = 0x00000000;
 
 /// Controller that allows the menu slider to jump to a position fraction of
 /// the current chapter, and external inputs (volume keys) to turn pages.
@@ -117,7 +110,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   static const _dragThreshold = 60.0;
   static const _chapterEndOverscrollThreshold = 80.0;
 
-  List<ReaderPageContent> _pages = const [];
+  List<TypesetPage> _pages = const [];
   String _layoutSignature = '';
   String _configSignature = '';
   ReadPosition? _pendingRestore;
@@ -155,6 +148,9 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   /// previous chapter/config doesn't schedule follow-up work.
   int _paginationGeneration = 0;
 
+  /// Shared [TextPainter]s used by every page painter.
+  final TypesetTextPainterPool _painterPool = TypesetTextPainterPool();
+
   @override
   void initState() {
     super.initState();
@@ -184,6 +180,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     widget.pagerController._previousPage = null;
     _pageController?.dispose();
     _pageIndexNotifier.dispose();
+    _painterPool.dispose();
     super.dispose();
   }
 
@@ -234,7 +231,7 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final stripped = text.substring(leading);
         // Keep paragraphs made solely of spaces untouched so they still
         // render as blank lines.
-        if (!isBlankTextLine(stripped)) {
+        if (!isTypesetBlankText(stripped)) {
           text = stripped;
           coloredRanges = [
             for (final range in coloredRanges)
@@ -288,6 +285,16 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
     );
   }
 
+  /// Number of fixed full-width indent columns per paragraph. Adaptive
+  /// mode normalizes source indentation (see [_effectiveElements]) and
+  /// always renders a two-cell indent.
+  int get _indentCells => switch (widget.indentMode) {
+        IndentMode.none => 0,
+        IndentMode.one => 1,
+        IndentMode.two => 2,
+        IndentMode.adaptive => 2,
+      };
+
   /// Paragraph spacing. With blank-line shrinking on it is 1.5x the line
   /// spacing (line height is 1.5x the font size, so line spacing is 0.5x
   /// the font size); otherwise a slightly tighter default.
@@ -339,25 +346,36 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         titlePainter.dispose();
 
         final signature =
-            '$_configSignature-${contentWidth.toStringAsFixed(1)}x${contentHeight.toStringAsFixed(1)}';
+            '$_configSignature-${style.fontFamily ?? ''}-${contentWidth.toStringAsFixed(1)}x${contentHeight.toStringAsFixed(1)}';
         if (signature != _layoutSignature) {
           _layoutSignature = signature;
-          _pages = paginateChapterContent(
-            elements: elements,
-            maxWidth: contentWidth,
-            maxHeight: contentHeight,
-            style: style,
-            paragraphGap: paragraphGap,
-            indentPrefix: widget.indentMode.prefix,
-            shrinkEmptyLines: widget.shrinkEmptyLines,
-            blankGap: blankGap,
-            firstPageHeaderHeight: headerHeight,
-          );
+          // The self-developed CJK typesetting engine: per-glyph
+          // measurement, kinsoku line breaking, punctuation compression
+          // and hung opening punctuation. Geometry produced here is what
+          // the painter draws verbatim.
+          final measure = TextMeasure(style);
+          try {
+            final typesetter = ChapterTypesetter(
+              engine: TextMeasureTypesetEngine(measure),
+              indentCells: _indentCells,
+              maxWidth: contentWidth,
+              maxHeight: contentHeight,
+              lineHeight: widget.fontSize * 1.5,
+              paragraphGap: paragraphGap,
+              blankGap: blankGap,
+              shrinkEmptyLines: widget.shrinkEmptyLines,
+              firstPageHeaderHeight: headerHeight,
+            );
+            _pages = typesetter.layout(elements);
+          } finally {
+            measure.dispose();
+          }
+          _painterPool.clear();
           final restore = _pendingRestore ?? widget.initialPosition;
           _pendingRestore = null;
           _currentPage = restore.isEnd
               ? _pages.length - 1
-              : pageIndexOfPosition(_pages, restore)
+              : typesetPageIndexOfPosition(_pages, restore)
                     .clamp(0, _pages.length - 1);
           // Notify the HUD and the persistence layer after the current
           // build/layout pass to avoid marking sibling widgets dirty.
@@ -380,7 +398,24 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final firstPage = _pages.isNotEmpty ? _pages.first : null;
         final showHeaderOnFirstPage = firstPage != null &&
             !firstPage.isImagePage() &&
-            firstPage.runs.isNotEmpty;
+            firstPage.blocks.isNotEmpty;
+
+        // Build the per-element source-color ranges consumed by the
+        // painter's color resolver.
+        final rangesByElement = <int, List<ColoredRange>>{};
+        for (var i = 0; i < elements.length; i++) {
+          final element = elements[i];
+          if (element is TextContent && element.coloredRanges.isNotEmpty) {
+            rangesByElement[i] = element.coloredRanges;
+          }
+        }
+        final colorResolver = TypesetColorResolver(
+          rangesByElement: rangesByElement,
+          mode: widget.textColorMode,
+          bodyColor: widget.textColor,
+          revealTransparent: _revealTransparent,
+        );
+
         // Every page is constructed up front so scrubbing the progress bar
         // lands on an already-built page; image pages, however, only start
         // their network request once they are the current/adjacent page or
@@ -389,16 +424,14 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final pageWidgets = [
           for (var i = 0; i < _pages.length; i++)
             _buildPage(
-              context,
               _pages[i],
               style,
-              paragraphGap,
-              blankGap,
+              colorResolver,
               topInset: topInset,
               bottomInset: bottomInset,
               contentWidth: contentWidth,
               contentHeight: contentHeight,
-              titleBodyGap: titleBodyGap,
+              headerHeight: headerHeight,
               pageIndex: i,
               pageIndexNotifier: _pageIndexNotifier,
               header: i == 0 && showHeaderOnFirstPage
@@ -439,16 +472,14 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   }
 
   Widget _buildPage(
-    BuildContext context,
-    ReaderPageContent page,
+    TypesetPage page,
     TextStyle style,
-    double paragraphGap,
-    double blankGap, {
+    TypesetColorResolver colorResolver, {
     required double topInset,
     required double bottomInset,
     required double contentWidth,
     required double contentHeight,
-    required double titleBodyGap,
+    required double headerHeight,
     required int pageIndex,
     required ValueNotifier<int> pageIndexNotifier,
     Widget? header,
@@ -463,147 +494,35 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       );
     }
 
-    final elements = _effectiveElements();
-    final children = <Widget>[];
-    var lastElementIndex = -1;
-    // The chapter title already carries its own trailing gap, so the first
-    // body run must not add another paragraph gap.
-    var suppressNextGap = false;
-    if (header != null) {
-      children.add(header);
-      children.add(SizedBox(height: titleBodyGap));
-      suppressNextGap = true;
-    }
-    for (final run in page.runs) {
-      if (run.isBlankGap) {
-        children.add(SizedBox(height: blankGap));
-        lastElementIndex = run.elementIndex;
-        suppressNextGap = false;
-        continue;
-      }
-      if (!suppressNextGap &&
-          children.isNotEmpty &&
-          run.elementIndex != lastElementIndex) {
-        children.add(SizedBox(height: paragraphGap));
-      }
-      suppressNextGap = false;
-      final element = elements[run.elementIndex] as TextContent;
-      final displayText = '${widget.indentMode.prefix}${element.text}';
-      var fragment = displayText.substring(run.start, run.end);
-      if (fragment.endsWith('\n')) {
-        fragment = fragment.substring(0, fragment.length - 1);
-      }
-      children.add(
-        Text.rich(
-          TextSpan(
-            children: _buildFragmentSpans(
-              element: element,
-              fragment: fragment,
-              runStart: run.start,
-              prefixLength: widget.indentMode.prefix.length,
-            ),
-          ),
-          style: style,
-        ),
-      );
-      lastElementIndex = run.elementIndex;
-    }
-
+    // All line geometry (line breaks, indent, hanging punctuation,
+    // justification, compression, paragraph and blank gaps) lives in the
+    // typeset page blocks. The painter draws exactly what the typesetter
+    // measured; there is no second layout path here.
+    final paintHeight =
+        header != null ? contentHeight - headerHeight : contentHeight;
     return Padding(
       padding: widget.padding +
           EdgeInsets.only(top: topInset, bottom: bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: children,
+        children: [
+          if (header != null) ...[
+            header,
+            SizedBox(height: _buildTitleBodyGap()),
+          ],
+          CustomPaint(
+            size: Size(contentWidth, paintHeight),
+            painter: TypesetPagePainter(
+              page: page,
+              resolver: colorResolver,
+              style: style,
+              pool: _painterPool,
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  /// Builds the spans of a page [fragment], splitting the source-colored
-  /// ranges out and coloring them according to [ChapterContentPager.textColorMode]:
-  ///
-  /// - [TextColorMode.original]: the declared source color is used verbatim
-  ///   (including alpha), with no adaptation to the reader background.
-  /// - [TextColorMode.simplified]: non-black source colors are rendered in a
-  ///   muted gray; explicit black keeps the body color.
-  /// - [TextColorMode.uniform]: source colors are ignored entirely and the
-  ///   adaptive body color (from [Text.style]) is used everywhere.
-  ///
-  /// [runStart] is the fragment's start offset within
-  /// `indentPrefix + element.text`; [prefixLength] is the indent prefix
-  /// length, used to map element-level ranges to fragment offsets.
-  List<InlineSpan> _buildFragmentSpans({
-    required TextContent element,
-    required String fragment,
-    required int runStart,
-    required int prefixLength,
-  }) {
-    if (widget.textColorMode == TextColorMode.uniform ||
-        element.coloredRanges.isEmpty ||
-        fragment.isEmpty) {
-      return [TextSpan(text: fragment)];
-    }
-
-    final mutedColor = widget.textColor.withValues(alpha: 0.45);
-
-    // Intersect the element-level colored ranges with the visible fragment.
-    final textLength = element.text.length;
-    final elementStart = (runStart - prefixLength).clamp(0, textLength);
-    final elementEnd =
-        (runStart + fragment.length - prefixLength).clamp(0, textLength);
-    final localRanges = <(int, int, Color?)>[];
-    for (final range in element.coloredRanges) {
-      final start = range.start > elementStart ? range.start : elementStart;
-      final end = range.end < elementEnd ? range.end : elementEnd;
-      if (start >= end) {
-        continue;
-      }
-      Color? resolved;
-      if (widget.textColorMode == TextColorMode.original) {
-        if (range.color == _transparentColor && _revealTransparent) {
-          // Long-press revealed transparent text: show it in muted gray
-          // so it becomes readable against any background.
-          resolved = mutedColor;
-        } else {
-          resolved = Color(range.color);
-        }
-      } else if (range.color != _sourceBlack) {
-        // Simplified mode: black declarations are treated as ordinary body
-        // text; every other source color is muted to gray.
-        resolved = mutedColor;
-      }
-      localRanges.add(
-        (
-          prefixLength + start - runStart,
-          prefixLength + end - runStart,
-          resolved,
-        ),
-      );
-    }
-    if (localRanges.isEmpty) {
-      return [TextSpan(text: fragment)];
-    }
-    localRanges.sort((a, b) => a.$1.compareTo(b.$1));
-
-    final spans = <InlineSpan>[];
-    var cursor = 0;
-    for (final (start, end, color) in localRanges) {
-      if (start > cursor) {
-        spans.add(TextSpan(text: fragment.substring(cursor, start)));
-      }
-      spans.add(
-        TextSpan(
-          text: fragment.substring(start, end),
-          style: color == null ? null : TextStyle(color: color),
-        ),
-      );
-      cursor = end;
-    }
-    if (cursor < fragment.length) {
-      spans.add(TextSpan(text: fragment.substring(cursor)));
-    }
-    return spans;
   }
 
   Widget _buildChapterEndPage(BuildContext context) {
@@ -856,16 +775,29 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       return;
     }
 
-    final firstRun = page.runs.first;
+    final firstLine = page.firstLine;
+    final int elementIndex;
+    final int charIndex;
+    if (firstLine != null) {
+      elementIndex = firstLine.elementIndex;
+      charIndex = firstLine.startChar;
+    } else if (page.blocks.isNotEmpty) {
+      // Blank-gap-only page: anchor at its source element.
+      elementIndex = page.blocks.first.elementIndex;
+      charIndex = 0;
+    } else {
+      elementIndex = 0;
+      charIndex = 0;
+    }
     widget.onPositionChange!(
       ReadPosition(
-        elementIndex: firstRun.elementIndex,
+        elementIndex: elementIndex,
         elementTopOffset: 0,
-        elementCharacterIndex: firstRun.start,
+        elementCharacterIndex: charIndex,
         articleCharacterIndex: getArticleCharacterIndex(
           _effectiveElements(),
-          firstRun.elementIndex,
-          firstRun.start,
+          elementIndex,
+          charIndex,
         ),
       ),
     );
