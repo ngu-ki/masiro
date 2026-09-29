@@ -711,14 +711,38 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       return;
     }
 
-    // Refresh the unread badge from a fresh novel detail. The chapter list is
-    // needed to compute how many chapters remain after the one just read.
+    final readChapterId = lastChapterId ?? lastReadChapterId;
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Update the reading timestamp optimistically so the "recently read"
+    // sort moves this novel to the top immediately when the reader closes,
+    // instead of waiting for the detail request below to finish. The
+    // chapter counts are preserved from the existing stat to avoid
+    // flickering the unread badge.
+    final currentStat =
+        bloc.state is FavoritesScreenLoadedState
+            ? (bloc.state as FavoritesScreenLoadedState).stats[n.id]
+            : null;
+    bloc.add(
+      FavoritesScreenNovelStatUpdated(
+        novelId: n.id,
+        stat: BookshelfStat(
+          totalChapters: currentStat?.totalChapters ?? 0,
+          unreadCount: currentStat?.unreadCount ?? 0,
+          lastReadChapterId: readChapterId,
+          lastReadAt: now,
+        ),
+      ),
+    );
+
+    // Refresh the unread badge from a fresh novel detail in the background.
+    // The chapter list is needed to compute how many chapters remain after
+    // the one just read.
     try {
       final detail = await getIt<MasiroRepository>().getNovelDetail(n.id);
       final chapters = [
         for (final volume in detail.volumes) ...volume.chapters,
       ];
-      final readChapterId = lastChapterId ?? lastReadChapterId;
       final index = chapters.indexWhere((c) => c.id == readChapterId);
       bloc.add(
         FavoritesScreenNovelStatUpdated(
@@ -727,7 +751,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             totalChapters: chapters.length,
             unreadCount: index < 0 ? 0 : chapters.length - index - 1,
             lastReadChapterId: readChapterId,
-            lastReadAt: DateTime.now().millisecondsSinceEpoch,
+            lastReadAt: now,
           ),
         ),
       );

@@ -7,9 +7,11 @@ import 'package:masiro/bloc/screen/novel/novel_screen_event.dart';
 import 'package:masiro/bloc/screen/novel/novel_screen_state.dart';
 import 'package:masiro/data/repository/model/novel_detail.dart';
 import 'package:masiro/data/repository/model/volume.dart';
+import 'package:masiro/di/get_it.dart';
 import 'package:masiro/misc/chapter.dart';
 import 'package:masiro/misc/context.dart';
 import 'package:masiro/misc/easy_refresh.dart';
+import 'package:masiro/misc/reading_progress_bus.dart';
 import 'package:masiro/misc/router.dart';
 import 'package:masiro/ui/screens/novel/expandable_brief.dart';
 import 'package:masiro/ui/screens/novel/novel_header.dart';
@@ -301,7 +303,18 @@ class _NovelScreenState extends State<NovelScreen> {
         'chapterId': chapterId,
       },
     );
-    bloc.add(NovelScreenChapterRead(chapterId: lastReadChapterId ?? chapterId));
+    final readChapterId = lastReadChapterId ?? chapterId;
+    bloc.add(NovelScreenChapterRead(chapterId: readChapterId));
+    // Notify the bookshelf so the novel jumps to the top of the "recently
+    // read" sort immediately, even though this screen has no direct access
+    // to the favorites bloc.
+    getIt<ReadingProgressBus>().publish(
+      ReadingProgressUpdate(
+        novelId: novelId,
+        lastReadChapterId: readChapterId,
+        lastReadAt: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
   }
 
   void _backToPrevScreen(BuildContext context) {

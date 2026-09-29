@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masiro/bloc/screen/favorites/favorites_screen_event.dart';
 import 'package:masiro/bloc/screen/favorites/favorites_screen_state.dart';
@@ -8,6 +10,7 @@ import 'package:masiro/data/repository/model/novel.dart';
 import 'package:masiro/data/repository/model/novel_detail.dart';
 import 'package:masiro/data/repository/preferences_repository.dart';
 import 'package:masiro/di/get_it.dart';
+import 'package:masiro/misc/reading_progress_bus.dart';
 
 typedef _FavoritesScreenBloc = Bloc<FavoritesScreenEvent, FavoritesScreenState>;
 
@@ -36,6 +39,11 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
   /// Whether the unread counts have already been enriched once.
   bool _statsEnriched = false;
 
+  /// Subscription to the global reading-progress broadcast, so novels read
+  /// from the detail page (which has no direct access to this bloc) still
+  /// move to the top of the "recently read" sort immediately.
+  StreamSubscription<ReadingProgressUpdate>? _progressSubscription;
+
   FavoritesScreenBloc() : super(_computeInitialState()) {
     on<FavoritesScreenRequested>(_onRequestFavoritesScreen);
     on<FavoritesScreenRefreshed>(_onRefreshFavoritesScreen);
@@ -50,6 +58,42 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
     on<FavoritesScreenNovelSelectionToggled>(_onNovelSelectionToggled);
     on<FavoritesScreenAllSelectionToggled>(_onAllSelectionToggled);
     on<FavoritesScreenSelectedNovelsRemoved>(_onSelectedNovelsRemoved);
+
+    _progressSubscription =
+        getIt<ReadingProgressBus>().stream.listen(_onReadingProgressUpdate);
+  }
+
+  @override
+  Future<void> close() async {
+    await _progressSubscription?.cancel();
+    _progressSubscription = null;
+    return super.close();
+  }
+
+  /// Handles a reading-progress update published by any screen that launched
+  /// the reader. Stamps the novel with the current reading time and re-sorts
+  /// so it surfaces at the top of the "recently read" order right away.
+  void _onReadingProgressUpdate(ReadingProgressUpdate update) {
+    final current = state;
+    if (current is! FavoritesScreenLoadedState) {
+      return;
+    }
+    final existing = _stats[update.novelId];
+    final stat = BookshelfStat(
+      totalChapters: existing?.totalChapters ?? 0,
+      unreadCount: existing?.unreadCount ?? 0,
+      lastReadChapterId: update.lastReadChapterId,
+      lastReadAt: update.lastReadAt,
+    );
+    final newStats = Map<int, BookshelfStat>.from(_stats);
+    newStats[update.novelId] = stat;
+    _stats = newStats;
+    _preferencesRepository.bookshelfStats = _stats;
+    final novels = current.sortMode == FavoritesSortMode.recentlyRead ||
+            current.sortMode == FavoritesSortMode.chapterCount
+        ? _sortNovels(_novels, current.sortMode, current.sortDirection)
+        : null;
+    emit(current.copyWith(stats: _stats, novels: novels));
   }
 
   /// Builds the initial state from cached data if available, so the screen

@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 import 'package:masiro/data/database/core.dart';
 import 'package:masiro/di/injectable.dart';
 import 'package:masiro/misc/cookie.dart';
+import 'package:masiro/misc/reading_progress_bus.dart';
 import 'package:masiro/misc/url.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -23,6 +24,10 @@ Future<void> setupGetIt() async {
   // Register logger
   final logger = Logger();
   getIt.registerSingleton(logger);
+
+  // Global broadcast for reading-progress updates so the bookshelf re-sorts
+  // immediately after a reading session, no matter which screen started it.
+  getIt.registerSingleton(ReadingProgressBus());
 
   // Register dio
   final supportDir = await getApplicationSupportDirectory();
