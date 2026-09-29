@@ -99,10 +99,11 @@ class PunctuationCompressRule {
     double rightSpace,
   ) {
     if (width < em * 0.9) return 0;
-    final space = switch (trimSide(leftSpace, rightSpace)) {
+    // Use 2.0 (not 2): int * double has static type num on Dart 3.7.
+    final double space = switch (trimSide(leftSpace, rightSpace)) {
       TrimSide.right => rightSpace,
       TrimSide.left => leftSpace,
-      TrimSide.both => 2 * math.min(leftSpace, rightSpace),
+      TrimSide.both => 2.0 * math.min(leftSpace, rightSpace),
     };
     return math.min(width / 2, math.max(0.0, space));
   }
