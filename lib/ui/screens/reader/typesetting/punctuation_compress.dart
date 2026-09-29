@@ -104,7 +104,7 @@ class PunctuationCompressRule {
       TrimSide.left => leftSpace,
       TrimSide.both => 2 * math.min(leftSpace, rightSpace),
     };
-    return math.min(width / 2, math.max(0, space));
+    return math.min(width / 2, math.max(0.0, space));
   }
 
   /// Paint offset of the glyph after trimming; the column origin does not

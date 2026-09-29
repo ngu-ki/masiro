@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:characters/characters.dart';
 import 'package:flutter/material.dart';
@@ -139,11 +140,12 @@ class TextMeasure {
     }
     _painter.text = TextSpan(text: cluster, style: style);
     _painter.layout();
-    final boxes = _painter.getBoxesForRange(
-      0,
-      cluster.length,
-      boxHeightStyle: BoxHeightStyle.tight,
-      boxWidthStyle: BoxWidthStyle.tight,
+    // TextPainter only exposes the tight-box query via selections on
+    // Flutter 3.29; getBoxesForRange was added on a later stable.
+    final boxes = _painter.getBoxesForSelection(
+      TextSelection(baseOffset: 0, extentOffset: cluster.length),
+      boxHeightStyle: ui.BoxHeightStyle.tight,
+      boxWidthStyle: ui.BoxWidthStyle.tight,
     );
     final result = boxes.isEmpty
         ? (left: 0.0, right: 0.0)

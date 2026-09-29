@@ -92,6 +92,10 @@ class GlyphUnit {
 /// A block placed on a typeset page: either a laid-out text line or a
 /// collapsed blank-line gap.
 sealed class TypesetBlock {
+  /// Enables const constructors in subclasses (on Dart 3.7 a sealed
+  /// class's implicit constructor is not const).
+  const TypesetBlock();
+
   /// Occupied height in logical pixels.
   double get height;
 
