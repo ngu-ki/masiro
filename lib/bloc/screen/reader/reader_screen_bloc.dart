@@ -7,6 +7,7 @@ import 'package:masiro/bloc/screen/reader/reader_screen_state.dart';
 import 'package:masiro/bloc/util/event_transformer.dart';
 import 'package:masiro/data/repository/app_configuration_repository.dart';
 import 'package:masiro/data/repository/masiro_repository.dart';
+import 'package:masiro/data/repository/model/bookshelf_stat.dart';
 import 'package:masiro/data/repository/model/chapter_detail.dart';
 import 'package:masiro/data/repository/model/chapter_record.dart';
 import 'package:masiro/data/repository/model/indent_mode.dart';
@@ -19,6 +20,7 @@ import 'package:masiro/data/repository/novel_record_repository.dart';
 import 'package:masiro/data/repository/preferences_repository.dart';
 import 'package:masiro/data/repository/user_repository.dart';
 import 'package:masiro/di/get_it.dart';
+import 'package:masiro/misc/reading_progress_bus.dart';
 
 class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
   final masiroRepository = getIt<MasiroRepository>();
@@ -162,9 +164,37 @@ class ReaderScreenBloc extends Bloc<ReaderScreenEvent, ReaderScreenState> {
           readingMode: _readingModeOf(pageTurnMode),
         ),
       );
+      _stampReadingTime(chapterId);
     } catch (e) {
       emit(ReaderScreenErrorState(message: e.toString()));
     }
+  }
+
+  /// Stamps the novel's reading timestamp when a chapter loads, rather than
+  /// when the reader pops, so the book tops the "recently read" sort even
+  /// when the app is killed while still in the reader. The prefs write
+  /// survives the kill; the bus update keeps a live favorites bloc's cached
+  /// stats in sync, so its next persist doesn't overwrite the fresh stamp.
+  void _stampReadingTime(int chapterId) {
+    final stats = Map<int, BookshelfStat>.from(
+      preferencesRepository.bookshelfStats,
+    );
+    final existing = stats[novelId];
+    final now = DateTime.now().millisecondsSinceEpoch;
+    stats[novelId] = BookshelfStat(
+      totalChapters: existing?.totalChapters ?? 0,
+      unreadCount: existing?.unreadCount ?? 0,
+      lastReadChapterId: chapterId,
+      lastReadAt: now,
+    );
+    preferencesRepository.bookshelfStats = stats;
+    getIt<ReadingProgressBus>().publish(
+      ReadingProgressUpdate(
+        novelId: novelId,
+        lastReadChapterId: chapterId,
+        lastReadAt: now,
+      ),
+    );
   }
 
   void _onToggleReaderScreenHud(
