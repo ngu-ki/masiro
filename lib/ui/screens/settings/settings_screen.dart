@@ -43,23 +43,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  /// Pops the settings popup menu when the user switches away from this tab
-  /// (branch index 2). Other routes (e.g. dialogs) are left untouched.
+  /// Removes the settings popup menu instantly (no closing animation) when
+  /// the user switches away from this tab (branch index 2), so the menu
+  /// never ghosts over the switch and switching back shows no fade.
   void _onBranchChanged() {
     final notifier = _branchNotifier;
     if (notifier == null || notifier.value == 2) {
       return;
     }
-    // Defer until after the branch-switch frame: the closing animation then
-    // runs on the offstage branch and cannot ghost over the new tab.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
+    final navigator = Navigator.of(context);
+    // popUntil is only used to reach the topmost route; the predicate always
+    // returns true so nothing is actually popped (popping would animate).
+    // PopupRoute (not PopupMenuRoute) for Flutter 3.29 CI compatibility;
+    // only popups sit above the page route, so nothing else is removed.
+    Route<dynamic>? popup;
+    navigator.popUntil((route) {
+      if (route is PopupRoute && route.isActive) {
+        popup = route;
       }
-      // PopupRoute (not PopupMenuRoute) for Flutter 3.29 CI compatibility;
-      // only popups sit above the page route, so nothing else is popped.
-      Navigator.of(context).popUntil((route) => route is! PopupRoute);
+      return true;
     });
+    final route = popup;
+    if (route != null) {
+      navigator.removeRoute(route);
+    }
   }
 
   @override
