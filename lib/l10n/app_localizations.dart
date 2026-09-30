@@ -722,7 +722,7 @@ abstract class AppLocalizations {
   /// No description provided for @indentForced.
   ///
   /// In zh, this message translates to:
-  /// **'统一'**
+  /// **'标准'**
   String get indentForced;
 
   /// No description provided for @indentAdaptive.
@@ -824,7 +824,7 @@ abstract class AppLocalizations {
   /// No description provided for @textColorUniform.
   ///
   /// In zh, this message translates to:
-  /// **'统一'**
+  /// **'单一'**
   String get textColorUniform;
 
   /// No description provided for @oneHandedMode.

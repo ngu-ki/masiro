@@ -50,7 +50,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get indentOverlay => '叠加';
 
   @override
-  String get indentForced => '统一';
+  String get indentForced => '标准';
 
   @override
   String get indentAdaptive => '悬挂';
@@ -384,7 +384,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textColorSimplified => '简化';
 
   @override
-  String get textColorUniform => '统一';
+  String get textColorUniform => '单一';
 
   @override
   String get oneHandedMode => '单手';
@@ -447,7 +447,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get indentOverlay => '疊加';
 
   @override
-  String get indentForced => '統一';
+  String get indentForced => '標準';
 
   @override
   String get indentAdaptive => '懸掛';
@@ -772,7 +772,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get textColorSimplified => '簡化';
 
   @override
-  String get textColorUniform => '統一';
+  String get textColorUniform => '單一';
 
   @override
   String get oneHandedMode => '單手';
@@ -835,7 +835,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get indentOverlay => '疊加';
 
   @override
-  String get indentForced => '統一';
+  String get indentForced => '標準';
 
   @override
   String get indentAdaptive => '懸掛';
@@ -1160,7 +1160,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get textColorSimplified => '簡化';
 
   @override
-  String get textColorUniform => '統一';
+  String get textColorUniform => '單一';
 
   @override
   String get oneHandedMode => '單手';

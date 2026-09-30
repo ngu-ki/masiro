@@ -223,6 +223,22 @@ class _SettingsSheetState extends State<SettingsSheet> {
   static const _minFontSize = 12;
   static const _maxFontSize = 32;
 
+  /// Segmented-control colors, adapted to the theme brightness: a light
+  /// gray bar with white pills in day mode; a dark gray bar with lighter
+  /// gray pills in night mode (tomato-novel style), so the controls stay
+  /// readable on the dark sheet.
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _barColor =>
+      _isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF2F2F2);
+
+  Color get _pillColor => _isDark ? const Color(0xFF4D4D4D) : Colors.white;
+
+  /// Color of text/icons sitting directly on the bar (font size number and
+  /// the +/- button icons); dark gray in day mode, white in night mode,
+  /// matching the sheet's other labels.
+  Color get _onBarColor => _isDark ? Colors.white : const Color(0xFF595959);
+
   /// Font size selector styled like the segmented controls: a gray rounded
   /// bar with a white minus pill, the current size in the middle and a
   /// white plus pill.
@@ -231,7 +247,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
       height: 40,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2),
+        color: _barColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -248,9 +264,9 @@ class _SettingsSheetState extends State<SettingsSheet> {
             child: Text(
               '$fontSize',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
-                color: Color(0xFF595959),
+                color: _onBarColor,
               ),
             ),
           ),
@@ -288,10 +304,10 @@ class _SettingsSheetState extends State<SettingsSheet> {
         child: Container(
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _pillColor,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(icon, size: 20, color: const Color(0xFF595959)),
+          child: Icon(icon, size: 20, color: _onBarColor),
         ),
       ),
     );
@@ -373,7 +389,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
       height: 40,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2),
+        color: _barColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -387,7 +403,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                   alignment: Alignment.center,
                   decoration: selectedTest(value)
                       ? BoxDecoration(
-                          color: Colors.white,
+                          color: _pillColor,
                           borderRadius: BorderRadius.circular(16),
                         )
                       : null,
