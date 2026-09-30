@@ -50,7 +50,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (notifier == null || notifier.value == 2) {
       return;
     }
-    Navigator.of(context).popUntil((route) => route is! PopupMenuRoute);
+    // PopupRoute (not PopupMenuRoute) for Flutter 3.29 CI compatibility;
+    // only popups sit above the page route, so nothing else is popped.
+    Navigator.of(context).popUntil((route) => route is! PopupRoute);
   }
 
   @override
