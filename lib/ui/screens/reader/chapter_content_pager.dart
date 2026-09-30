@@ -138,11 +138,11 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
   int? _prefetchedImagePage;
   bool _prefetchInFlight = false;
 
-  /// Physical-pixel decode size for prefetched images, matching the size
+  /// Physical-pixel decode width for prefetched images, matching the width
   /// the on-screen [CachedImage] decodes at, so the prefetched bitmap is
-  /// reused directly instead of being decoded a second time.
+  /// reused directly instead of being decoded a second time. Height is left
+  /// unset so ResizeImage keeps the image's aspect ratio (see CachedImage).
   int? _prefetchCacheWidth;
-  int? _prefetchCacheHeight;
 
   /// Bumped whenever pagination runs, so a prefetch started for the
   /// previous chapter/config doesn't schedule follow-up work.
@@ -333,8 +333,6 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
         final contentHeight = constraints.maxHeight - topInset - bottomInset;
         _prefetchCacheWidth =
             (contentWidth * mediaQuery.devicePixelRatio).round();
-        _prefetchCacheHeight =
-            (contentHeight * mediaQuery.devicePixelRatio).round();
         final elements = _effectiveElements();
         final chapterTitle = _effectiveChapterTitle();
 
@@ -704,15 +702,15 @@ class _ChapterContentPagerState extends State<ChapterContentPager> {
       _prefetchInFlight = true;
       final generation = _paginationGeneration;
       final targetPage = i;
-      // Decode at on-screen pixel size; this is the same ResizeImage key
-      // the visible CachedImage will use, so display is a direct cache hit.
+      // Decode at the on-screen pixel width; this is the same ResizeImage
+      // key the visible CachedImage uses (width only, aspect preserved), so
+      // display is a direct cache hit.
       final provider = ResizeImage(
         CachedNetworkImageProvider(
           page.image!.src,
           cacheManager: MasiroImageCacheManager(),
         ),
         width: _prefetchCacheWidth,
-        height: _prefetchCacheHeight,
       );
       precacheImage(
         provider,

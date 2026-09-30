@@ -58,18 +58,23 @@ class CachedImage extends StatelessWidget {
         // the grid may be displayed at ~100dp while the source is several
         // times larger, so full-resolution decoding wastes decode time,
         // memory and per-frame GPU bandwidth. ResizeImage keeps aspect
-        // ratio, so this never distorts the image.
+        // ratio only when a single dimension is given — passing both
+        // decodes to the exact w×h and distorts the bitmap. `contain`
+        // always fits the whole image inside the box, so it decodes at the
+        // box width only.
         final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
         final cacheWidth = _targetPixels(
           width,
           constraints.maxWidth,
           devicePixelRatio,
         );
-        final cacheHeight = _targetPixels(
-          height,
-          constraints.maxHeight,
-          devicePixelRatio,
-        );
+        final cacheHeight = fit == BoxFit.contain
+            ? null
+            : _targetPixels(
+                height,
+                constraints.maxHeight,
+                devicePixelRatio,
+              );
         return CachedNetworkImage(
           width: width,
           height: height,
