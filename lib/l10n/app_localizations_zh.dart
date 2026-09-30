@@ -12,7 +12,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backgroundColor => '背景';
 
   @override
-  String get pageTurnMode => '翻页模式';
+  String get pageTurnMode => '翻页';
 
   @override
   String get pageTurnSlide => '平移';
@@ -47,10 +47,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get indentTwo => '2格';
 
   @override
-  String get indentForced => '强制';
+  String get indentOverlay => '叠加';
 
   @override
-  String get indentAdaptive => '自适应';
+  String get indentForced => '统一';
+
+  @override
+  String get indentAdaptive => '悬挂';
 
   @override
   String get addToBookshelf => '加入书架';
@@ -406,7 +409,7 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get backgroundColor => '背景';
 
   @override
-  String get pageTurnMode => '翻頁模式';
+  String get pageTurnMode => '翻頁';
 
   @override
   String get pageTurnSlide => '平移';
@@ -441,10 +444,13 @@ class AppLocalizationsZhHantHk extends AppLocalizationsZh {
   String get indentTwo => '2格';
 
   @override
-  String get indentForced => '強制';
+  String get indentOverlay => '疊加';
 
   @override
-  String get indentAdaptive => '自適應';
+  String get indentForced => '統一';
+
+  @override
+  String get indentAdaptive => '懸掛';
 
   @override
   String get addToBookshelf => '加入書架';
@@ -791,7 +797,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get backgroundColor => '背景';
 
   @override
-  String get pageTurnMode => '翻頁模式';
+  String get pageTurnMode => '翻頁';
 
   @override
   String get pageTurnSlide => '平移';
@@ -826,10 +832,13 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get indentTwo => '2格';
 
   @override
-  String get indentForced => '強制';
+  String get indentOverlay => '疊加';
 
   @override
-  String get indentAdaptive => '自適應';
+  String get indentForced => '統一';
+
+  @override
+  String get indentAdaptive => '懸掛';
 
   @override
   String get addToBookshelf => '加入書架';

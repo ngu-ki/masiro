@@ -650,7 +650,7 @@ abstract class AppLocalizations {
   /// No description provided for @pageTurnMode.
   ///
   /// In zh, this message translates to:
-  /// **'翻页模式'**
+  /// **'翻页'**
   String get pageTurnMode;
 
   /// No description provided for @pageTurnSlide.
@@ -713,16 +713,22 @@ abstract class AppLocalizations {
   /// **'2格'**
   String get indentTwo;
 
+  /// No description provided for @indentOverlay.
+  ///
+  /// In zh, this message translates to:
+  /// **'叠加'**
+  String get indentOverlay;
+
   /// No description provided for @indentForced.
   ///
   /// In zh, this message translates to:
-  /// **'强制'**
+  /// **'统一'**
   String get indentForced;
 
   /// No description provided for @indentAdaptive.
   ///
   /// In zh, this message translates to:
-  /// **'自适应'**
+  /// **'悬挂'**
   String get indentAdaptive;
 
   /// No description provided for @addToBookshelf.

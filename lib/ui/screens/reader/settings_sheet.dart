@@ -168,18 +168,36 @@ class _SettingsSheetState extends State<SettingsSheet> {
           const SizedBox(height: 16),
           Text(localizations.indentMode),
           const SizedBox(height: 8),
+          // The one-cell and two-cell indents share a single segment: its
+          // label reads "叠加" while another mode is active, and shows the
+          // current cell count ("1格"/"2格") once selected; tapping it again
+          // toggles between one and two cells.
           _buildSegmentedControl<IndentMode>(
             options: [
               (localizations.indentNone, IndentMode.none),
-              (localizations.indentOne, IndentMode.one),
-              (localizations.indentTwo, IndentMode.two),
+              (
+                switch (indentMode) {
+                  IndentMode.one => localizations.indentOne,
+                  IndentMode.two => localizations.indentTwo,
+                  _ => localizations.indentOverlay,
+                },
+                IndentMode.one,
+              ),
               (localizations.indentForced, IndentMode.forced),
               (localizations.indentAdaptive, IndentMode.adaptive),
             ],
             selected: indentMode,
+            isSelected: (value) => value == IndentMode.one
+                ? indentMode == IndentMode.one || indentMode == IndentMode.two
+                : value == indentMode,
             onSelected: (mode) {
-              setState(() => indentMode = mode);
-              widget.onIndentModeChanged(mode);
+              final next = mode == IndentMode.one
+                  ? (indentMode == IndentMode.one
+                      ? IndentMode.two
+                      : IndentMode.one)
+                  : mode;
+              setState(() => indentMode = next);
+              widget.onIndentModeChanged(next);
             },
           ),
           const SizedBox(height: 16),
@@ -341,12 +359,16 @@ class _SettingsSheetState extends State<SettingsSheet> {
 
   /// A segmented control styled after the tomato-novel reader settings: a
   /// gray rounded bar holding all [options], with the selected option
-  /// rendered as a white pill with bold text.
+  /// rendered as a white pill with bold text. [isSelected] overrides the
+  /// selected test for options that stand for more than one value (the
+  /// merged one/two-cell indent segment).
   Widget _buildSegmentedControl<T>({
     required List<(String, T)> options,
     required T selected,
     required ValueChanged<T> onSelected,
+    bool Function(T value)? isSelected,
   }) {
+    final selectedTest = isSelected ?? (value) => value == selected;
     return Container(
       height: 40,
       padding: const EdgeInsets.all(4),
@@ -363,7 +385,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 onTap: () => onSelected(value),
                 child: Container(
                   alignment: Alignment.center,
-                  decoration: value == selected
+                  decoration: selectedTest(value)
                       ? BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
@@ -374,7 +396,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontWeight: value == selected
+                      fontWeight: selectedTest(value)
                           ? FontWeight.bold
                           : FontWeight.normal,
                     ),
