@@ -269,8 +269,11 @@ class TypesetTextPainterPool {
     Color? color,
     double letterSpacing = 0.0,
   }) {
-    final colorValue = color?.toARGB32() ?? 0;
-    final key = '$text|$colorValue|$letterSpacing';
+    // Key by the effective color: body-colored commands carry a null color
+    // and fall back to the style's color, which changes with the reader
+    // background without a re-pagination (and thus without a pool clear).
+    final effectiveColor = color ?? style.color;
+    final key = '$text|${effectiveColor?.toARGB32() ?? 0}|$letterSpacing';
     return _cache.putIfAbsent(
       key,
       () => TextPainter(
