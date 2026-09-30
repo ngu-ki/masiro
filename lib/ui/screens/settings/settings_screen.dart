@@ -16,6 +16,7 @@ import 'package:masiro/misc/cookie.dart';
 import 'package:masiro/ui/screens/settings/profile_card.dart';
 import 'package:masiro/ui/screens/settings/sign_in_card.dart';
 import 'package:masiro/ui/screens/settings/theme_color_card.dart';
+import 'package:masiro/ui/widgets/router_outlet_with_nav_bar.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,6 +26,33 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  ValueNotifier<int>? _branchNotifier;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The shell keeps this tab alive across switches, so a popup menu left
+    // open would still be there when coming back; dismiss it on switch away.
+    _branchNotifier ??= ActiveBranchNotifier.of(context)
+      ?..addListener(_onBranchChanged);
+  }
+
+  @override
+  void dispose() {
+    _branchNotifier?.removeListener(_onBranchChanged);
+    super.dispose();
+  }
+
+  /// Pops the settings popup menu when the user switches away from this tab
+  /// (branch index 2). Other routes (e.g. dialogs) are left untouched.
+  void _onBranchChanged() {
+    final notifier = _branchNotifier;
+    if (notifier == null || notifier.value == 2) {
+      return;
+    }
+    Navigator.of(context).popUntil((route) => route is! PopupMenuRoute);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(

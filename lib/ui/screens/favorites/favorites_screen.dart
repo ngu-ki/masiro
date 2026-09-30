@@ -19,6 +19,7 @@ import 'package:masiro/ui/widgets/error_message.dart';
 import 'package:masiro/ui/widgets/message.dart';
 import 'package:masiro/ui/widgets/novel_card.dart';
 import 'package:masiro/ui/widgets/novel_grid_card.dart';
+import 'package:masiro/ui/widgets/router_outlet_with_nav_bar.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -39,6 +40,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   /// The current keyword used to filter favorited novels.
   String _searchQuery = '';
 
+  ValueNotifier<int>? _branchNotifier;
+
   @override
   void initState() {
     super.initState();
@@ -48,11 +51,31 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The shell keeps this tab alive across switches, so a popup menu left
+    // open would still be there when coming back; dismiss it on switch away.
+    _branchNotifier ??= ActiveBranchNotifier.of(context)
+      ?..addListener(_onBranchChanged);
+  }
+
+  @override
   void dispose() {
+    _branchNotifier?.removeListener(_onBranchChanged);
     _easyRefreshController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  /// Pops the sort/more popup menus when the user switches away from this
+  /// tab (branch index 1). Other routes are left untouched.
+  void _onBranchChanged() {
+    final notifier = _branchNotifier;
+    if (notifier == null || notifier.value == 1) {
+      return;
+    }
+    Navigator.of(context).popUntil((route) => route is! PopupMenuRoute);
   }
 
   void _enterSearch() {
