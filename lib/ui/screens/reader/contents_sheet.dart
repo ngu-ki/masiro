@@ -68,7 +68,6 @@ class ContentsSheet extends StatelessWidget {
                     child: Text(
                       entry.title!,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.black,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -83,9 +82,7 @@ class ContentsSheet extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: isCurrent
-                          ? theme.colorScheme.primary
-                          : Colors.black,
+                      color: isCurrent ? theme.colorScheme.primary : null,
                       fontWeight: isCurrent ? FontWeight.bold : null,
                     ),
                   ),
