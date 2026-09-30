@@ -50,9 +50,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (notifier == null || notifier.value == 2) {
       return;
     }
-    // PopupRoute (not PopupMenuRoute) for Flutter 3.29 CI compatibility;
-    // only popups sit above the page route, so nothing else is popped.
-    Navigator.of(context).popUntil((route) => route is! PopupRoute);
+    // Defer until after the branch-switch frame: the closing animation then
+    // runs on the offstage branch and cannot ghost over the new tab.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      // PopupRoute (not PopupMenuRoute) for Flutter 3.29 CI compatibility;
+      // only popups sit above the page route, so nothing else is popped.
+      Navigator.of(context).popUntil((route) => route is! PopupRoute);
+    });
   }
 
   @override
