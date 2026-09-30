@@ -117,16 +117,17 @@ class _ExpandableBriefState extends State<ExpandableBrief> {
                 child: Container(
                   height: _maskHeight,
                   decoration: boxDecoration,
-                  // Pinned to the bottom of the 60px mask, the 24px-tall
+                  // Pinned to the bottom of the 60px mask, the 28px-tall
                   // button lives entirely in the opaque tail of the gradient
                   // (>=96%), so it never overlaps visible text. Full width
-                  // keeps the tap target wide.
+                  // keeps the tap target wide; the default Material tap
+                  // target (not shrinkWrap) extends the vertical hit area to
+                  // 48px around the visual button.
                   alignment: Alignment.bottomCenter,
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      minimumSize: const Size.fromHeight(24),
+                      minimumSize: const Size.fromHeight(28),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     onPressed: () => setState(() => isExpanded = !isExpanded),
                     child: Text(
