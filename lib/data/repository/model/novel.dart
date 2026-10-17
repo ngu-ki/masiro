@@ -25,6 +25,36 @@ final class Novel extends Equatable {
     required this.words,
   });
 
+  factory Novel.fromJson(Map<String, dynamic> json) {
+    return Novel(
+      id: json['id'] as int,
+      title: json['title'] as String,
+      brief: json['brief'] as String,
+      rank: json['rank'] as int,
+      coverImg: json['coverImg'] as String,
+      author: json['author'] as String?,
+      lastUpdated: json['lastUpdated'] as String?,
+      lastUpdatedTime: json['lastUpdatedTime'] as String?,
+      lvLimit: json['lvLimit'] as int,
+      words: json['words'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'brief': brief,
+      'rank': rank,
+      'coverImg': coverImg,
+      'author': author,
+      'lastUpdated': lastUpdated,
+      'lastUpdatedTime': lastUpdatedTime,
+      'lvLimit': lvLimit,
+      'words': words,
+    };
+  }
+
   @override
   List<Object?> get props => [
         id,

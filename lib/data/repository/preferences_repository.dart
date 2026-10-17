@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:masiro/data/repository/model/bookshelf_stat.dart';
 import 'package:masiro/data/repository/model/indent_mode.dart';
+import 'package:masiro/data/repository/model/novel.dart';
 import 'package:masiro/data/repository/model/page_turn_mode.dart';
 import 'package:masiro/data/repository/model/text_color_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,7 @@ const _favoritesViewModeKey = 'favoritesViewMode';
 const _favoritesSortModeKey = 'favoritesSortMode';
 const _bookshelfStatsKey = 'bookshelfStats';
 const _bookshelfFavoritedAtKey = 'bookshelfFavoritedAt';
+const _bookshelfFavoritesKey = 'bookshelfFavorites';
 const _readerBackgroundColorKey = 'readerBackgroundColor';
 const _pageTurnModeKey = 'pageTurnMode';
 const _indentModeKeyPrefix = 'indentMode_';
@@ -123,6 +125,30 @@ class PreferencesRepository {
       for (final entry in value.entries) '${entry.key}': entry.value,
     };
     _prefs.setString(_bookshelfFavoritedAtKey, jsonEncode(encoded));
+  }
+
+  /// Locally persisted snapshot of the favorites list, so the bookshelf can
+  /// be rendered from cache before (or without) a successful network fetch.
+  List<Novel> get bookshelfFavorites {
+    final raw = _prefs.getString(_bookshelfFavoritesKey);
+    if (raw == null || raw.isEmpty) {
+      return const [];
+    }
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded
+          .map((e) => Novel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  set bookshelfFavorites(List<Novel> value) {
+    _prefs.setString(
+      _bookshelfFavoritesKey,
+      jsonEncode([for (final novel in value) novel.toJson()]),
+    );
   }
 
   /// Background color (as a value) of the reader screen.

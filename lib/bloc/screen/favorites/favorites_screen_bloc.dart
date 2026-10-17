@@ -11,6 +11,7 @@ import 'package:masiro/data/repository/model/novel_detail.dart';
 import 'package:masiro/data/repository/preferences_repository.dart';
 import 'package:masiro/di/get_it.dart';
 import 'package:masiro/misc/reading_progress_bus.dart';
+import 'package:masiro/misc/toast.dart';
 
 typedef _FavoritesScreenBloc = Bloc<FavoritesScreenEvent, FavoritesScreenState>;
 
@@ -119,6 +120,9 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
           ? FavoritesViewMode.grid
           : FavoritesViewMode.list,
       stats: stats,
+      // The shelf renders from cache right away; the top progress line
+      // stays until the network fetch below finishes.
+      isSyncing: true,
     );
   }
 
@@ -157,6 +161,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
             novels:
                 _sortNovels(_novels, current.sortMode, current.sortDirection),
             stats: _stats,
+            isSyncing: false,
           ),
         );
       } else {
@@ -166,12 +171,21 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
             sortMode: _storedSortMode,
             viewMode: _storedViewMode,
             stats: _stats,
+            isSyncing: false,
           ),
         );
       }
       await _enrichUnreadCountsIfNeeded();
     } catch (e) {
-      emit(FavoritesScreenErrorState(message: e.toString()));
+      final current = state;
+      if (current is FavoritesScreenLoadedState) {
+        // The cached shelf is already on screen; stop the sync line and
+        // explain why the content may be stale.
+        emit(current.copyWith(isSyncing: false));
+        e.toString().toast();
+      } else {
+        emit(FavoritesScreenErrorState(message: e.toString()));
+      }
     }
   }
 
@@ -189,6 +203,7 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
           current.copyWith(
             novels:
                 _sortNovels(_novels, current.sortMode, current.sortDirection),
+            isSyncing: false,
           ),
         );
       } else {
@@ -199,12 +214,20 @@ class FavoritesScreenBloc extends _FavoritesScreenBloc {
             sortMode: _storedSortMode,
             viewMode: _storedViewMode,
             stats: _stats,
+            isSyncing: false,
           ),
         );
       }
       await _enrichUnreadCountsIfNeeded(forceRefresh: true);
     } catch (e) {
-      emit(FavoritesScreenErrorState(message: e.toString()));
+      final current = state;
+      if (current is FavoritesScreenLoadedState) {
+        // Keep the displayed shelf and explain why the refresh failed.
+        emit(current.copyWith(isSyncing: false));
+        e.toString().toast();
+      } else {
+        emit(FavoritesScreenErrorState(message: e.toString()));
+      }
     }
   }
 

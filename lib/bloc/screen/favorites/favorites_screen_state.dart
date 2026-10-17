@@ -69,6 +69,11 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
   /// The set of selected novel ids in batch mode.
   final Set<int> selectedNovelIds;
 
+  /// Whether the shelf is currently rendered from cache while the network
+  /// fetch is still running; the top progress line stays visible until the
+  /// fetch finishes (successfully or not).
+  final bool isSyncing;
+
   FavoritesScreenLoadedState({
     this.novels = const [],
     this.sortMode = FavoritesSortMode.recentlyRead,
@@ -78,6 +83,7 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
     this.stats = const {},
     this.isBatchMode = false,
     this.selectedNovelIds = const {},
+    this.isSyncing = false,
   });
 
   FavoritesScreenLoadedState copyWith({
@@ -89,6 +95,7 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
     Map<int, BookshelfStat>? stats,
     bool? isBatchMode,
     Set<int>? selectedNovelIds,
+    bool? isSyncing,
   }) {
     return FavoritesScreenLoadedState(
       novels: novels ?? this.novels,
@@ -99,6 +106,7 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
       stats: stats ?? this.stats,
       isBatchMode: isBatchMode ?? this.isBatchMode,
       selectedNovelIds: selectedNovelIds ?? this.selectedNovelIds,
+      isSyncing: isSyncing ?? this.isSyncing,
     );
   }
 
@@ -112,5 +120,6 @@ class FavoritesScreenLoadedState extends FavoritesScreenState {
         stats,
         isBatchMode,
         selectedNovelIds,
+        isSyncing,
       ];
 }

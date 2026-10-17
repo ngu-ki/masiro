@@ -154,6 +154,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       },
       child: Column(
         children: [
+          // While the shelf content is rendered from local cache, keep the
+          // top progress line until the network sync finishes.
+          if (state.isSyncing) const LinearProgressIndicator(),
           buildHeader(context, state),
           Expanded(
             child: EasyRefresh(
